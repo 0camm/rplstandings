@@ -1,234 +1,348 @@
-/**
- * RPL Standings API Server
- * ─────────────────────────────────────────────────────────────
- * A minimal Node.js server (no framework required) that:
- *   • Accepts POST  /rpl/standings   from the Roblox Script
- *   • Serves  GET   /rpl/standings   to the HTML page
- *   • Streams GET   /rpl/standings/events  (SSE) for instant refresh
- *
- * Setup:
- *   1. node server.js                 (port 3000 by default)
- *   2. Deploy on Railway / Render / Fly.io / any Node host
- *   3. Set STANDINGS_API_URL in both the Lua module and the HTML
- *      to https://your-host.com/rpl/standings
- *   4. Set SECRET_KEY below (same value in Lua CONFIG.SECRET_KEY)
- *
- * No database needed — data is stored in memory and persisted to
- * standings.json on disk so it survives restarts.
- */
+/*
+  rpl_server.js  —  RPL Standings API Bridge
+  ============================================
+  Deploy on Railway (or any Node host).
+  Set environment variable:  RPL_SECRET = RPLSTANDINGS$
+
+  Endpoints
+  ─────────────────────────────────────────────────────
+  POST /rpl/standings          ← Roblox posts game results here
+  GET  /rpl/standings          ← Website polls current standings
+  GET  /rpl/standings/events   ← SSE stream for instant push
+  POST /rpl/standings/team     ← Manual W/L override
+  GET  /                       ← Health check
+*/
+
+"use strict";
 
 const http  = require("http");
+const https = require("https");
 const fs    = require("fs");
 const path  = require("path");
-const PORT  = process.env.PORT || 3000;
 
-// ── Auth ─────────────────────────────────────────────────────
-const SECRET_KEY = process.env.RPL_SECRET || "RPLSTANDINGS$";  // "" = no auth
+// ── Config ────────────────────────────────────────────────────
+const PORT        = process.env.PORT        || 3000;
+const SECRET      = process.env.RPL_SECRET  || "RPLSTANDINGS$";
+const DATA_FILE   = path.join(__dirname, "standings.json");
+const RESULTS_MAX = 20;   // keep last N game results
 
-// ── Persistence file ─────────────────────────────────────────
-const DATA_FILE = path.join(__dirname, "standings.json");
-
-// ── In-memory state ──────────────────────────────────────────
+// ── In-memory state (persisted to standings.json) ─────────────
 let state = {
-  lastUpdated : null,
-  recentGames : [],      // newest-first, capped at 10
-  standings   : {
-    eastern : [],
-    western : [],
-  },
+  teams:   {},   // { "LAL": { wins:0, losses:0, pct:"0.000", streak:"—", logo:"" }, … }
+  results: [],   // last N game result objects
+  lastUpdated: null,
 };
 
-// Load persisted data on startup
-if (fs.existsSync(DATA_FILE)) {
-  try {
-    state = JSON.parse(fs.readFileSync(DATA_FILE, "utf8"));
-    console.log("[RPL] Loaded standings from disk.");
-  } catch (e) {
-    console.warn("[RPL] Could not parse standings.json, starting fresh.", e.message);
-  }
-}
-
-function persist() {
-  fs.writeFile(DATA_FILE, JSON.stringify(state, null, 2), () => {});
-}
-
-// ── SSE clients ──────────────────────────────────────────────
+// ── SSE client registry ───────────────────────────────────────
 const sseClients = new Set();
 
-function broadcastUpdate() {
+function broadcast(eventName, data) {
+  const payload = `event: ${eventName}\ndata: ${JSON.stringify(data)}\n\n`;
   for (const res of sseClients) {
-    try { res.write("event: update\ndata: {}\n\n"); } catch (_) {}
+    try { res.write(payload); } catch (_) { sseClients.delete(res); }
   }
 }
 
-// ── CORS helper ───────────────────────────────────────────────
-function setCORS(res) {
-  res.setHeader("Access-Control-Allow-Origin",  "*");
-  res.setHeader("Access-Control-Allow-Methods", "GET, POST, OPTIONS");
-  res.setHeader("Access-Control-Allow-Headers", "Content-Type, Authorization");
+// ── Persistence ───────────────────────────────────────────────
+function loadState() {
+  try {
+    if (fs.existsSync(DATA_FILE)) {
+      const raw = fs.readFileSync(DATA_FILE, "utf8");
+      const parsed = JSON.parse(raw);
+      if (parsed && typeof parsed === "object") {
+        state = { teams: {}, results: [], lastUpdated: null, ...parsed };
+        console.log("[RPL] Loaded standings from disk:", Object.keys(state.teams).length, "teams,", state.results.length, "results");
+      }
+    }
+  } catch (e) {
+    console.error("[RPL] Failed to load standings.json:", e.message);
+  }
 }
 
-// ── Auth check ───────────────────────────────────────────────
+function saveState() {
+  try {
+    fs.writeFileSync(DATA_FILE, JSON.stringify(state, null, 2), "utf8");
+  } catch (e) {
+    console.error("[RPL] Failed to save standings.json:", e.message);
+  }
+}
+
+// ── Auth helper ───────────────────────────────────────────────
 function isAuthorized(req) {
-  if (!SECRET_KEY) return true;
   const auth = req.headers["authorization"] || "";
-  return auth === `Bearer ${SECRET_KEY}`;
+  if (auth.startsWith("Bearer ")) {
+    return auth.slice(7) === SECRET;
+  }
+  // Also accept as query param for easy testing
+  const url = new URL(req.url, `http://localhost`);
+  return url.searchParams.get("secret") === SECRET;
 }
 
-// ── Body parser ───────────────────────────────────────────────
+// ── W/L record updater ────────────────────────────────────────
+function ensureTeam(abb, logo) {
+  if (!abb) return;
+  if (!state.teams[abb]) {
+    state.teams[abb] = { wins: 0, losses: 0, pct: "0.000", streak: "—", logo: logo || "" };
+  } else if (logo) {
+    state.teams[abb].logo = logo;
+  }
+}
+
+function updateRecord(winnerABB, loserABB) {
+  if (!winnerABB || !loserABB) return;
+  ensureTeam(winnerABB);
+  ensureTeam(loserABB);
+
+  state.teams[winnerABB].wins   += 1;
+  state.teams[loserABB].losses  += 1;
+
+  // Streak
+  state.teams[winnerABB].streak = updateStreak(state.teams[winnerABB].streak, true);
+  state.teams[loserABB].streak  = updateStreak(state.teams[loserABB].streak,  false);
+
+  // PCT
+  for (const abb of [winnerABB, loserABB]) {
+    const t = state.teams[abb];
+    const total = t.wins + t.losses;
+    t.pct = total > 0 ? (t.wins / total).toFixed(3) : "0.000";
+  }
+}
+
+function updateStreak(current, won) {
+  const letter = won ? "W" : "L";
+  if (!current || current === "—") return `${letter}1`;
+  const curLetter = current[0];
+  const curNum    = parseInt(current.slice(1), 10) || 0;
+  if (curLetter === letter) return `${letter}${curNum + 1}`;
+  return `${letter}1`;
+}
+
+// ── Body reader ───────────────────────────────────────────────
 function readBody(req) {
   return new Promise((resolve, reject) => {
-    let raw = "";
-    req.on("data", chunk => { raw += chunk; });
+    let body = "";
+    req.on("data", chunk => { body += chunk; if (body.length > 1e6) req.destroy(); });
     req.on("end",  () => {
-      try { resolve(JSON.parse(raw)); }
-      catch (e) { reject(e); }
+      try { resolve(JSON.parse(body)); }
+      catch (e) { reject(new Error("Invalid JSON")); }
     });
     req.on("error", reject);
   });
 }
 
-// ── Merge a game result into state ───────────────────────────
-function applyResult(payload) {
-  // Update last-updated timestamp
-  state.lastUpdated = payload.timestamp || new Date().toISOString();
-
-  // Push to recentGames (newest first, max 10)
-  state.recentGames.unshift({
-    homeABB    : payload.homeABB,
-    awayABB    : payload.awayABB,
-    homeLogo   : payload.homeLogo,
-    awayLogo   : payload.awayLogo,
-    homeScore  : payload.homeScore,
-    awayScore  : payload.awayScore,
-    status     : payload.status,
-    quarter    : payload.quarter,
-    note       : payload.note || "",
-    timestamp  : payload.timestamp,
-  });
-  if (state.recentGames.length > 10) state.recentGames.length = 10;
-
-  // Update standings records if it's a real result
-  if (payload.status === "final" && payload.homeABB && payload.awayABB) {
-    const homeWin = payload.homeScore > payload.awayScore;
-    updateRecord(payload.homeABB, homeWin  ? 1 : 0, homeWin  ? 0 : 1);
-    updateRecord(payload.awayABB, !homeWin ? 1 : 0, !homeWin ? 0 : 1);
-  }
-  // Forfeits: winner gets a win, loser gets a loss
-  if (payload.status === "forfeit" && payload.winnerABB) {
-    const loserABB = payload.winnerABB === payload.homeABB ? payload.awayABB : payload.homeABB;
-    updateRecord(payload.winnerABB, 1, 0);
-    updateRecord(loserABB, 0, 1);
-  }
-
-  persist();
-  broadcastUpdate();
-  console.log(`[RPL] Result stored: ${payload.awayABB} @ ${payload.homeABB} — ${payload.status}`);
+// ── CORS + JSON helpers ───────────────────────────────────────
+function setCORS(res) {
+  res.setHeader("Access-Control-Allow-Origin",  "*");
+  res.setHeader("Access-Control-Allow-Methods", "GET,POST,OPTIONS");
+  res.setHeader("Access-Control-Allow-Headers", "Content-Type,Authorization");
 }
 
-// ── Find or create a team record and update W/L ──────────────
-const EASTERN = new Set([
-  "ATL","BOS","BKN","CHA","CHI","CLE","DET","IND","MIA","MIL","NYK","ORL","PHI","TOR","WAS"
-]);
-
-function updateRecord(abbr, wDelta, lDelta) {
-  const confKey = EASTERN.has(abbr) ? "eastern" : "western";
-  const list    = state.standings[confKey];
-  let team      = list.find(t => t.abbr === abbr);
-  if (!team) {
-    team = { abbr, name: abbr, w: 0, l: 0, status: "" };
-    list.push(team);
-  }
-  team.w += wDelta;
-  team.l += lDelta;
-}
-
-// ── HTTP server ───────────────────────────────────────────────
-const server = http.createServer(async (req, res) => {
+function sendJSON(res, status, data) {
   setCORS(res);
+  res.writeHead(status, { "Content-Type": "application/json" });
+  res.end(JSON.stringify(data));
+}
 
-  // Pre-flight
-  if (req.method === "OPTIONS") {
-    res.writeHead(204); res.end(); return;
+// ── Route: POST /rpl/standings ────────────────────────────────
+async function handlePostResult(req, res) {
+  if (!isAuthorized(req)) return sendJSON(res, 401, { error: "Unauthorized" });
+
+  let body;
+  try { body = await readBody(req); }
+  catch (e) { return sendJSON(res, 400, { error: "Bad JSON" }); }
+
+  const {
+    status,       // "final" | "forfeit" | "incomplete"
+    homeABB, awayABB,
+    homeLogo, awayLogo,
+    homeScore, awayScore,
+    winnerABB,
+    quarter,
+    note,
+    season,
+    timestamp,
+    playerOfGame,
+    homeStats,
+    awayStats,
+  } = body;
+
+  // Validate minimum fields
+  if (!homeABB || !awayABB || !status) {
+    return sendJSON(res, 422, { error: "Missing required fields: homeABB, awayABB, status" });
   }
 
-  const url = req.url.split("?")[0];
+  // Ensure teams exist in standings
+  ensureTeam(homeABB, homeLogo);
+  ensureTeam(awayABB, awayLogo);
 
-  // ── GET /rpl/standings/events  (SSE) ──────────────────────
-  if (req.method === "GET" && url === "/rpl/standings/events") {
-    res.writeHead(200, {
-      "Content-Type"  : "text/event-stream",
-      "Cache-Control" : "no-cache",
-      "Connection"    : "keep-alive",
+  // Update W/L only for conclusive results
+  if (status === "final" || status === "forfeit") {
+    if (winnerABB) {
+      const loserABB = winnerABB === homeABB ? awayABB : homeABB;
+      updateRecord(winnerABB, loserABB);
+    }
+  }
+
+  // Prepend to results list
+  const result = {
+    id:           Date.now(),
+    timestamp:    timestamp || new Date().toISOString(),
+    season:       season    || "Season 10",
+    status,
+    quarter:      quarter   || "---",
+    note:         note      || "",
+    homeABB, awayABB,
+    homeLogo:     homeLogo  || "",
+    awayLogo:     awayLogo  || "",
+    homeScore:    homeScore ?? 0,
+    awayScore:    awayScore ?? 0,
+    winnerABB:    winnerABB || null,
+    playerOfGame: playerOfGame || null,
+    homeStats:    homeStats || [],
+    awayStats:    awayStats || [],
+  };
+
+  state.results.unshift(result);
+  if (state.results.length > RESULTS_MAX) state.results.length = RESULTS_MAX;
+  state.lastUpdated = new Date().toISOString();
+
+  saveState();
+
+  // Push to all open SSE connections instantly
+  broadcast("standings", buildPublicPayload());
+  broadcast("result",    result);
+
+  console.log(`[RPL] Result saved: ${awayABB} @ ${homeABB} | ${status} | ${awayScore}-${homeScore}`);
+  return sendJSON(res, 200, { ok: true, result });
+}
+
+// ── Route: GET /rpl/standings ─────────────────────────────────
+function handleGetStandings(req, res) {
+  setCORS(res);
+  res.writeHead(200, { "Content-Type": "application/json" });
+  res.end(JSON.stringify(buildPublicPayload()));
+}
+
+// ── Route: GET /rpl/standings/events (SSE) ────────────────────
+function handleSSE(req, res) {
+  setCORS(res);
+  res.writeHead(200, {
+    "Content-Type":  "text/event-stream",
+    "Cache-Control": "no-cache",
+    "Connection":    "keep-alive",
+    "X-Accel-Buffering": "no",
+  });
+
+  // Send current state immediately
+  res.write(`event: standings\ndata: ${JSON.stringify(buildPublicPayload())}\n\n`);
+
+  sseClients.add(res);
+  console.log(`[RPL] SSE client connected (${sseClients.size} total)`);
+
+  // Heartbeat every 25 s
+  const heartbeat = setInterval(() => {
+    try { res.write(": heartbeat\n\n"); }
+    catch (_) { clearInterval(heartbeat); sseClients.delete(res); }
+  }, 25000);
+
+  req.on("close", () => {
+    clearInterval(heartbeat);
+    sseClients.delete(res);
+    console.log(`[RPL] SSE client disconnected (${sseClients.size} remaining)`);
+  });
+}
+
+// ── Route: POST /rpl/standings/team ───────────────────────────
+async function handleTeamOverride(req, res) {
+  if (!isAuthorized(req)) return sendJSON(res, 401, { error: "Unauthorized" });
+
+  let body;
+  try { body = await readBody(req); }
+  catch (e) { return sendJSON(res, 400, { error: "Bad JSON" }); }
+
+  const { abb, wins, losses, streak, logo } = body;
+  if (!abb) return sendJSON(res, 422, { error: "Missing abb" });
+
+  ensureTeam(abb, logo);
+  const t = state.teams[abb];
+  if (wins    !== undefined) t.wins    = Math.max(0, parseInt(wins,    10) || 0);
+  if (losses  !== undefined) t.losses  = Math.max(0, parseInt(losses,  10) || 0);
+  if (streak  !== undefined) t.streak  = streak;
+  if (logo    !== undefined) t.logo    = logo;
+
+  const total = t.wins + t.losses;
+  t.pct = total > 0 ? (t.wins / total).toFixed(3) : "0.000";
+
+  state.lastUpdated = new Date().toISOString();
+  saveState();
+  broadcast("standings", buildPublicPayload());
+
+  console.log(`[RPL] Manual override: ${abb} → ${t.wins}W-${t.losses}L`);
+  return sendJSON(res, 200, { ok: true, team: { abb, ...t } });
+}
+
+// ── Public payload builder ─────────────────────────────────────
+function buildPublicPayload() {
+  // Sort teams by wins desc, then by losses asc
+  const sorted = Object.entries(state.teams)
+    .map(([abb, data]) => ({ abb, ...data }))
+    .sort((a, b) => {
+      if (b.wins !== a.wins) return b.wins - a.wins;
+      return a.losses - b.losses;
     });
-    res.write(": connected\n\n");
-    sseClients.add(res);
-    req.on("close", () => sseClients.delete(res));
-    return;
+
+  return {
+    standings:   sorted,
+    results:     state.results.slice(0, 10),
+    lastUpdated: state.lastUpdated,
+  };
+}
+
+// ── Main router ───────────────────────────────────────────────
+const server = http.createServer(async (req, res) => {
+  const url    = req.url.split("?")[0];
+  const method = req.method.toUpperCase();
+
+  // OPTIONS preflight
+  if (method === "OPTIONS") {
+    setCORS(res);
+    res.writeHead(204);
+    return res.end();
   }
 
-  // ── GET /rpl/standings ────────────────────────────────────
-  if (req.method === "GET" && url === "/rpl/standings") {
-    const body = JSON.stringify(state);
-    res.writeHead(200, { "Content-Type": "application/json" });
-    res.end(body);
-    return;
+  // Health check
+  if (url === "/" || url === "/health") {
+    return sendJSON(res, 200, { status: "ok", clients: sseClients.size, teams: Object.keys(state.teams).length });
   }
 
-  // ── POST /rpl/standings ───────────────────────────────────
-  if (req.method === "POST" && url === "/rpl/standings") {
-    if (!isAuthorized(req)) {
-      res.writeHead(401); res.end("Unauthorized"); return;
-    }
-    try {
-      const payload = await readBody(req);
-      applyResult(payload);
-      res.writeHead(200, { "Content-Type": "application/json" });
-      res.end(JSON.stringify({ ok: true }));
-    } catch (e) {
-      console.error("[RPL] POST parse error:", e.message);
-      res.writeHead(400); res.end("Bad JSON");
-    }
-    return;
+  // Routes
+  if (url === "/rpl/standings") {
+    if (method === "POST") return handlePostResult(req, res);
+    if (method === "GET")  return handleGetStandings(req, res);
   }
 
-  // ── POST /rpl/standings/team  (manual W/L override) ──────
-  // Body: { "abbr": "NYK", "w": 12, "l": 4, "status": "x" }
-  if (req.method === "POST" && url === "/rpl/standings/team") {
-    if (!isAuthorized(req)) {
-      res.writeHead(401); res.end("Unauthorized"); return;
-    }
-    try {
-      const payload = await readBody(req);
-      if (!payload.abbr) throw new Error("Missing abbr");
-
-      const confKey = EASTERN.has(payload.abbr) ? "eastern" : "western";
-      const list    = state.standings[confKey];
-      let team      = list.find(t => t.abbr === payload.abbr);
-      if (!team) {
-        team = { abbr: payload.abbr, name: payload.name || payload.abbr, w: 0, l: 0, status: "" };
-        list.push(team);
-      }
-      if (payload.name   !== undefined) team.name   = payload.name;
-      if (payload.w      !== undefined) team.w      = Number(payload.w);
-      if (payload.l      !== undefined) team.l      = Number(payload.l);
-      if (payload.status !== undefined) team.status = payload.status;
-
-      state.lastUpdated = new Date().toISOString();
-      persist();
-      broadcastUpdate();
-      res.writeHead(200, { "Content-Type": "application/json" });
-      res.end(JSON.stringify({ ok: true, team }));
-    } catch (e) {
-      res.writeHead(400); res.end(e.message);
-    }
-    return;
+  if (url === "/rpl/standings/events" && method === "GET") {
+    return handleSSE(req, res);
   }
 
-  res.writeHead(404); res.end("Not found");
+  if (url === "/rpl/standings/team" && method === "POST") {
+    return handleTeamOverride(req, res);
+  }
+
+  // 404
+  sendJSON(res, 404, { error: "Not found" });
 });
 
+// ── Boot ──────────────────────────────────────────────────────
+loadState();
+
 server.listen(PORT, () => {
-  console.log(`[RPL] Standings server running on port ${PORT}`);
-  console.log(`[RPL] Auth: ${SECRET_KEY ? "enabled" : "DISABLED — set RPL_SECRET env var"}`);
+  console.log(`[RPL] Server running on port ${PORT}`);
+  console.log(`[RPL] Secret key: ${SECRET.slice(0, 4)}${"*".repeat(SECRET.length - 4)}`);
+  console.log(`[RPL] Data file:  ${DATA_FILE}`);
+});
+
+server.on("error", err => {
+  console.error("[RPL] Server error:", err.message);
+  process.exit(1);
 });
