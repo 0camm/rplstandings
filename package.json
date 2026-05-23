@@ -1,0 +1,8 @@
+{
+  "name": "rpl-standings",
+  "version": "1.0.0",
+  "main": "rpl_server.js",
+  "scripts": {
+    "start": "node rpl_server.js"
+  }
+}
