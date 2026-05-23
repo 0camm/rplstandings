@@ -23,7 +23,7 @@ const path  = require("path");
 // ── Config ────────────────────────────────────────────────────
 const PORT        = process.env.PORT        || 3000;
 const SECRET      = process.env.RPL_SECRET  || "RPLSTANDINGS$";
-const DATA_FILE   = path.join(__dirname, "standings.json");
+const DATA_FILE = process.env.DATA_FILE || path.join("/data", "standings.json");
 const RESULTS_MAX = 20;   // keep last N game results
 
 // ── In-memory state (persisted to standings.json) ─────────────
