@@ -591,9 +591,12 @@ function renderConferences(data) {
 async function fetchStandings() {
   try {
     const res = await fetch(CONFIG.API_URL, {
-      cache: 'no-store',
-      headers: { 'Accept': 'application/json' },
-    });
+  cache: 'no-store',
+  headers: { 
+    'Accept': 'application/json',
+    'ngrok-skip-browser-warning': '1',
+  },
+});
 
     if (!res.ok) throw new Error(`HTTP ${res.status}`);
 
