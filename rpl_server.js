@@ -171,6 +171,17 @@ async function handlePostResult(req, res) {
     return sendJSON(res, 422, { error: "Missing required fields: homeABB, awayABB, status" });
   }
 
+  // Deduplicate: ignore if same matchup + status was recorded in the last 30 seconds
+  const now = Date.now();
+  const duplicate = state.results.find(r => {
+    const age = now - new Date(r.timestamp).getTime();
+    return age < 30000 && r.homeABB === homeABB && r.awayABB === awayABB && r.status === status;
+  });
+  if (duplicate) {
+    console.log(`[RPL] Duplicate result ignored: ${awayABB} @ ${homeABB} (${status})`);
+    return sendJSON(res, 200, { ok: true, duplicate: true });
+  }
+
   // Ensure teams exist in standings
   ensureTeam(homeABB, homeLogo);
   ensureTeam(awayABB, awayLogo);
