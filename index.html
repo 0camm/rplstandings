@@ -314,7 +314,7 @@
 
 <script>
 const CONFIG = {
-  API_URL: 'https://rplstandings.onrender.com/',
+  API_URL: 'https://rplstandings.onrender.com/rpl/standings',
   POLL_MS: 30000,
 };
 
@@ -592,10 +592,7 @@ async function fetchStandings() {
   try {
     const res = await fetch(CONFIG.API_URL, {
   cache: 'no-store',
-  headers: { 
-    'Accept': 'application/json',
-    'ngrok-skip-browser-warning': '1',
-  },
+  headers: { 'Accept': 'application/json' },
 });
 
     if (!res.ok) throw new Error(`HTTP ${res.status}`);
