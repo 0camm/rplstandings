@@ -23,7 +23,7 @@ const path  = require("path");
 const PORT  = process.env.PORT || 3000;
 
 // ── Auth ─────────────────────────────────────────────────────
-const SECRET_KEY = process.env.RPL_SECRET || "";  // "" = no auth
+const SECRET_KEY = process.env.RPL_SECRET || "RPLSTANDINGS$";  // "" = no auth
 
 // ── Persistence file ─────────────────────────────────────────
 const DATA_FILE = path.join(__dirname, "standings.json");
