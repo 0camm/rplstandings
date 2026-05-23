@@ -14,6 +14,9 @@
     --border: rgba(255,255,255,.06);
     --muted: #555;
     --text: #e8e8ee;
+    --green: #22c55e;
+    --amber: #f59e0b;
+    --blue: #3b82f6;
   }
 
   *, *::before, *::after { margin:0; padding:0; box-sizing:border-box; }
@@ -27,111 +30,173 @@
     min-height: 100vh;
   }
 
+  /* ── NAV ── */
   nav {
     position: sticky; top: 0; z-index: 100;
     display: flex; align-items: center; justify-content: space-between;
     padding: 0 40px; height: 58px;
     border-bottom: 1px solid var(--border);
-    background: rgba(6,6,8,.9);
+    background: rgba(6,6,8,.92);
     backdrop-filter: blur(20px);
   }
 
   .nav-logo { display: flex; align-items: center; gap: 10px; text-decoration: none; }
-  .nav-logo img { width: 28px; height: 28px; object-fit: contain; }
   .nav-logo span { font-family: 'Bebas Neue', sans-serif; font-size: 20px; letter-spacing: .06em; color: #fff; }
   .nav-logo span em { color: var(--red); font-style: normal; }
 
-  /* PAGE HEADER */
-  .page-header {
-    padding: 52px 40px 36px;
-    border-bottom: 1px solid var(--border);
-    display: flex; align-items: flex-end; justify-content: space-between; gap: 24px;
+  .nav-right { display: flex; align-items: center; gap: 16px; }
+
+  /* live pulse indicator */
+  .live-pill {
+    display: flex; align-items: center; gap: 6px;
+    font-size: 11px; font-weight: 600; letter-spacing: .1em;
+    color: var(--muted); text-transform: uppercase;
+    transition: color .3s;
+  }
+  .live-pill.live { color: var(--green); }
+  .live-dot {
+    width: 7px; height: 7px; border-radius: 50%;
+    background: var(--muted); flex-shrink: 0;
+    transition: background .3s;
+  }
+  .live-pill.live .live-dot {
+    background: var(--green);
+    animation: pulse 1.8s ease infinite;
+  }
+  @keyframes pulse {
+    0%,100% { opacity:1; transform:scale(1); }
+    50%      { opacity:.4; transform:scale(.7); }
   }
 
-  .page-eyebrow {
-    font-size: 11px; font-weight: 600; letter-spacing: .12em;
-    text-transform: uppercase; color: var(--red);
-    margin-bottom: 10px;
-    display: flex; align-items: center; gap: 8px;
+  .last-sync {
+    font-size: 11px; color: var(--muted);
   }
 
-  .page-eyebrow::before { content:''; width:18px; height:2px; background:var(--red); border-radius:2px; }
-
-  .page-title {
-    font-family: 'Bebas Neue', sans-serif;
-    font-size: clamp(40px,5vw,60px);
-    letter-spacing: .03em; line-height: 1; color: #fff;
-  }
-
-  /* PLAYOFF KEY */
+  /* ── PLAYOFF KEY ── */
   .playoff-key {
     background: var(--surface);
     border: 1px solid var(--border);
     border-radius: 10px;
     padding: 16px 20px;
-    display: flex;
-    flex-wrap: wrap;
-    gap: 16px;
-    margin: 32px 40px;
+    display: flex; flex-wrap: wrap; gap: 16px;
+    margin: 32px 40px 0;
+  }
+  .key-item { display:flex; align-items:center; gap:8px; font-size:12px; color:var(--muted); }
+  .key-dot { width:10px; height:10px; border-radius:2px; flex-shrink:0; }
+  .key-dot.z  { background: var(--amber); }
+  .key-dot.x  { background: var(--green); }
+  .key-dot.pi { background: var(--blue); }
+  .key-dot.e  { background: #555; }
+
+  /* ── LAST GAME RESULTS TICKER ── */
+  #results-strip {
+    margin: 20px 40px 0;
+    display: none; /* shown when data arrives */
+  }
+  .results-strip-inner {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 0;
+    overflow: hidden;
+  }
+  .results-header {
+    display: flex; align-items: center; gap: 10px;
+    padding: 12px 20px;
+    border-bottom: 1px solid var(--border);
+    background: var(--surface2);
+  }
+  .results-header-title {
+    font-size: 10px; font-weight: 600; letter-spacing: .12em;
+    text-transform: uppercase; color: var(--muted);
+  }
+  .results-header-title em { color: var(--red); font-style: normal; }
+
+  .results-list {
+    display: flex; flex-wrap: wrap; gap: 0;
   }
 
-  .key-item {
+  .result-card {
+    display: flex; align-items: center; gap: 0;
+    padding: 14px 24px;
+    border-right: 1px solid var(--border);
+    min-width: 260px;
+    position: relative;
+    transition: background .15s;
+  }
+  .result-card:last-child { border-right: none; }
+  .result-card:hover { background: rgba(255,255,255,.02); }
+
+  /* status bar on top */
+  .result-card::before {
+    content: '';
+    position: absolute; top: 0; left: 0; right: 0; height: 2px;
+  }
+  .result-card.final::before    { background: var(--green); }
+  .result-card.forfeit::before  { background: var(--amber); }
+  .result-card.incomplete::before { background: #555; }
+
+  .result-teams {
+    flex: 1;
+    display: flex; flex-direction: column; gap: 4px;
+  }
+  .result-row {
     display: flex; align-items: center; gap: 8px;
-    font-size: 12px; color: var(--muted);
+  }
+  .result-abbr {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 15px; letter-spacing: .06em; color: #fff;
+    width: 40px;
+  }
+  .result-score {
+    font-size: 14px; font-weight: 700; color: #fff;
+    width: 28px; text-align: right;
+  }
+  .result-score.winner { color: var(--green); }
+  .result-score.loser  { color: var(--muted); }
+
+  .result-meta {
+    display: flex; flex-direction: column; align-items: flex-end;
+    gap: 3px; margin-left: 16px;
+  }
+  .result-status-badge {
+    font-size: 9px; font-weight: 700; letter-spacing: .1em;
+    text-transform: uppercase; padding: 3px 7px; border-radius: 4px;
+  }
+  .result-status-badge.final    { background: rgba(34,197,94,.12); color: var(--green); }
+  .result-status-badge.forfeit  { background: rgba(245,158,11,.12); color: var(--amber); }
+  .result-status-badge.incomplete { background: rgba(85,85,85,.2); color: var(--muted); }
+  .result-status-badge.ot       { background: rgba(59,130,246,.12); color: var(--blue); }
+
+  .result-quarter {
+    font-size: 10px; color: var(--muted);
   }
 
-  .key-dot {
-    width: 10px; height: 10px; border-radius: 2px; flex-shrink: 0;
-  }
-
-  .key-dot.z    { background: #f59e0b; }
-  .key-dot.x    { background: #22c55e; }
-  .key-dot.pi   { background: #3b82f6; }
-  .key-dot.e    { background: #555; }
-
-  /* CONFERENCES */
+  /* ── CONFERENCES ── */
   .conferences {
     display: grid;
     grid-template-columns: 1fr 1fr;
     gap: 2px;
-    padding: 0 40px 80px;
+    padding: 24px 40px 80px;
   }
-
-  .conference { }
 
   .conf-header {
     display: flex; align-items: center; gap: 12px;
     padding: 28px 0 20px;
   }
-
   .conf-badge {
     font-family: 'Bebas Neue', sans-serif;
     font-size: 11px; letter-spacing: .12em;
-    padding: 4px 10px; border-radius: 4px;
-    color: #fff;
+    padding: 4px 10px; border-radius: 4px; color: #fff;
   }
-
   .conf-badge.east { background: rgba(232,0,29,.2); color: var(--red); border: 1px solid rgba(232,0,29,.3); }
   .conf-badge.west { background: rgba(59,130,246,.15); color: #60a5fa; border: 1px solid rgba(59,130,246,.25); }
-
   .conf-title {
     font-family: 'Bebas Neue', sans-serif;
     font-size: 26px; letter-spacing: .04em; color: #fff;
   }
 
-  /* DIVISION LABEL */
-  .division-label {
-    font-size: 10px; font-weight: 600; letter-spacing: .12em;
-    text-transform: uppercase; color: var(--muted);
-    padding: 6px 0 8px;
-    border-bottom: 1px solid var(--border);
-    margin-bottom: 2px;
-    display: flex; align-items: center; gap: 8px;
-  }
-
-  .division-label::before { content:''; width:12px; height:1px; background:var(--muted); }
-
-  /* STANDING TABLE */
+  /* ── STANDINGS TABLE ── */
   .standings-table {
     width: 100%;
     background: var(--surface);
@@ -140,7 +205,6 @@
     overflow: hidden;
     margin-bottom: 20px;
   }
-
   .standings-table-header {
     display: grid;
     grid-template-columns: 28px 36px 1fr 48px 48px 70px 48px;
@@ -148,13 +212,11 @@
     border-bottom: 1px solid var(--border);
     background: var(--surface2);
   }
-
   .standings-table-header span {
     font-size: 10px; font-weight: 600; letter-spacing: .1em;
     text-transform: uppercase; color: var(--muted);
     text-align: center;
   }
-
   .standings-table-header span:nth-child(3) { text-align: left; }
 
   .standing-row {
@@ -166,81 +228,108 @@
     transition: background .15s;
     position: relative;
   }
-
   .standing-row:last-child { border-bottom: none; }
   .standing-row:hover { background: rgba(255,255,255,.03); }
 
-  /* status stripe on left */
   .standing-row::before {
-    content: '';
-    position: absolute;
-    left: 0; top: 0; bottom: 0;
-    width: 3px;
-    border-radius: 0;
+    content: ''; position: absolute;
+    left: 0; top: 0; bottom: 0; width: 3px;
   }
-
-  .standing-row.status-z::before  { background: #f59e0b; }
-  .standing-row.status-x::before  { background: #22c55e; }
-  .standing-row.status-pi::before { background: #3b82f6; }
+  .standing-row.status-z::before  { background: var(--amber); }
+  .standing-row.status-x::before  { background: var(--green); }
+  .standing-row.status-pi::before { background: var(--blue); }
   .standing-row.status-e::before  { background: transparent; }
 
-  .row-rank {
-    font-size: 13px; font-weight: 600;
-    color: var(--muted); text-align: center;
+  /* flash animation when a row updates */
+  @keyframes rowFlash {
+    0%   { background: rgba(232,0,29,.18); }
+    100% { background: transparent; }
   }
+  .standing-row.updated { animation: rowFlash 1.4s ease forwards; }
 
-  .row-logo img {
-    width: 24px; height: 24px; object-fit: contain;
-    display: block; margin: auto;
-  }
+  .row-rank { font-size:13px; font-weight:600; color:var(--muted); text-align:center; }
+  .row-logo img { width:24px; height:24px; object-fit:contain; display:block; margin:auto; }
+  .row-team-name { font-size:13px; font-weight:600; color:#fff; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+  .row-team-abbr { font-size:10px; color:var(--muted); letter-spacing:.06em; }
+  .row-w  { text-align:center; font-size:13px; color:var(--green); font-weight:600; }
+  .row-l  { text-align:center; font-size:13px; color:#ef4444; font-weight:600; }
+  .row-pct { text-align:center; font-size:13px; color:#fff; font-weight:600; }
+  .row-gb  { text-align:center; font-size:13px; color:var(--muted); }
 
-  .row-team { }
-
-  .row-team-name {
-    font-size: 13px; font-weight: 600; color: #fff;
-    white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
-  }
-
-  .row-team-abbr {
-    font-size: 10px; color: var(--muted); letter-spacing: .06em;
-  }
-
-  .row-w, .row-l, .row-pct, .row-gb {
-    text-align: center; font-size: 13px;
-  }
-
-  .row-w { color: #22c55e; font-weight: 600; }
-  .row-l { color: #ef4444; font-weight: 600; }
-  .row-pct { color: #fff; font-weight: 600; }
-  .row-gb { color: var(--muted); }
-
-  /* status badge */
   .status-badge {
-    display: inline-flex; align-items: center; justify-content: center;
-    font-size: 10px; font-weight: 700; letter-spacing: .06em;
-    width: 20px; height: 20px; border-radius: 4px;
-    flex-shrink: 0;
+    display: inline-flex; align-items:center; justify-content:center;
+    font-size:10px; font-weight:700; letter-spacing:.06em;
+    width:20px; height:20px; border-radius:4px; flex-shrink:0;
   }
+  .status-badge.z  { background:rgba(245,158,11,.15); color:var(--amber); }
+  .status-badge.x  { background:rgba(34,197,94,.12); color:var(--green); }
+  .status-badge.pi { background:rgba(59,130,246,.15); color:#60a5fa; }
+  .status-badge.e  { display:none; }
 
-  .status-badge.z  { background: rgba(245,158,11,.15); color: #f59e0b; }
-  .status-badge.x  { background: rgba(34,197,94,.12);  color: #22c55e; }
-  .status-badge.pi { background: rgba(59,130,246,.15); color: #60a5fa; }
-  .status-badge.e  { display: none; }
+  .standing-row.status-e .row-team-name,
+  .standing-row.status-e .row-w,
+  .standing-row.status-e .row-l,
+  .standing-row.status-e .row-pct { color: #666; }
 
-  /* divider between groups */
-  .group-divider {
-    height: 1px; background: var(--border);
-    margin: 4px 0;
+  /* ── TOAST ── */
+  #toast-container {
+    position: fixed; bottom: 28px; right: 28px;
+    display: flex; flex-direction: column; gap: 10px;
+    z-index: 9999; pointer-events: none;
   }
+  .toast {
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-left: 3px solid var(--red);
+    border-radius: 8px;
+    padding: 12px 18px;
+    font-size: 13px; color: #fff;
+    box-shadow: 0 4px 24px rgba(0,0,0,.4);
+    animation: toastIn .25s ease forwards;
+    pointer-events: all;
+    max-width: 320px;
+  }
+  .toast.green { border-left-color: var(--green); }
+  .toast.amber { border-left-color: var(--amber); }
+  @keyframes toastIn {
+    from { opacity:0; transform:translateY(12px); }
+    to   { opacity:1; transform:translateY(0); }
+  }
+  @keyframes toastOut {
+    from { opacity:1; }
+    to   { opacity:0; transform:translateY(-8px); }
+  }
+  .toast.dying { animation: toastOut .25s ease forwards; }
 
-  /* eliminated style */
-  .standing-row.status-e .row-team-name { color: #666; }
-  .standing-row.status-e .row-w { color: #444; }
-  .standing-row.status-e .row-l { color: #444; }
-  .standing-row.status-e .row-pct { color: #444; }
+  /* ── EMPTY / ERROR STATE ── */
+  .state-banner {
+    display: none;
+    margin: 0 40px;
+    padding: 14px 20px;
+    border-radius: 8px;
+    font-size: 13px;
+    border: 1px solid var(--border);
+    color: var(--muted);
+    background: var(--surface);
+  }
+  .state-banner.show { display: block; }
 </style>
 </head>
 <body>
+
+<!-- NAV -->
+<nav>
+  <a class="nav-logo" href="#">
+    <span>R<em>P</em>L</span>
+  </a>
+  <div class="nav-right">
+    <span class="last-sync" id="last-sync">Never synced</span>
+    <span class="live-pill" id="live-pill">
+      <span class="live-dot"></span>
+      <span id="live-label">Offline</span>
+    </span>
+  </div>
+</nav>
 
 <!-- PLAYOFF KEY -->
 <div class="playoff-key">
@@ -248,191 +337,404 @@
   <div class="key-item"><div class="key-dot x"></div> x — Playoff Berth</div>
   <div class="key-item"><div class="key-dot pi"></div> pi — Play-In Berth</div>
   <div class="key-item"><div class="key-dot e"></div> e — Eliminated</div>
-  <div class="key-item" style="margin-left:auto; color:#444; font-size:11px;">Playoff Eligibility: 7 matches played &nbsp;·&nbsp; NEGP = Not Enough Games Played</div>
+  <div class="key-item" style="margin-left:auto;color:#444;font-size:11px;">
+    Playoff Eligibility: 7 matches played &nbsp;·&nbsp; Updates live after every game
+  </div>
 </div>
 
+<!-- STATE BANNER (error / no data) -->
+<div class="state-banner" id="state-banner"></div>
+
+<!-- LAST GAME RESULTS STRIP -->
+<div id="results-strip">
+  <div class="results-strip-inner">
+    <div class="results-header">
+      <span class="results-header-title">Recent Results &nbsp;<em>●</em></span>
+    </div>
+    <div class="results-list" id="results-list"></div>
+  </div>
+</div>
+
+<!-- STANDINGS -->
 <div class="conferences" id="conferences"></div>
 
+<!-- TOAST -->
+<div id="toast-container"></div>
+
 <script>
-/* ═══════════════════════════════════════════════════════
-   HOW TO UPDATE STANDINGS:
+/* ══════════════════════════════════════════════════════════════
+   CONFIGURATION
+   ══════════════════════════════════════════════════════════════
 
-   Each team object has:
-   - name:   Full team name
-   - abbr:   Short code shown under name
-   - w:      Wins
-   - l:      Losses
-   - status: "z" | "x" | "pi" | "e" | ""
-             z  = 1 seed
-             x  = playoff berth
-             pi = play-in
-             e  = eliminated
-             "" = no status yet
+   API_URL  — Your server endpoint that returns the JSON payload
+              described below. The Roblox script POSTs to this same
+              URL after every game; the website GETs from it.
 
-   The table auto-sorts by win % (desc), then wins (desc).
-   GB (games back) is calculated automatically from the leader.
+   POLL_MS  — How often the page re-fetches standings (milliseconds).
+              30 000 = 30 seconds. Drop to 10 000 for near-real-time.
 
-   To update: just change w, l, and status for each team.
-═══════════════════════════════════════════════════════ */
-
-const logos = {
-  "Atlanta Hawks":"https://loodibee.com/wp-content/uploads/nba-atlanta-hawks-logo.png",
-  "Boston Celtics":"https://loodibee.com/wp-content/uploads/nba-boston-celtics-logo.png",
-  "Brooklyn Nets":"https://loodibee.com/wp-content/uploads/nba-brooklyn-nets-logo.png",
-  "Charlotte Hornets":"https://loodibee.com/wp-content/uploads/nba-charlotte-hornets-logo.png",
-  "Chicago Bulls":"https://loodibee.com/wp-content/uploads/nba-chicago-bulls-logo.png",
-  "Cleveland Cavaliers":"https://loodibee.com/wp-content/uploads/nba-cleveland-cavaliers-logo.png",
-  "Dallas Mavericks":"https://loodibee.com/wp-content/uploads/nba-dallas-mavericks-logo.png",
-  "Denver Nuggets":"https://upload.wikimedia.org/wikipedia/en/thumb/7/76/Denver_Nuggets.svg/500px-Denver_Nuggets.svg.png",
-  "Detroit Pistons":"https://loodibee.com/wp-content/uploads/nba-detroit-pistons-logo.png",
-  "Golden State Warriors":"https://loodibee.com/wp-content/uploads/nba-golden-state-warriors-logo.png",
-  "Houston Rockets":"https://loodibee.com/wp-content/uploads/nba-houston-rockets-logo.png",
-  "Indiana Pacers":"https://loodibee.com/wp-content/uploads/nba-indiana-pacers-logo.png",
-  "LA Clippers":"https://loodibee.com/wp-content/uploads/nba-la-clippers-logo.png",
-  "Los Angeles Lakers":"https://loodibee.com/wp-content/uploads/nba-los-angeles-lakers-logo.png",
-  "Memphis Grizzlies":"https://loodibee.com/wp-content/uploads/nba-memphis-grizzlies-logo.png",
-  "Miami Heat":"https://loodibee.com/wp-content/uploads/nba-miami-heat-logo.png",
-  "Milwaukee Bucks":"https://loodibee.com/wp-content/uploads/nba-milwaukee-bucks-logo.png",
-  "Minnesota Timberwolves":"https://loodibee.com/wp-content/uploads/nba-minnesota-timberwolves-logo.png",
-  "New Orleans Pelicans":"https://loodibee.com/wp-content/uploads/nba-new-orleans-pelicans-logo.png",
-  "New York Knicks":"https://loodibee.com/wp-content/uploads/nba-new-york-knicks-logo.png",
-  "Oklahoma City Thunder":"https://loodibee.com/wp-content/uploads/nba-oklahoma-city-thunder-logo.png",
-  "Orlando Magic":"https://loodibee.com/wp-content/uploads/nba-orlando-magic-logo.png",
-  "Philadelphia 76ers":"https://loodibee.com/wp-content/uploads/nba-philadelphia-76ers-logo.png",
-  "Phoenix Suns":"https://loodibee.com/wp-content/uploads/nba-phoenix-suns-logo.png",
-  "Portland Trail Blazers":"https://loodibee.com/wp-content/uploads/nba-portland-trail-blazers-logo.png",
-  "Sacramento Kings":"https://loodibee.com/wp-content/uploads/nba-sacramento-kings-logo.png",
-  "San Antonio Spurs":"https://loodibee.com/wp-content/uploads/nba-san-antonio-spurs-logo.png",
-  "Toronto Raptors":"https://loodibee.com/wp-content/uploads/nba-toronto-raptors-logo.png",
-  "Utah Jazz":"https://loodibee.com/wp-content/uploads/nba-utah-jazz-logo.png",
-  "Washington Wizards":"https://loodibee.com/wp-content/uploads/nba-washington-wizards-logo.png"
+   ══════════════════════════════════════════════════════════════ */
+const CONFIG = {
+  API_URL : 'https://YOUR-API-SERVER.com/rpl/standings',   // ← change this
+  POLL_MS : 30_000,
 };
 
-/* ─────────────────────────────────────
-   STANDINGS DATA — edit w, l, status
-───────────────────────────────────── */
-const conferences = [
-  {
-    name: "Eastern Conference",
-    conf: "east",
-    teams: [
-      { name: "Atlanta Hawks",       abbr: "ATL", w: 0, l: 0, status: "" },
-      { name: "Boston Celtics",      abbr: "BOS", w: 0, l: 0, status: "" },
-      { name: "Brooklyn Nets",       abbr: "BKN", w: 0, l: 0, status: "" },
-      { name: "Charlotte Hornets",   abbr: "CHA", w: 0, l: 0, status: "" },
-      { name: "Chicago Bulls",       abbr: "CHI", w: 0, l: 0, status: "" },
-      { name: "Cleveland Cavaliers", abbr: "CLE", w: 0, l: 0, status: "" },
-      { name: "Detroit Pistons",     abbr: "DET", w: 0, l: 0, status: "" },
-      { name: "Indiana Pacers",      abbr: "IND", w: 0, l: 0, status: "" },
-      { name: "Miami Heat",          abbr: "MIA", w: 0, l: 0, status: "" },
-      { name: "Milwaukee Bucks",     abbr: "MIL", w: 0, l: 0, status: "" },
-      { name: "New York Knicks",     abbr: "NYK", w: 0, l: 0, status: "" },
-      { name: "Orlando Magic",       abbr: "ORL", w: 0, l: 0, status: "" },
-      { name: "Philadelphia 76ers",  abbr: "PHI", w: 0, l: 0, status: "" },
-      { name: "Toronto Raptors",     abbr: "TOR", w: 0, l: 0, status: "" },
-      { name: "Washington Wizards",  abbr: "WAS", w: 0, l: 0, status: "" },
-    ]
-  },
-  {
-    name: "Western Conference",
-    conf: "west",
-    teams: [
-      { name: "Dallas Mavericks",       abbr: "DAL", w: 0, l: 0, status: "" },
-      { name: "Denver Nuggets",         abbr: "DEN", w: 0, l: 0, status: "" },
-      { name: "Golden State Warriors",  abbr: "GSW", w: 0, l: 0, status: "" },
-      { name: "Houston Rockets",        abbr: "HOU", w: 0, l: 0, status: "" },
-      { name: "LA Clippers",            abbr: "LAC", w: 0, l: 0, status: "" },
-      { name: "Los Angeles Lakers",     abbr: "LAL", w: 0, l: 0, status: "" },
-      { name: "Memphis Grizzlies",      abbr: "MEM", w: 0, l: 0, status: "" },
-      { name: "Minnesota Timberwolves", abbr: "MIN", w: 0, l: 0, status: "" },
-      { name: "New Orleans Pelicans",   abbr: "NOP", w: 0, l: 0, status: "" },
-      { name: "Oklahoma City Thunder",  abbr: "OKC", w: 0, l: 0, status: "" },
-      { name: "Phoenix Suns",           abbr: "PHX", w: 0, l: 0, status: "" },
-      { name: "Portland Trail Blazers", abbr: "POR", w: 0, l: 0, status: "" },
-      { name: "Sacramento Kings",       abbr: "SAC", w: 0, l: 0, status: "" },
-      { name: "San Antonio Spurs",      abbr: "SAS", w: 0, l: 0, status: "" },
-      { name: "Utah Jazz",              abbr: "UTA", w: 0, l: 0, status: "" },
+/* ── EXPECTED JSON SHAPE FROM SERVER ──────────────────────────
+{
+  "lastUpdated": "2025-05-23T18:00:00Z",     // ISO timestamp
+  "recentGames": [                            // newest first, max 5
+    {
+      "homeABB": "NYK", "homeLogo": "...", "homeScore": 112,
+      "awayABB": "BOS", "awayLogo": "...", "awayScore": 98,
+      "status": "final" | "forfeit" | "incomplete",
+      "quarter": "4TH" | "OT",
+      "note": ""                              // optional free-text
+    }
+  ],
+  "standings": {
+    "eastern": [
+      { "name":"New York Knicks","abbr":"NYK","w":12,"l":4,"status":"x" }
+    ],
+    "western": [
+      { "name":"Oklahoma City Thunder","abbr":"OKC","w":14,"l":2,"status":"z" }
     ]
   }
-];
+}
+─────────────────────────────────────────────────────────────── */
 
-/* ── RENDER ── */
+/* ── TEAM LOGOS ── */
+const LOGOS = {
+  "Atlanta Hawks":          "https://loodibee.com/wp-content/uploads/nba-atlanta-hawks-logo.png",
+  "Boston Celtics":         "https://loodibee.com/wp-content/uploads/nba-boston-celtics-logo.png",
+  "Brooklyn Nets":          "https://loodibee.com/wp-content/uploads/nba-brooklyn-nets-logo.png",
+  "Charlotte Hornets":      "https://loodibee.com/wp-content/uploads/nba-charlotte-hornets-logo.png",
+  "Chicago Bulls":          "https://loodibee.com/wp-content/uploads/nba-chicago-bulls-logo.png",
+  "Cleveland Cavaliers":    "https://loodibee.com/wp-content/uploads/nba-cleveland-cavaliers-logo.png",
+  "Dallas Mavericks":       "https://loodibee.com/wp-content/uploads/nba-dallas-mavericks-logo.png",
+  "Denver Nuggets":         "https://upload.wikimedia.org/wikipedia/en/thumb/7/76/Denver_Nuggets.svg/500px-Denver_Nuggets.svg.png",
+  "Detroit Pistons":        "https://loodibee.com/wp-content/uploads/nba-detroit-pistons-logo.png",
+  "Golden State Warriors":  "https://loodibee.com/wp-content/uploads/nba-golden-state-warriors-logo.png",
+  "Houston Rockets":        "https://loodibee.com/wp-content/uploads/nba-houston-rockets-logo.png",
+  "Indiana Pacers":         "https://loodibee.com/wp-content/uploads/nba-indiana-pacers-logo.png",
+  "LA Clippers":            "https://loodibee.com/wp-content/uploads/nba-la-clippers-logo.png",
+  "Los Angeles Lakers":     "https://loodibee.com/wp-content/uploads/nba-los-angeles-lakers-logo.png",
+  "Memphis Grizzlies":      "https://loodibee.com/wp-content/uploads/nba-memphis-grizzlies-logo.png",
+  "Miami Heat":             "https://loodibee.com/wp-content/uploads/nba-miami-heat-logo.png",
+  "Milwaukee Bucks":        "https://loodibee.com/wp-content/uploads/nba-milwaukee-bucks-logo.png",
+  "Minnesota Timberwolves": "https://loodibee.com/wp-content/uploads/nba-minnesota-timberwolves-logo.png",
+  "New Orleans Pelicans":   "https://loodibee.com/wp-content/uploads/nba-new-orleans-pelicans-logo.png",
+  "New York Knicks":        "https://loodibee.com/wp-content/uploads/nba-new-york-knicks-logo.png",
+  "Oklahoma City Thunder":  "https://loodibee.com/wp-content/uploads/nba-oklahoma-city-thunder-logo.png",
+  "Orlando Magic":          "https://loodibee.com/wp-content/uploads/nba-orlando-magic-logo.png",
+  "Philadelphia 76ers":     "https://loodibee.com/wp-content/uploads/nba-philadelphia-76ers-logo.png",
+  "Phoenix Suns":           "https://loodibee.com/wp-content/uploads/nba-phoenix-suns-logo.png",
+  "Portland Trail Blazers": "https://loodibee.com/wp-content/uploads/nba-portland-trail-blazers-logo.png",
+  "Sacramento Kings":       "https://loodibee.com/wp-content/uploads/nba-sacramento-kings-logo.png",
+  "San Antonio Spurs":      "https://loodibee.com/wp-content/uploads/nba-san-antonio-spurs-logo.png",
+  "Toronto Raptors":        "https://loodibee.com/wp-content/uploads/nba-toronto-raptors-logo.png",
+  "Utah Jazz":              "https://loodibee.com/wp-content/uploads/nba-utah-jazz-logo.png",
+  "Washington Wizards":     "https://loodibee.com/wp-content/uploads/nba-washington-wizards-logo.png",
+};
+
+/* ── FALLBACK STATIC STANDINGS (used when API is unreachable) ── */
+const FALLBACK = {
+  standings: {
+    eastern: [
+      "Atlanta Hawks","Boston Celtics","Brooklyn Nets","Charlotte Hornets",
+      "Chicago Bulls","Cleveland Cavaliers","Detroit Pistons","Indiana Pacers",
+      "Miami Heat","Milwaukee Bucks","New York Knicks","Orlando Magic",
+      "Philadelphia 76ers","Toronto Raptors","Washington Wizards"
+    ].map(n => ({ name:n, abbr:n.split(' ').map(w=>w[0]).join('').slice(0,3).toUpperCase(), w:0, l:0, status:'' })),
+    western: [
+      "Dallas Mavericks","Denver Nuggets","Golden State Warriors","Houston Rockets",
+      "LA Clippers","Los Angeles Lakers","Memphis Grizzlies","Minnesota Timberwolves",
+      "New Orleans Pelicans","Oklahoma City Thunder","Phoenix Suns",
+      "Portland Trail Blazers","Sacramento Kings","San Antonio Spurs","Utah Jazz"
+    ].map(n => ({ name:n, abbr:n.split(' ').map(w=>w[0]).join('').slice(0,3).toUpperCase(), w:0, l:0, status:'' })),
+  },
+  recentGames: [],
+};
+
+/* ══════════════════════════════════════════════════════════════
+   STATE
+   ══════════════════════════════════════════════════════════════ */
+let prevStandings = null;   // last known standings for diff-checking
+let pollTimer     = null;
+let consecutiveFails = 0;
+
+/* ══════════════════════════════════════════════════════════════
+   UTILITIES
+   ══════════════════════════════════════════════════════════════ */
 function pct(w, l) {
   const gp = w + l;
-  if (gp === 0) return null;
-  return w / gp;
+  return gp === 0 ? null : w / gp;
 }
 
 function fmtPct(w, l) {
   const p = pct(w, l);
-  if (p === null) return '—';
-  return p.toFixed(3).replace(/^0/, '');
+  return p === null ? '—' : p.toFixed(3).replace(/^0/, '');
 }
 
-function calcGB(leaderW, leaderL, w, l) {
-  const gb = ((leaderW - w) + (l - leaderL)) / 2;
+function calcGB(lw, ll, w, l) {
+  const gb = ((lw - w) + (l - ll)) / 2;
   if (gb === 0) return '—';
   return gb % 1 === 0 ? gb.toFixed(0) : gb.toFixed(1);
 }
 
-function render() {
-  const container = document.getElementById('conferences');
-  container.innerHTML = conferences.map(conf => {
-    // sort by win%, then wins
-    const sorted = [...conf.teams].sort((a, b) => {
+function timeAgo(isoStr) {
+  if (!isoStr) return 'Unknown';
+  const diff = Math.floor((Date.now() - new Date(isoStr).getTime()) / 1000);
+  if (diff < 60)     return `${diff}s ago`;
+  if (diff < 3600)   return `${Math.floor(diff/60)}m ago`;
+  if (diff < 86400)  return `${Math.floor(diff/3600)}h ago`;
+  return `${Math.floor(diff/86400)}d ago`;
+}
+
+/* ══════════════════════════════════════════════════════════════
+   TOAST
+   ══════════════════════════════════════════════════════════════ */
+function showToast(msg, colour = 'red', duration = 4000) {
+  const container = document.getElementById('toast-container');
+  const t = document.createElement('div');
+  t.className = `toast ${colour}`;
+  t.textContent = msg;
+  container.appendChild(t);
+  setTimeout(() => {
+    t.classList.add('dying');
+    setTimeout(() => t.remove(), 300);
+  }, duration);
+}
+
+/* ══════════════════════════════════════════════════════════════
+   LIVE INDICATOR
+   ══════════════════════════════════════════════════════════════ */
+function setLive(isLive) {
+  const pill  = document.getElementById('live-pill');
+  const label = document.getElementById('live-label');
+  pill.classList.toggle('live', isLive);
+  label.textContent = isLive ? 'Live' : 'Offline';
+}
+
+function setLastSync(isoStr) {
+  document.getElementById('last-sync').textContent =
+    isoStr ? `Updated ${timeAgo(isoStr)}` : 'Never synced';
+}
+
+/* ══════════════════════════════════════════════════════════════
+   RECENT RESULTS STRIP
+   ══════════════════════════════════════════════════════════════ */
+function renderResults(games) {
+  const strip = document.getElementById('results-strip');
+  const list  = document.getElementById('results-list');
+
+  if (!games || games.length === 0) {
+    strip.style.display = 'none';
+    return;
+  }
+
+  strip.style.display = 'block';
+  list.innerHTML = games.slice(0, 5).map(g => {
+    const homeWin = g.homeScore > g.awayScore;
+    const status  = (g.status || 'final').toLowerCase();
+
+    let badgeLabel = status.toUpperCase();
+    let badgeClass = status;
+    if (status === 'final' && g.quarter === 'OT') {
+      badgeLabel = 'FINAL/OT';
+      badgeClass = 'ot';
+    }
+    if (status === 'forfeit') badgeLabel = 'FORFEIT';
+    if (status === 'incomplete') badgeLabel = 'NO RESULT';
+
+    return `
+      <div class="result-card ${status}">
+        <div class="result-teams">
+          <div class="result-row">
+            <span class="result-abbr">${g.awayABB || '???'}</span>
+            <span class="result-score ${!homeWin ? 'winner':'loser'}">${g.awayScore ?? '—'}</span>
+          </div>
+          <div class="result-row">
+            <span class="result-abbr">${g.homeABB || '???'}</span>
+            <span class="result-score ${homeWin ? 'winner':'loser'}">${g.homeScore ?? '—'}</span>
+          </div>
+        </div>
+        <div class="result-meta">
+          <span class="result-status-badge ${badgeClass}">${badgeLabel}</span>
+          ${g.note ? `<span class="result-quarter">${g.note}</span>` : ''}
+        </div>
+      </div>`;
+  }).join('');
+}
+
+/* ══════════════════════════════════════════════════════════════
+   STANDINGS RENDER
+   ══════════════════════════════════════════════════════════════ */
+function renderConferences(data) {
+  const container   = document.getElementById('conferences');
+  const confDefs    = [
+    { key: 'eastern', name: 'Eastern Conference', cls: 'east', badge: 'EAST' },
+    { key: 'western', name: 'Western Conference', cls: 'west', badge: 'WEST' },
+  ];
+
+  const changedAbbrs = new Set();
+  if (prevStandings) {
+    for (const ck of ['eastern', 'western']) {
+      const prev = prevStandings[ck] || [];
+      const next = data.standings[ck]  || [];
+      for (const team of next) {
+        const p = prev.find(t => t.abbr === team.abbr);
+        if (!p || p.w !== team.w || p.l !== team.l || p.status !== team.status) {
+          changedAbbrs.add(team.abbr);
+        }
+      }
+    }
+  }
+
+  container.innerHTML = confDefs.map(conf => {
+    const teams  = [...(data.standings[conf.key] || [])];
+    const sorted = teams.sort((a,b) => {
       const pa = pct(a.w, a.l) ?? -1;
       const pb = pct(b.w, b.l) ?? -1;
       if (pb !== pa) return pb - pa;
       return b.w - a.w;
     });
-
     const leader = sorted[0];
 
     const rows = sorted.map((team, i) => {
-      const gb = i === 0 ? '—' : calcGB(leader.w, leader.l, team.w, team.l);
-      const statusCls = team.status ? `status-${team.status}` : '';
-      const badgeCls  = team.status || 'e';
+      const gb       = i === 0 ? '—' : calcGB(leader.w, leader.l, team.w, team.l);
+      const stsCls   = team.status ? `status-${team.status}` : '';
+      const badgeCls = team.status || 'e';
+      const flash    = changedAbbrs.has(team.abbr) ? ' updated' : '';
+      const logo     = LOGOS[team.name] || '';
 
       return `
-        <div class="standing-row ${statusCls}">
-          <span class="row-rank">${i + 1}</span>
-          <span class="row-logo"><img src="${logos[team.name]}" alt="${team.abbr}" loading="lazy"></span>
+        <div class="standing-row ${stsCls}${flash}" data-abbr="${team.abbr}">
+          <span class="row-rank">${i+1}</span>
+          <span class="row-logo">${logo ? `<img src="${logo}" alt="${team.abbr}" loading="lazy">` : ''}</span>
           <span class="row-team">
-            <div class="row-team-name">${team.name}</div>
-            <div class="row-team-abbr">${team.abbr} <span class="status-badge ${badgeCls}">${team.status.toUpperCase() || ''}</span></div>
+            <div class="row-team-name">${team.name || team.abbr}</div>
+            <div class="row-team-abbr">${team.abbr}
+              <span class="status-badge ${badgeCls}">${(team.status||'').toUpperCase()}</span>
+            </div>
           </span>
           <span class="row-w">${team.w}</span>
           <span class="row-l">${team.l}</span>
           <span class="row-pct">${fmtPct(team.w, team.l)}</span>
           <span class="row-gb">${gb}</span>
-        </div>
-      `;
+        </div>`;
     }).join('');
 
     return `
       <div class="conference">
         <div class="conf-header">
-          <span class="conf-badge ${conf.conf}">${conf.conf === 'east' ? 'EAST' : 'WEST'}</span>
+          <span class="conf-badge ${conf.cls}">${conf.badge}</span>
           <span class="conf-title">${conf.name}</span>
         </div>
         <div class="standings-table">
           <div class="standings-table-header">
-            <span>#</span>
-            <span></span>
-            <span>Team</span>
-            <span>W</span>
-            <span>L</span>
-            <span>PCT</span>
-            <span>GB</span>
+            <span>#</span><span></span><span>Team</span>
+            <span>W</span><span>L</span><span>PCT</span><span>GB</span>
           </div>
           ${rows}
         </div>
-      </div>
-    `;
+      </div>`;
   }).join('');
+
+  /* remove flash class after animation completes */
+  setTimeout(() => {
+    document.querySelectorAll('.standing-row.updated')
+      .forEach(el => el.classList.remove('updated'));
+  }, 1500);
+
+  prevStandings = JSON.parse(JSON.stringify(data.standings));
 }
 
-render();
+/* ══════════════════════════════════════════════════════════════
+   FETCH & POLL
+   ══════════════════════════════════════════════════════════════ */
+async function fetchStandings() {
+  try {
+    const res = await fetch(CONFIG.API_URL, {
+      cache: 'no-store',
+      headers: { 'Accept': 'application/json' },
+    });
+
+    if (!res.ok) throw new Error(`HTTP ${res.status}`);
+
+    const data = await res.json();
+
+    /* ── handle response ── */
+    consecutiveFails = 0;
+    setLive(true);
+    setLastSync(data.lastUpdated || new Date().toISOString());
+    document.getElementById('state-banner').classList.remove('show');
+
+    /* check for new games vs previous fetch */
+    if (prevStandings && data.recentGames?.length) {
+      const latest = data.recentGames[0];
+      if (latest && latest.homeABB && latest.status) {
+        showToast(
+          `${latest.awayABB} @ ${latest.homeABB} — ${
+            latest.status === 'final'      ? `${latest.awayScore}–${latest.homeScore} FINAL` :
+            latest.status === 'forfeit'    ? 'FORFEIT' :
+            latest.status === 'incomplete' ? 'NO RESULT' : latest.status.toUpperCase()
+          }`,
+          latest.status === 'forfeit' ? 'amber' : 'green',
+          6000
+        );
+      }
+    }
+
+    renderResults(data.recentGames || []);
+    renderConferences(data);
+
+  } catch (err) {
+    consecutiveFails++;
+    console.warn('[RPL] Fetch failed:', err.message);
+
+    if (consecutiveFails >= 3) {
+      setLive(false);
+      const banner = document.getElementById('state-banner');
+      banner.textContent = `⚠ Standings server unreachable. Showing last known data. (${err.message})`;
+      banner.classList.add('show');
+    }
+
+    /* render fallback on very first load if no data yet */
+    if (!prevStandings) {
+      renderConferences(FALLBACK);
+    }
+  }
+}
+
+/* ── START POLLING ── */
+(async function init() {
+  await fetchStandings();
+  pollTimer = setInterval(fetchStandings, CONFIG.POLL_MS);
+})();
+
+/* ── Manual endpoint for Roblox to push updates ─────────────────
+   Roblox cannot directly call JS in a browser, but you can expose
+   a Server-Sent Events stream or a webhook on your API server.
+   The page listens for SSE events here so the standings update
+   instantly when Roblox POSTs without waiting for the next poll.
+   Replace CONFIG.API_URL with your SSE endpoint path below.
+─────────────────────────────────────────────────────────────── */
+const SSE_URL = CONFIG.API_URL.replace(/\/standings$/, '/standings/events');
+
+function connectSSE() {
+  if (typeof EventSource === 'undefined') return;
+  const es = new EventSource(SSE_URL);
+
+  es.addEventListener('update', () => {
+    fetchStandings();
+  });
+
+  es.onerror = () => {
+    /* SSE not available — polling covers it, ignore silently */
+    es.close();
+  };
+}
+connectSSE();
 </script>
 </body>
 </html>
