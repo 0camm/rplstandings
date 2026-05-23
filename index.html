@@ -318,7 +318,7 @@ const CONFIG = {
   POLL_MS: 30000,
 };
 
-const logos = {
+const LOGOS = {
   "Atlanta Hawks":"https://a.espncdn.com/i/teamlogos/nba/500/atl.png",
   "Boston Celtics":"https://a.espncdn.com/i/teamlogos/nba/500/bos.png",
   "Brooklyn Nets":"https://a.espncdn.com/i/teamlogos/nba/500/bkn.png",
@@ -648,6 +648,7 @@ async function fetchStandings() {
 })();
 
 function connectSSE() {
+  return;
   if (typeof EventSource === 'undefined') return;
   const SSE_URL = CONFIG.API_URL.replace(/\/standings$/, '/standings/events');
   const es = new EventSource(SSE_URL);
