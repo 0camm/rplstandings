@@ -30,7 +30,6 @@
     min-height: 100vh;
   }
 
-  /* ── NAV ── */
   nav {
     position: sticky; top: 0; z-index: 100;
     display: flex; align-items: center; justify-content: space-between;
@@ -46,7 +45,6 @@
 
   .nav-right { display: flex; align-items: center; gap: 16px; }
 
-  /* live pulse indicator */
   .live-pill {
     display: flex; align-items: center; gap: 6px;
     font-size: 11px; font-weight: 600; letter-spacing: .1em;
@@ -68,11 +66,8 @@
     50%      { opacity:.4; transform:scale(.7); }
   }
 
-  .last-sync {
-    font-size: 11px; color: var(--muted);
-  }
+  .last-sync { font-size: 11px; color: var(--muted); }
 
-  /* ── PLAYOFF KEY ── */
   .playoff-key {
     background: var(--surface);
     border: 1px solid var(--border);
@@ -88,16 +83,14 @@
   .key-dot.pi { background: var(--blue); }
   .key-dot.e  { background: #555; }
 
-  /* ── LAST GAME RESULTS TICKER ── */
   #results-strip {
     margin: 20px 40px 0;
-    display: none; /* shown when data arrives */
+    display: none;
   }
   .results-strip-inner {
     background: var(--surface);
     border: 1px solid var(--border);
     border-radius: 10px;
-    padding: 0;
     overflow: hidden;
   }
   .results-header {
@@ -112,12 +105,10 @@
   }
   .results-header-title em { color: var(--red); font-style: normal; }
 
-  .results-list {
-    display: flex; flex-wrap: wrap; gap: 0;
-  }
+  .results-list { display: flex; flex-wrap: wrap; }
 
   .result-card {
-    display: flex; align-items: center; gap: 0;
+    display: flex; align-items: center;
     padding: 14px 24px;
     border-right: 1px solid var(--border);
     min-width: 260px;
@@ -126,8 +117,6 @@
   }
   .result-card:last-child { border-right: none; }
   .result-card:hover { background: rgba(255,255,255,.02); }
-
-  /* status bar on top */
   .result-card::before {
     content: '';
     position: absolute; top: 0; left: 0; right: 0; height: 2px;
@@ -136,29 +125,18 @@
   .result-card.forfeit::before  { background: var(--amber); }
   .result-card.incomplete::before { background: #555; }
 
-  .result-teams {
-    flex: 1;
-    display: flex; flex-direction: column; gap: 4px;
-  }
-  .result-row {
-    display: flex; align-items: center; gap: 8px;
-  }
+  .result-teams { flex: 1; display: flex; flex-direction: column; gap: 4px; }
+  .result-row { display: flex; align-items: center; gap: 8px; }
   .result-abbr {
     font-family: 'Bebas Neue', sans-serif;
     font-size: 15px; letter-spacing: .06em; color: #fff;
     width: 40px;
   }
-  .result-score {
-    font-size: 14px; font-weight: 700; color: #fff;
-    width: 28px; text-align: right;
-  }
+  .result-score { font-size: 14px; font-weight: 700; color: #fff; width: 28px; text-align: right; }
   .result-score.winner { color: var(--green); }
   .result-score.loser  { color: var(--muted); }
 
-  .result-meta {
-    display: flex; flex-direction: column; align-items: flex-end;
-    gap: 3px; margin-left: 16px;
-  }
+  .result-meta { display: flex; flex-direction: column; align-items: flex-end; gap: 3px; margin-left: 16px; }
   .result-status-badge {
     font-size: 9px; font-weight: 700; letter-spacing: .1em;
     text-transform: uppercase; padding: 3px 7px; border-radius: 4px;
@@ -167,12 +145,8 @@
   .result-status-badge.forfeit  { background: rgba(245,158,11,.12); color: var(--amber); }
   .result-status-badge.incomplete { background: rgba(85,85,85,.2); color: var(--muted); }
   .result-status-badge.ot       { background: rgba(59,130,246,.12); color: var(--blue); }
+  .result-quarter { font-size: 10px; color: var(--muted); }
 
-  .result-quarter {
-    font-size: 10px; color: var(--muted);
-  }
-
-  /* ── CONFERENCES ── */
   .conferences {
     display: grid;
     grid-template-columns: 1fr 1fr;
@@ -180,10 +154,7 @@
     padding: 24px 40px 80px;
   }
 
-  .conf-header {
-    display: flex; align-items: center; gap: 12px;
-    padding: 28px 0 20px;
-  }
+  .conf-header { display: flex; align-items: center; gap: 12px; padding: 28px 0 20px; }
   .conf-badge {
     font-family: 'Bebas Neue', sans-serif;
     font-size: 11px; letter-spacing: .12em;
@@ -191,12 +162,8 @@
   }
   .conf-badge.east { background: rgba(232,0,29,.2); color: var(--red); border: 1px solid rgba(232,0,29,.3); }
   .conf-badge.west { background: rgba(59,130,246,.15); color: #60a5fa; border: 1px solid rgba(59,130,246,.25); }
-  .conf-title {
-    font-family: 'Bebas Neue', sans-serif;
-    font-size: 26px; letter-spacing: .04em; color: #fff;
-  }
+  .conf-title { font-family: 'Bebas Neue', sans-serif; font-size: 26px; letter-spacing: .04em; color: #fff; }
 
-  /* ── STANDINGS TABLE ── */
   .standings-table {
     width: 100%;
     background: var(--surface);
@@ -214,8 +181,7 @@
   }
   .standings-table-header span {
     font-size: 10px; font-weight: 600; letter-spacing: .1em;
-    text-transform: uppercase; color: var(--muted);
-    text-align: center;
+    text-transform: uppercase; color: var(--muted); text-align: center;
   }
   .standings-table-header span:nth-child(3) { text-align: left; }
 
@@ -230,7 +196,6 @@
   }
   .standing-row:last-child { border-bottom: none; }
   .standing-row:hover { background: rgba(255,255,255,.03); }
-
   .standing-row::before {
     content: ''; position: absolute;
     left: 0; top: 0; bottom: 0; width: 3px;
@@ -240,7 +205,6 @@
   .standing-row.status-pi::before { background: var(--blue); }
   .standing-row.status-e::before  { background: transparent; }
 
-  /* flash animation when a row updates */
   @keyframes rowFlash {
     0%   { background: rgba(232,0,29,.18); }
     100% { background: transparent; }
@@ -271,7 +235,6 @@
   .standing-row.status-e .row-l,
   .standing-row.status-e .row-pct { color: #666; }
 
-  /* ── TOAST ── */
   #toast-container {
     position: fixed; bottom: 28px; right: 28px;
     display: flex; flex-direction: column; gap: 10px;
@@ -301,7 +264,6 @@
   }
   .toast.dying { animation: toastOut .25s ease forwards; }
 
-  /* ── EMPTY / ERROR STATE ── */
   .state-banner {
     display: none;
     margin: 0 40px;
@@ -317,7 +279,6 @@
 </head>
 <body>
 
-<!-- NAV -->
 <nav>
   <a class="nav-logo" href="#">
     <span>R<em>P</em>L</span>
@@ -331,7 +292,6 @@
   </div>
 </nav>
 
-<!-- PLAYOFF KEY -->
 <div class="playoff-key">
   <div class="key-item"><div class="key-dot z"></div> z — 1 Seed (Conference Leader)</div>
   <div class="key-item"><div class="key-dot x"></div> x — Playoff Berth</div>
@@ -342,10 +302,8 @@
   </div>
 </div>
 
-<!-- STATE BANNER (error / no data) -->
 <div class="state-banner" id="state-banner"></div>
 
-<!-- LAST GAME RESULTS STRIP -->
 <div id="results-strip">
   <div class="results-strip-inner">
     <div class="results-header">
@@ -355,54 +313,16 @@
   </div>
 </div>
 
-<!-- STANDINGS -->
 <div class="conferences" id="conferences"></div>
 
-<!-- TOAST -->
 <div id="toast-container"></div>
 
 <script>
-/* ══════════════════════════════════════════════════════════════
-   CONFIGURATION
-   ══════════════════════════════════════════════════════════════
-
-   API_URL  — Your server endpoint that returns the JSON payload
-              described below. The Roblox script POSTs to this same
-              URL after every game; the website GETs from it.
-
-   POLL_MS  — How often the page re-fetches standings (milliseconds).
-              30 000 = 30 seconds. Drop to 10 000 for near-real-time.
-
-   ══════════════════════════════════════════════════════════════ */
 const CONFIG = {
-  API_URL : 'https://rplstandings-production.up.railway.app/rpl/standings',
-  POLL_MS : 30_000,
+  API_URL: 'https://rplstandings-production.up.railway.app/rpl/standings',
+  POLL_MS: 30000,
 };
 
-/* ── EXPECTED JSON SHAPE FROM SERVER ──────────────────────────
-{
-  "lastUpdated": "2025-05-23T18:00:00Z",     // ISO timestamp
-  "recentGames": [                            // newest first, max 5
-    {
-      "homeABB": "NYK", "homeLogo": "...", "homeScore": 112,
-      "awayABB": "BOS", "awayLogo": "...", "awayScore": 98,
-      "status": "final" | "forfeit" | "incomplete",
-      "quarter": "4TH" | "OT",
-      "note": ""                              // optional free-text
-    }
-  ],
-  "standings": {
-    "eastern": [
-      { "name":"New York Knicks","abbr":"NYK","w":12,"l":4,"status":"x" }
-    ],
-    "western": [
-      { "name":"Oklahoma City Thunder","abbr":"OKC","w":14,"l":2,"status":"z" }
-    ]
-  }
-}
-─────────────────────────────────────────────────────────────── */
-
-/* ── TEAM LOGOS ── */
 const LOGOS = {
   "Atlanta Hawks":          "https://loodibee.com/wp-content/uploads/nba-atlanta-hawks-logo.png",
   "Boston Celtics":         "https://loodibee.com/wp-content/uploads/nba-boston-celtics-logo.png",
@@ -436,7 +356,6 @@ const LOGOS = {
   "Washington Wizards":     "https://loodibee.com/wp-content/uploads/nba-washington-wizards-logo.png",
 };
 
-/* ── FALLBACK STATIC STANDINGS (used when API is unreachable) ── */
 const FALLBACK = {
   standings: {
     eastern: [
@@ -452,19 +371,12 @@ const FALLBACK = {
       "Portland Trail Blazers","Sacramento Kings","San Antonio Spurs","Utah Jazz"
     ].map(n => ({ name:n, abbr:n.split(' ').map(w=>w[0]).join('').slice(0,3).toUpperCase(), w:0, l:0, status:'' })),
   },
-  recentGames: [],
+  results: [],
 };
 
-/* ══════════════════════════════════════════════════════════════
-   STATE
-   ══════════════════════════════════════════════════════════════ */
-let prevStandings = null;   // last known standings for diff-checking
-let pollTimer     = null;
+let prevStandings = null;
 let consecutiveFails = 0;
 
-/* ══════════════════════════════════════════════════════════════
-   UTILITIES
-   ══════════════════════════════════════════════════════════════ */
 function pct(w, l) {
   const gp = w + l;
   return gp === 0 ? null : w / gp;
@@ -484,15 +396,12 @@ function calcGB(lw, ll, w, l) {
 function timeAgo(isoStr) {
   if (!isoStr) return 'Unknown';
   const diff = Math.floor((Date.now() - new Date(isoStr).getTime()) / 1000);
-  if (diff < 60)     return `${diff}s ago`;
-  if (diff < 3600)   return `${Math.floor(diff/60)}m ago`;
-  if (diff < 86400)  return `${Math.floor(diff/3600)}h ago`;
+  if (diff < 60)    return `${diff}s ago`;
+  if (diff < 3600)  return `${Math.floor(diff/60)}m ago`;
+  if (diff < 86400) return `${Math.floor(diff/3600)}h ago`;
   return `${Math.floor(diff/86400)}d ago`;
 }
 
-/* ══════════════════════════════════════════════════════════════
-   TOAST
-   ══════════════════════════════════════════════════════════════ */
 function showToast(msg, colour = 'red', duration = 4000) {
   const container = document.getElementById('toast-container');
   const t = document.createElement('div');
@@ -505,9 +414,6 @@ function showToast(msg, colour = 'red', duration = 4000) {
   }, duration);
 }
 
-/* ══════════════════════════════════════════════════════════════
-   LIVE INDICATOR
-   ══════════════════════════════════════════════════════════════ */
 function setLive(isLive) {
   const pill  = document.getElementById('live-pill');
   const label = document.getElementById('live-label');
@@ -520,9 +426,6 @@ function setLastSync(isoStr) {
     isoStr ? `Updated ${timeAgo(isoStr)}` : 'Never synced';
 }
 
-/* ══════════════════════════════════════════════════════════════
-   RECENT RESULTS STRIP
-   ══════════════════════════════════════════════════════════════ */
 function renderResults(games) {
   const strip = document.getElementById('results-strip');
   const list  = document.getElementById('results-list');
@@ -543,7 +446,7 @@ function renderResults(games) {
       badgeLabel = 'FINAL/OT';
       badgeClass = 'ot';
     }
-    if (status === 'forfeit') badgeLabel = 'FORFEIT';
+    if (status === 'forfeit')    badgeLabel = 'FORFEIT';
     if (status === 'incomplete') badgeLabel = 'NO RESULT';
 
     return `
@@ -551,11 +454,11 @@ function renderResults(games) {
         <div class="result-teams">
           <div class="result-row">
             <span class="result-abbr">${g.awayABB || '???'}</span>
-            <span class="result-score ${!homeWin ? 'winner':'loser'}">${g.awayScore ?? '—'}</span>
+            <span class="result-score ${!homeWin ? 'winner' : 'loser'}">${g.awayScore ?? '—'}</span>
           </div>
           <div class="result-row">
             <span class="result-abbr">${g.homeABB || '???'}</span>
-            <span class="result-score ${homeWin ? 'winner':'loser'}">${g.homeScore ?? '—'}</span>
+            <span class="result-score ${homeWin ? 'winner' : 'loser'}">${g.homeScore ?? '—'}</span>
           </div>
         </div>
         <div class="result-meta">
@@ -566,12 +469,54 @@ function renderResults(games) {
   }).join('');
 }
 
-/* ══════════════════════════════════════════════════════════════
-   STANDINGS RENDER
-   ══════════════════════════════════════════════════════════════ */
+function buildStandingsFromFlat(flatTeams) {
+  const eastern = [
+    "ATL","BOS","BKN","CHA","CHI","CLE","DET","IND",
+    "MIA","MIL","NYK","ORL","PHI","TOR","WAS"
+  ];
+  const western = [
+    "DAL","DEN","GSW","HOU","LAC","LAL","MEM","MIN",
+    "NOP","OKC","PHX","POR","SAC","SAS","UTAH"
+  ];
+
+  const eastTeams = [];
+  const westTeams = [];
+
+  for (const team of flatTeams) {
+    const entry = {
+      name:   team.abb,
+      abbr:   team.abb,
+      w:      team.wins   || 0,
+      l:      team.losses || 0,
+      status: team.status || '',
+      logo:   team.logo   || '',
+      streak: team.streak || '—',
+      pct:    team.pct    || '0.000',
+    };
+    if (eastern.includes(team.abb)) {
+      eastTeams.push(entry);
+    } else {
+      westTeams.push(entry);
+    }
+  }
+
+  return { eastern: eastTeams, western: westTeams };
+}
+
 function renderConferences(data) {
-  const container   = document.getElementById('conferences');
-  const confDefs    = [
+  const container = document.getElementById('conferences');
+
+  let standingsData = data.standings;
+
+  if (Array.isArray(data.standings)) {
+    standingsData = buildStandingsFromFlat(data.standings);
+  }
+
+  if (!standingsData || (!standingsData.eastern && !standingsData.western)) {
+    standingsData = FALLBACK.standings;
+  }
+
+  const confDefs = [
     { key: 'eastern', name: 'Eastern Conference', cls: 'east', badge: 'EAST' },
     { key: 'western', name: 'Western Conference', cls: 'west', badge: 'WEST' },
   ];
@@ -580,7 +525,7 @@ function renderConferences(data) {
   if (prevStandings) {
     for (const ck of ['eastern', 'western']) {
       const prev = prevStandings[ck] || [];
-      const next = data.standings[ck]  || [];
+      const next = standingsData[ck]  || [];
       for (const team of next) {
         const p = prev.find(t => t.abbr === team.abbr);
         if (!p || p.w !== team.w || p.l !== team.l || p.status !== team.status) {
@@ -591,7 +536,7 @@ function renderConferences(data) {
   }
 
   container.innerHTML = confDefs.map(conf => {
-    const teams  = [...(data.standings[conf.key] || [])];
+    const teams  = [...(standingsData[conf.key] || [])];
     const sorted = teams.sort((a,b) => {
       const pa = pct(a.w, a.l) ?? -1;
       const pb = pct(b.w, b.l) ?? -1;
@@ -605,7 +550,7 @@ function renderConferences(data) {
       const stsCls   = team.status ? `status-${team.status}` : '';
       const badgeCls = team.status || 'e';
       const flash    = changedAbbrs.has(team.abbr) ? ' updated' : '';
-      const logo     = LOGOS[team.name] || '';
+      const logo     = team.logo || LOGOS[team.name] || '';
 
       return `
         <div class="standing-row ${stsCls}${flash}" data-abbr="${team.abbr}">
@@ -640,18 +585,14 @@ function renderConferences(data) {
       </div>`;
   }).join('');
 
-  /* remove flash class after animation completes */
   setTimeout(() => {
     document.querySelectorAll('.standing-row.updated')
       .forEach(el => el.classList.remove('updated'));
   }, 1500);
 
-  prevStandings = JSON.parse(JSON.stringify(data.standings));
+  prevStandings = JSON.parse(JSON.stringify(standingsData));
 }
 
-/* ══════════════════════════════════════════════════════════════
-   FETCH & POLL
-   ══════════════════════════════════════════════════════════════ */
 async function fetchStandings() {
   try {
     const res = await fetch(CONFIG.API_URL, {
@@ -663,15 +604,13 @@ async function fetchStandings() {
 
     const data = await res.json();
 
-    /* ── handle response ── */
     consecutiveFails = 0;
     setLive(true);
     setLastSync(data.lastUpdated || new Date().toISOString());
     document.getElementById('state-banner').classList.remove('show');
 
-    /* check for new games vs previous fetch */
-    if (prevStandings && data.recentGames?.length) {
-      const latest = data.recentGames[0];
+    if (prevStandings && data.results?.length) {
+      const latest = data.results[0];
       if (latest && latest.homeABB && latest.status) {
         showToast(
           `${latest.awayABB} @ ${latest.homeABB} — ${
@@ -685,7 +624,7 @@ async function fetchStandings() {
       }
     }
 
-    renderResults(data.recentGames || []);
+    renderResults(data.results || []);
     renderConferences(data);
 
   } catch (err) {
@@ -699,38 +638,31 @@ async function fetchStandings() {
       banner.classList.add('show');
     }
 
-    /* render fallback on very first load if no data yet */
     if (!prevStandings) {
       renderConferences(FALLBACK);
     }
   }
 }
 
-/* ── START POLLING ── */
 (async function init() {
   await fetchStandings();
-  pollTimer = setInterval(fetchStandings, CONFIG.POLL_MS);
+  setInterval(fetchStandings, CONFIG.POLL_MS);
 })();
-
-/* ── Manual endpoint for Roblox to push updates ─────────────────
-   Roblox cannot directly call JS in a browser, but you can expose
-   a Server-Sent Events stream or a webhook on your API server.
-   The page listens for SSE events here so the standings update
-   instantly when Roblox POSTs without waiting for the next poll.
-   Replace CONFIG.API_URL with your SSE endpoint path below.
-─────────────────────────────────────────────────────────────── */
-const SSE_URL = CONFIG.API_URL.replace(/\/standings$/, '/standings/events');
 
 function connectSSE() {
   if (typeof EventSource === 'undefined') return;
+  const SSE_URL = CONFIG.API_URL.replace(/\/standings$/, '/standings/events');
   const es = new EventSource(SSE_URL);
 
-  es.addEventListener('update', () => {
+  es.addEventListener('standings', () => {
+    fetchStandings();
+  });
+
+  es.addEventListener('result', () => {
     fetchStandings();
   });
 
   es.onerror = () => {
-    /* SSE not available — polling covers it, ignore silently */
     es.close();
   };
 }
