@@ -1,0 +1,708 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>RPL Standings</title>
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --red: #e8001d;
+    --bg: #060608;
+    --surface: #0d0d10;
+    --surface2: #111115;
+    --border: rgba(255,255,255,.06);
+    --muted: #555;
+    --text: #e8e8ee;
+    --green: #22c55e;
+    --amber: #f59e0b;
+    --blue: #3b82f6;
+  }
+
+  *, *::before, *::after { margin:0; padding:0; box-sizing:border-box; }
+  html { scroll-behavior: smooth; }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'DM Sans', sans-serif;
+    font-size: 14px;
+    min-height: 100vh;
+  }
+
+  nav {
+    position: sticky; top: 0; z-index: 100;
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 0 40px; height: 58px;
+    border-bottom: 1px solid var(--border);
+    background: rgba(6,6,8,.92);
+    backdrop-filter: blur(20px);
+  }
+
+  .nav-logo { display: flex; align-items: center; gap: 10px; text-decoration: none; }
+  .nav-logo span { font-family: 'Bebas Neue', sans-serif; font-size: 20px; letter-spacing: .06em; color: #fff; }
+  .nav-logo span em { color: var(--red); font-style: normal; }
+
+  .nav-right { display: flex; align-items: center; gap: 16px; }
+
+  .live-pill {
+    display: flex; align-items: center; gap: 6px;
+    font-size: 11px; font-weight: 600; letter-spacing: .1em;
+    color: var(--muted); text-transform: uppercase;
+    transition: color .3s;
+  }
+  .live-pill.live { color: var(--green); }
+  .live-dot {
+    width: 7px; height: 7px; border-radius: 50%;
+    background: var(--muted); flex-shrink: 0;
+    transition: background .3s;
+  }
+  .live-pill.live .live-dot {
+    background: var(--green);
+    animation: pulse 1.8s ease infinite;
+  }
+  @keyframes pulse {
+    0%,100% { opacity:1; transform:scale(1); }
+    50%      { opacity:.4; transform:scale(.7); }
+  }
+
+  .last-sync { font-size: 11px; color: var(--muted); }
+
+  .playoff-key {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 16px 20px;
+    display: flex; flex-wrap: wrap; gap: 16px;
+    margin: 32px 40px 0;
+  }
+  .key-item { display:flex; align-items:center; gap:8px; font-size:12px; color:var(--muted); }
+  .key-dot { width:10px; height:10px; border-radius:2px; flex-shrink:0; }
+  .key-dot.z  { background: var(--amber); }
+  .key-dot.x  { background: var(--green); }
+  .key-dot.pi { background: var(--blue); }
+  .key-dot.e  { background: #555; }
+
+  #results-strip {
+    margin: 20px 40px 0;
+    display: none;
+  }
+  .results-strip-inner {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    overflow: hidden;
+  }
+  .results-header {
+    display: flex; align-items: center; gap: 10px;
+    padding: 12px 20px;
+    border-bottom: 1px solid var(--border);
+    background: var(--surface2);
+  }
+  .results-header-title {
+    font-size: 10px; font-weight: 600; letter-spacing: .12em;
+    text-transform: uppercase; color: var(--muted);
+  }
+  .results-header-title em { color: var(--red); font-style: normal; }
+
+  .results-list { display: flex; flex-wrap: wrap; }
+
+  .result-card {
+    display: flex; align-items: center;
+    padding: 14px 24px;
+    border-right: 1px solid var(--border);
+    min-width: 260px;
+    position: relative;
+    transition: background .15s;
+  }
+  .result-card:last-child { border-right: none; }
+  .result-card:hover { background: rgba(255,255,255,.02); }
+  .result-card::before {
+    content: '';
+    position: absolute; top: 0; left: 0; right: 0; height: 2px;
+  }
+  .result-card.final::before    { background: var(--green); }
+  .result-card.forfeit::before  { background: var(--amber); }
+  .result-card.incomplete::before { background: #555; }
+
+  .result-teams { flex: 1; display: flex; flex-direction: column; gap: 4px; }
+  .result-row { display: flex; align-items: center; gap: 8px; }
+  .result-abbr {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 15px; letter-spacing: .06em; color: #fff;
+    width: 40px;
+  }
+  .result-score { font-size: 14px; font-weight: 700; color: #fff; width: 28px; text-align: right; }
+  .result-score.winner { color: var(--green); }
+  .result-score.loser  { color: var(--muted); }
+
+  .result-meta { display: flex; flex-direction: column; align-items: flex-end; gap: 3px; margin-left: 16px; }
+  .result-status-badge {
+    font-size: 9px; font-weight: 700; letter-spacing: .1em;
+    text-transform: uppercase; padding: 3px 7px; border-radius: 4px;
+  }
+  .result-status-badge.final    { background: rgba(34,197,94,.12); color: var(--green); }
+  .result-status-badge.forfeit  { background: rgba(245,158,11,.12); color: var(--amber); }
+  .result-status-badge.incomplete { background: rgba(85,85,85,.2); color: var(--muted); }
+  .result-status-badge.ot       { background: rgba(59,130,246,.12); color: var(--blue); }
+  .result-quarter { font-size: 10px; color: var(--muted); }
+
+  .conferences {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 2px;
+    padding: 24px 40px 80px;
+  }
+
+  .conf-header { display: flex; align-items: center; gap: 12px; padding: 28px 0 20px; }
+  .conf-badge {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 11px; letter-spacing: .12em;
+    padding: 4px 10px; border-radius: 4px; color: #fff;
+  }
+  .conf-badge.east { background: rgba(232,0,29,.2); color: var(--red); border: 1px solid rgba(232,0,29,.3); }
+  .conf-badge.west { background: rgba(59,130,246,.15); color: #60a5fa; border: 1px solid rgba(59,130,246,.25); }
+  .conf-title { font-family: 'Bebas Neue', sans-serif; font-size: 26px; letter-spacing: .04em; color: #fff; }
+
+  .standings-table {
+    width: 100%;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    overflow: hidden;
+    margin-bottom: 20px;
+  }
+  .standings-table-header {
+    display: grid;
+    grid-template-columns: 28px 36px 1fr 48px 48px 70px 48px;
+    padding: 10px 16px;
+    border-bottom: 1px solid var(--border);
+    background: var(--surface2);
+  }
+  .standings-table-header span {
+    font-size: 10px; font-weight: 600; letter-spacing: .1em;
+    text-transform: uppercase; color: var(--muted); text-align: center;
+  }
+  .standings-table-header span:nth-child(3) { text-align: left; }
+
+  .standing-row {
+    display: grid;
+    grid-template-columns: 28px 36px 1fr 48px 48px 70px 48px;
+    padding: 11px 16px;
+    align-items: center;
+    border-bottom: 1px solid rgba(255,255,255,.03);
+    transition: background .15s;
+    position: relative;
+  }
+  .standing-row:last-child { border-bottom: none; }
+  .standing-row:hover { background: rgba(255,255,255,.03); }
+  .standing-row::before {
+    content: ''; position: absolute;
+    left: 0; top: 0; bottom: 0; width: 3px;
+  }
+  .standing-row.status-z::before  { background: var(--amber); }
+  .standing-row.status-x::before  { background: var(--green); }
+  .standing-row.status-pi::before { background: var(--blue); }
+  .standing-row.status-e::before  { background: transparent; }
+
+  @keyframes rowFlash {
+    0%   { background: rgba(232,0,29,.18); }
+    100% { background: transparent; }
+  }
+  .standing-row.updated { animation: rowFlash 1.4s ease forwards; }
+
+  .row-rank { font-size:13px; font-weight:600; color:var(--muted); text-align:center; }
+  .row-logo img { width:24px; height:24px; object-fit:contain; display:block; margin:auto; }
+  .row-team-name { font-size:13px; font-weight:600; color:#fff; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+  .row-team-abbr { font-size:10px; color:var(--muted); letter-spacing:.06em; }
+  .row-w  { text-align:center; font-size:13px; color:var(--green); font-weight:600; }
+  .row-l  { text-align:center; font-size:13px; color:#ef4444; font-weight:600; }
+  .row-pct { text-align:center; font-size:13px; color:#fff; font-weight:600; }
+  .row-gb  { text-align:center; font-size:13px; color:var(--muted); }
+
+  .status-badge {
+    display: inline-flex; align-items:center; justify-content:center;
+    font-size:10px; font-weight:700; letter-spacing:.06em;
+    width:20px; height:20px; border-radius:4px; flex-shrink:0;
+  }
+  .status-badge.z  { background:rgba(245,158,11,.15); color:var(--amber); }
+  .status-badge.x  { background:rgba(34,197,94,.12); color:var(--green); }
+  .status-badge.pi { background:rgba(59,130,246,.15); color:#60a5fa; }
+  .status-badge.e  { display:none; }
+
+  .standing-row.status-e .row-team-name,
+  .standing-row.status-e .row-w,
+  .standing-row.status-e .row-l,
+  .standing-row.status-e .row-pct { color: #666; }
+
+  #toast-container {
+    position: fixed; bottom: 28px; right: 28px;
+    display: flex; flex-direction: column; gap: 10px;
+    z-index: 9999; pointer-events: none;
+  }
+  .toast {
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-left: 3px solid var(--red);
+    border-radius: 8px;
+    padding: 12px 18px;
+    font-size: 13px; color: #fff;
+    box-shadow: 0 4px 24px rgba(0,0,0,.4);
+    animation: toastIn .25s ease forwards;
+    pointer-events: all;
+    max-width: 320px;
+  }
+  .toast.green { border-left-color: var(--green); }
+  .toast.amber { border-left-color: var(--amber); }
+  @keyframes toastIn {
+    from { opacity:0; transform:translateY(12px); }
+    to   { opacity:1; transform:translateY(0); }
+  }
+  @keyframes toastOut {
+    from { opacity:1; }
+    to   { opacity:0; transform:translateY(-8px); }
+  }
+  .toast.dying { animation: toastOut .25s ease forwards; }
+
+  .state-banner {
+    display: none;
+    margin: 0 40px;
+    padding: 14px 20px;
+    border-radius: 8px;
+    font-size: 13px;
+    border: 1px solid var(--border);
+    color: var(--muted);
+    background: var(--surface);
+  }
+  .state-banner.show { display: block; }
+</style>
+</head>
+<body>
+
+<nav>
+    <span class="last-sync" id="last-sync">Never synced</span>
+    <span class="live-pill" id="live-pill">
+      <span class="live-dot"></span>
+      <span id="live-label">Offline</span>
+    </span>
+</nav>
+
+<div class="playoff-key">
+  <div class="key-item"><div class="key-dot z"></div> z — 1 Seed (Conference Leader)</div>
+  <div class="key-item"><div class="key-dot x"></div> x — Playoff Berth</div>
+  <div class="key-item"><div class="key-dot pi"></div> pi — Play-In Berth</div>
+  <div class="key-item"><div class="key-dot e"></div> e — Eliminated</div>
+  <div class="key-item" style="margin-left:auto;color:#444;font-size:11px;">
+    Playoff Eligibility: 7 matches played &nbsp;·&nbsp; Updates live after every game
+  </div>
+</div>
+
+<div class="state-banner" id="state-banner"></div>
+
+<div id="results-strip">
+  <div class="results-strip-inner">
+    <div class="results-header">
+      <span class="results-header-title">Recent Results &nbsp;<em>●</em></span>
+    </div>
+    <div class="results-list" id="results-list"></div>
+  </div>
+</div>
+
+<div class="conferences" id="conferences"></div>
+
+<div id="toast-container"></div>
+
+<script>
+const CONFIG = {
+  API_URL: 'https://rplstandings.onrender.com/rpl/standings',
+  POLL_MS: 30000,
+};
+
+// Keyed by full team name — used as a secondary fallback
+const LOGOS = {
+  "Atlanta Hawks":"https://a.espncdn.com/i/teamlogos/nba/500/atl.png",
+  "Boston Celtics":"https://a.espncdn.com/i/teamlogos/nba/500/bos.png",
+  "Brooklyn Nets":"https://a.espncdn.com/i/teamlogos/nba/500/bkn.png",
+  "Charlotte Hornets":"https://a.espncdn.com/i/teamlogos/nba/500/cha.png",
+  "Chicago Bulls":"https://a.espncdn.com/i/teamlogos/nba/500/chi.png",
+  "Cleveland Cavaliers":"https://a.espncdn.com/i/teamlogos/nba/500/cle.png",
+  "Dallas Mavericks":"https://a.espncdn.com/i/teamlogos/nba/500/dal.png",
+  "Denver Nuggets":"https://a.espncdn.com/i/teamlogos/nba/500/den.png",
+  "Detroit Pistons":"https://a.espncdn.com/i/teamlogos/nba/500/det.png",
+  "Golden State Warriors":"https://a.espncdn.com/i/teamlogos/nba/500/gs.png",
+  "Houston Rockets":"https://a.espncdn.com/i/teamlogos/nba/500/hou.png",
+  "Indiana Pacers":"https://a.espncdn.com/i/teamlogos/nba/500/ind.png",
+  "LA Clippers":"https://a.espncdn.com/i/teamlogos/nba/500/lac.png",
+  "Los Angeles Lakers":"https://a.espncdn.com/i/teamlogos/nba/500/lal.png",
+  "Memphis Grizzlies":"https://a.espncdn.com/i/teamlogos/nba/500/mem.png",
+  "Miami Heat":"https://a.espncdn.com/i/teamlogos/nba/500/mia.png",
+  "Milwaukee Bucks":"https://a.espncdn.com/i/teamlogos/nba/500/mil.png",
+  "Minnesota Timberwolves":"https://a.espncdn.com/i/teamlogos/nba/500/min.png",
+  "New Orleans Pelicans":"https://a.espncdn.com/i/teamlogos/nba/500/no.png",
+  "New York Knicks":"https://a.espncdn.com/i/teamlogos/nba/500/ny.png",
+  "Oklahoma City Thunder":"https://a.espncdn.com/i/teamlogos/nba/500/okc.png",
+  "Orlando Magic":"https://a.espncdn.com/i/teamlogos/nba/500/orl.png",
+  "Philadelphia 76ers":"https://a.espncdn.com/i/teamlogos/nba/500/phi.png",
+  "Phoenix Suns":"https://a.espncdn.com/i/teamlogos/nba/500/phx.png",
+  "Portland Trail Blazers":"https://a.espncdn.com/i/teamlogos/nba/500/por.png",
+  "Sacramento Kings":"https://a.espncdn.com/i/teamlogos/nba/500/sac.png",
+  "San Antonio Spurs":"https://a.espncdn.com/i/teamlogos/nba/500/sa.png",
+  "Toronto Raptors":"https://a.espncdn.com/i/teamlogos/nba/500/tor.png",
+  "Utah Jazz":"https://a.espncdn.com/i/teamlogos/nba/500/utah.png",
+  "Washington Wizards":"https://a.espncdn.com/i/teamlogos/nba/500/wsh.png"
+};
+
+// Keyed by abbreviation — primary client-side logo source
+const LOGOS_BY_ABB = {
+  ATL:  "https://a.espncdn.com/i/teamlogos/nba/500/atl.png",
+  BOS:  "https://a.espncdn.com/i/teamlogos/nba/500/bos.png",
+  BKN:  "https://a.espncdn.com/i/teamlogos/nba/500/bkn.png",
+  CHA:  "https://a.espncdn.com/i/teamlogos/nba/500/cha.png",
+  CHI:  "https://a.espncdn.com/i/teamlogos/nba/500/chi.png",
+  CLE:  "https://a.espncdn.com/i/teamlogos/nba/500/cle.png",
+  DAL:  "https://a.espncdn.com/i/teamlogos/nba/500/dal.png",
+  DEN:  "https://a.espncdn.com/i/teamlogos/nba/500/den.png",
+  DET:  "https://a.espncdn.com/i/teamlogos/nba/500/det.png",
+  GSW:  "https://a.espncdn.com/i/teamlogos/nba/500/gs.png",
+  HOU:  "https://a.espncdn.com/i/teamlogos/nba/500/hou.png",
+  IND:  "https://a.espncdn.com/i/teamlogos/nba/500/ind.png",
+  LAC:  "https://a.espncdn.com/i/teamlogos/nba/500/lac.png",
+  LAL:  "https://a.espncdn.com/i/teamlogos/nba/500/lal.png",
+  MEM:  "https://a.espncdn.com/i/teamlogos/nba/500/mem.png",
+  MIA:  "https://a.espncdn.com/i/teamlogos/nba/500/mia.png",
+  MIL:  "https://a.espncdn.com/i/teamlogos/nba/500/mil.png",
+  MIN:  "https://a.espncdn.com/i/teamlogos/nba/500/min.png",
+  NOP:  "https://a.espncdn.com/i/teamlogos/nba/500/no.png",
+  NYK:  "https://a.espncdn.com/i/teamlogos/nba/500/ny.png",
+  OKC:  "https://a.espncdn.com/i/teamlogos/nba/500/okc.png",
+  ORL:  "https://a.espncdn.com/i/teamlogos/nba/500/orl.png",
+  PHI:  "https://a.espncdn.com/i/teamlogos/nba/500/phi.png",
+  PHX:  "https://a.espncdn.com/i/teamlogos/nba/500/phx.png",
+  POR:  "https://a.espncdn.com/i/teamlogos/nba/500/por.png",
+  SAC:  "https://a.espncdn.com/i/teamlogos/nba/500/sac.png",
+  SAS:  "https://a.espncdn.com/i/teamlogos/nba/500/sa.png",
+  TOR:  "https://a.espncdn.com/i/teamlogos/nba/500/tor.png",
+  UTAH: "https://a.espncdn.com/i/teamlogos/nba/500/utah.png",
+  WAS:  "https://a.espncdn.com/i/teamlogos/nba/500/wsh.png",
+};
+
+const FALLBACK = {
+  standings: {
+    eastern: [
+      "Atlanta Hawks","Boston Celtics","Brooklyn Nets","Charlotte Hornets",
+      "Chicago Bulls","Cleveland Cavaliers","Detroit Pistons","Indiana Pacers",
+      "Miami Heat","Milwaukee Bucks","New York Knicks","Orlando Magic",
+      "Philadelphia 76ers","Toronto Raptors","Washington Wizards"
+    ].map(n => ({ name:n, abbr:n.split(' ').map(w=>w[0]).join('').slice(0,3).toUpperCase(), w:0, l:0, status:'' })),
+    western: [
+      "Dallas Mavericks","Denver Nuggets","Golden State Warriors","Houston Rockets",
+      "LA Clippers","Los Angeles Lakers","Memphis Grizzlies","Minnesota Timberwolves",
+      "New Orleans Pelicans","Oklahoma City Thunder","Phoenix Suns",
+      "Portland Trail Blazers","Sacramento Kings","San Antonio Spurs","Utah Jazz"
+    ].map(n => ({ name:n, abbr:n.split(' ').map(w=>w[0]).join('').slice(0,3).toUpperCase(), w:0, l:0, status:'' })),
+  },
+  results: [],
+};
+
+let prevStandings = null;
+let consecutiveFails = 0;
+
+function pct(w, l) {
+  const gp = w + l;
+  return gp === 0 ? null : w / gp;
+}
+
+function fmtPct(w, l) {
+  const p = pct(w, l);
+  return p === null ? '—' : p.toFixed(3).replace(/^0/, '');
+}
+
+function calcGB(lw, ll, w, l) {
+  const gb = ((lw - w) + (l - ll)) / 2;
+  if (gb === 0) return '—';
+  return gb % 1 === 0 ? gb.toFixed(0) : gb.toFixed(1);
+}
+
+function timeAgo(isoStr) {
+  if (!isoStr) return 'Unknown';
+  const diff = Math.floor((Date.now() - new Date(isoStr).getTime()) / 1000);
+  if (diff < 60)    return `${diff}s ago`;
+  if (diff < 3600)  return `${Math.floor(diff/60)}m ago`;
+  if (diff < 86400) return `${Math.floor(diff/3600)}h ago`;
+  return `${Math.floor(diff/86400)}d ago`;
+}
+
+function showToast(msg, colour = 'red', duration = 4000) {
+  const container = document.getElementById('toast-container');
+  const t = document.createElement('div');
+  t.className = `toast ${colour}`;
+  t.textContent = msg;
+  container.appendChild(t);
+  setTimeout(() => {
+    t.classList.add('dying');
+    setTimeout(() => t.remove(), 300);
+  }, duration);
+}
+
+function setLive(isLive) {
+  const pill  = document.getElementById('live-pill');
+  const label = document.getElementById('live-label');
+  pill.classList.toggle('live', isLive);
+  label.textContent = isLive ? 'Live' : 'Offline';
+}
+
+function setLastSync(isoStr) {
+  document.getElementById('last-sync').textContent =
+    isoStr ? `Updated ${timeAgo(isoStr)}` : 'Never synced';
+}
+
+function renderResults(games) {
+  const strip = document.getElementById('results-strip');
+  const list  = document.getElementById('results-list');
+
+  if (!games || games.length === 0) {
+    strip.style.display = 'none';
+    return;
+  }
+
+  strip.style.display = 'block';
+  list.innerHTML = games.slice(0, 5).map(g => {
+    const homeWin = g.homeScore > g.awayScore;
+    const status  = (g.status || 'final').toLowerCase();
+
+    let badgeLabel = status.toUpperCase();
+    let badgeClass = status;
+    if (status === 'final' && g.quarter === 'OT') {
+      badgeLabel = 'FINAL/OT';
+      badgeClass = 'ot';
+    }
+    if (status === 'forfeit')    badgeLabel = 'FORFEIT';
+    if (status === 'incomplete') badgeLabel = 'NO RESULT';
+
+    return `
+      <div class="result-card ${status}">
+        <div class="result-teams">
+          <div class="result-row">
+            <span class="result-abbr">${g.awayABB || '???'}</span>
+            <span class="result-score ${!homeWin ? 'winner' : 'loser'}">${g.awayScore ?? '—'}</span>
+          </div>
+          <div class="result-row">
+            <span class="result-abbr">${g.homeABB || '???'}</span>
+            <span class="result-score ${homeWin ? 'winner' : 'loser'}">${g.homeScore ?? '—'}</span>
+          </div>
+        </div>
+        <div class="result-meta">
+          <span class="result-status-badge ${badgeClass}">${badgeLabel}</span>
+          ${g.note ? `<span class="result-quarter">${g.note}</span>` : ''}
+        </div>
+      </div>`;
+  }).join('');
+}
+
+const ABB_TO_NAME = {
+  ATL:"Atlanta Hawks",BOS:"Boston Celtics",BKN:"Brooklyn Nets",CHA:"Charlotte Hornets",
+  CHI:"Chicago Bulls",CLE:"Cleveland Cavaliers",DAL:"Dallas Mavericks",DEN:"Denver Nuggets",
+  DET:"Detroit Pistons",GSW:"Golden State Warriors",HOU:"Houston Rockets",IND:"Indiana Pacers",
+  LAC:"LA Clippers",LAL:"Los Angeles Lakers",MEM:"Memphis Grizzlies",MIA:"Miami Heat",
+  MIL:"Milwaukee Bucks",MIN:"Minnesota Timberwolves",NOP:"New Orleans Pelicans",NYK:"New York Knicks",
+  OKC:"Oklahoma City Thunder",ORL:"Orlando Magic",PHI:"Philadelphia 76ers",PHX:"Phoenix Suns",
+  POR:"Portland Trail Blazers",SAC:"Sacramento Kings",SAS:"San Antonio Spurs",TOR:"Toronto Raptors",
+  UTAH:"Utah Jazz",WAS:"Washington Wizards"
+};
+
+function buildStandingsFromFlat(flatTeams) {
+  const eastern = [
+    "ATL","BOS","BKN","CHA","CHI","CLE","DET","IND",
+    "MIA","MIL","NYK","ORL","PHI","TOR","WAS"
+  ];
+  const western = [
+    "DAL","DEN","GSW","HOU","LAC","LAL","MEM","MIN",
+    "NOP","OKC","PHX","POR","SAC","SAS","UTAH"
+  ];
+
+  const eastTeams = [];
+  const westTeams = [];
+
+  for (const team of flatTeams) {
+    const name = ABB_TO_NAME[team.abb] || team.abb;
+    const entry = {
+      name,
+      abbr:   team.abb,
+      w:      team.wins   || 0,
+      l:      team.losses || 0,
+      status: team.status || '',
+      // Priority: API-supplied logo → abbr map → full-name map
+      logo:   team.logo || LOGOS_BY_ABB[team.abb] || LOGOS[name] || '',
+      streak: team.streak || '—',
+      pct:    team.pct    || '0.000',
+    };
+    if (eastern.includes(team.abb)) {
+      eastTeams.push(entry);
+    } else {
+      westTeams.push(entry);
+    }
+  }
+
+  return { eastern: eastTeams, western: westTeams };
+}
+
+function renderConferences(data) {
+  const container = document.getElementById('conferences');
+
+  let standingsData = data.standings;
+
+  if (Array.isArray(data.standings)) {
+    standingsData = buildStandingsFromFlat(data.standings);
+  }
+
+  if (!standingsData || (!standingsData.eastern && !standingsData.western)) {
+    standingsData = FALLBACK.standings;
+  }
+
+  const confDefs = [
+    { key: 'eastern', name: 'Eastern Conference', cls: 'east', badge: 'EAST' },
+    { key: 'western', name: 'Western Conference', cls: 'west', badge: 'WEST' },
+  ];
+
+  const changedAbbrs = new Set();
+  if (prevStandings) {
+    for (const ck of ['eastern', 'western']) {
+      const prev = prevStandings[ck] || [];
+      const next = standingsData[ck]  || [];
+      for (const team of next) {
+        const p = prev.find(t => t.abbr === team.abbr);
+        if (!p || p.w !== team.w || p.l !== team.l || p.status !== team.status) {
+          changedAbbrs.add(team.abbr);
+        }
+      }
+    }
+  }
+
+  container.innerHTML = confDefs.map(conf => {
+    const teams  = [...(standingsData[conf.key] || [])];
+    const sorted = teams.sort((a,b) => {
+      const pa = pct(a.w, a.l) ?? -1;
+      const pb = pct(b.w, b.l) ?? -1;
+      if (pb !== pa) return pb - pa;
+      return b.w - a.w;
+    });
+    const leader = sorted[0];
+
+    const rows = sorted.map((team, i) => {
+      const gb       = i === 0 ? '—' : calcGB(leader.w, leader.l, team.w, team.l);
+      const stsCls   = team.status ? `status-${team.status}` : '';
+      const badgeCls = team.status || 'e';
+      const flash    = changedAbbrs.has(team.abbr) ? ' updated' : '';
+      // Resolve logo: team object first, then abbr map, then name map
+      const logo     = team.logo || LOGOS_BY_ABB[team.abbr] || LOGOS[team.name] || '';
+
+      return `
+        <div class="standing-row ${stsCls}${flash}" data-abbr="${team.abbr}">
+          <span class="row-rank">${i+1}</span>
+          <span class="row-logo">${logo ? `<img src="${logo}" alt="${team.abbr}" loading="lazy">` : ''}</span>
+          <span class="row-team">
+            <div class="row-team-name">${team.name || team.abbr}</div>
+            <div class="row-team-abbr">${team.abbr}
+              <span class="status-badge ${badgeCls}">${(team.status||'').toUpperCase()}</span>
+            </div>
+          </span>
+          <span class="row-w">${team.w}</span>
+          <span class="row-l">${team.l}</span>
+          <span class="row-pct">${fmtPct(team.w, team.l)}</span>
+          <span class="row-gb">${gb}</span>
+        </div>`;
+    }).join('');
+
+    return `
+      <div class="conference">
+        <div class="conf-header">
+          <span class="conf-badge ${conf.cls}">${conf.badge}</span>
+          <span class="conf-title">${conf.name}</span>
+        </div>
+        <div class="standings-table">
+          <div class="standings-table-header">
+            <span>#</span><span></span><span>Team</span>
+            <span>W</span><span>L</span><span>PCT</span><span>GB</span>
+          </div>
+          ${rows}
+        </div>
+      </div>`;
+  }).join('');
+
+  setTimeout(() => {
+    document.querySelectorAll('.standing-row.updated')
+      .forEach(el => el.classList.remove('updated'));
+  }, 1500);
+
+  prevStandings = JSON.parse(JSON.stringify(standingsData));
+}
+
+async function fetchStandings() {
+  try {
+    const res = await fetch(CONFIG.API_URL, {
+      cache: 'no-store',
+      headers: { 'Accept': 'application/json' },
+    });
+
+    if (!res.ok) throw new Error(`HTTP ${res.status}`);
+
+    const data = await res.json();
+
+    consecutiveFails = 0;
+    setLive(true);
+    setLastSync(data.lastUpdated || new Date().toISOString());
+    document.getElementById('state-banner').classList.remove('show');
+
+    if (prevStandings && data.results?.length) {
+      const latest = data.results[0];
+      if (latest && latest.homeABB && latest.status) {
+        showToast(
+          `${latest.awayABB} @ ${latest.homeABB} — ${
+            latest.status === 'final'      ? `${latest.awayScore}–${latest.homeScore} FINAL` :
+            latest.status === 'forfeit'    ? 'FORFEIT' :
+            latest.status === 'incomplete' ? 'NO RESULT' : latest.status.toUpperCase()
+          }`,
+          latest.status === 'forfeit' ? 'amber' : 'green',
+          6000
+        );
+      }
+    }
+
+    renderResults(data.results || []);
+    renderConferences(data);
+
+  } catch (err) {
+    consecutiveFails++;
+    console.warn('[RPL] Fetch failed:', err.message);
+
+    if (consecutiveFails >= 3) {
+      setLive(false);
+      const banner = document.getElementById('state-banner');
+      banner.textContent = `⚠ Standings server unreachable. Showing last known data. (${err.message})`;
+      banner.classList.add('show');
+    }
+
+    if (!prevStandings) {
+      renderConferences(FALLBACK);
+    }
+  }
+}
+
+(async function init() {
+  await fetchStandings();
+  setInterval(fetchStandings, CONFIG.POLL_MS);
+})();
+
+function connectSSE() {
+  return;
+  if (typeof EventSource === 'undefined') return;
+  const SSE_URL = CONFIG.API_URL.replace(/\/standings$/, '/standings/events');
+  const es = new EventSource(SSE_URL);
+  es.addEventListener('standings', () => { fetchStandings(); });
+  es.addEventListener('result',    () => { fetchStandings(); });
+  es.onerror = () => { es.close(); };
+}
+connectSSE();
+</script>
+</body>
+</html>
