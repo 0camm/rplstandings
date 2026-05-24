@@ -318,6 +318,7 @@ const CONFIG = {
   POLL_MS: 30000,
 };
 
+// Keyed by full team name — used as a secondary fallback
 const LOGOS = {
   "Atlanta Hawks":"https://a.espncdn.com/i/teamlogos/nba/500/atl.png",
   "Boston Celtics":"https://a.espncdn.com/i/teamlogos/nba/500/bos.png",
@@ -349,6 +350,40 @@ const LOGOS = {
   "Toronto Raptors":"https://a.espncdn.com/i/teamlogos/nba/500/tor.png",
   "Utah Jazz":"https://a.espncdn.com/i/teamlogos/nba/500/utah.png",
   "Washington Wizards":"https://a.espncdn.com/i/teamlogos/nba/500/wsh.png"
+};
+
+// Keyed by abbreviation — primary client-side logo source
+const LOGOS_BY_ABB = {
+  ATL:  "https://a.espncdn.com/i/teamlogos/nba/500/atl.png",
+  BOS:  "https://a.espncdn.com/i/teamlogos/nba/500/bos.png",
+  BKN:  "https://a.espncdn.com/i/teamlogos/nba/500/bkn.png",
+  CHA:  "https://a.espncdn.com/i/teamlogos/nba/500/cha.png",
+  CHI:  "https://a.espncdn.com/i/teamlogos/nba/500/chi.png",
+  CLE:  "https://a.espncdn.com/i/teamlogos/nba/500/cle.png",
+  DAL:  "https://a.espncdn.com/i/teamlogos/nba/500/dal.png",
+  DEN:  "https://a.espncdn.com/i/teamlogos/nba/500/den.png",
+  DET:  "https://a.espncdn.com/i/teamlogos/nba/500/det.png",
+  GSW:  "https://a.espncdn.com/i/teamlogos/nba/500/gs.png",
+  HOU:  "https://a.espncdn.com/i/teamlogos/nba/500/hou.png",
+  IND:  "https://a.espncdn.com/i/teamlogos/nba/500/ind.png",
+  LAC:  "https://a.espncdn.com/i/teamlogos/nba/500/lac.png",
+  LAL:  "https://a.espncdn.com/i/teamlogos/nba/500/lal.png",
+  MEM:  "https://a.espncdn.com/i/teamlogos/nba/500/mem.png",
+  MIA:  "https://a.espncdn.com/i/teamlogos/nba/500/mia.png",
+  MIL:  "https://a.espncdn.com/i/teamlogos/nba/500/mil.png",
+  MIN:  "https://a.espncdn.com/i/teamlogos/nba/500/min.png",
+  NOP:  "https://a.espncdn.com/i/teamlogos/nba/500/no.png",
+  NYK:  "https://a.espncdn.com/i/teamlogos/nba/500/ny.png",
+  OKC:  "https://a.espncdn.com/i/teamlogos/nba/500/okc.png",
+  ORL:  "https://a.espncdn.com/i/teamlogos/nba/500/orl.png",
+  PHI:  "https://a.espncdn.com/i/teamlogos/nba/500/phi.png",
+  PHX:  "https://a.espncdn.com/i/teamlogos/nba/500/phx.png",
+  POR:  "https://a.espncdn.com/i/teamlogos/nba/500/por.png",
+  SAC:  "https://a.espncdn.com/i/teamlogos/nba/500/sac.png",
+  SAS:  "https://a.espncdn.com/i/teamlogos/nba/500/sa.png",
+  TOR:  "https://a.espncdn.com/i/teamlogos/nba/500/tor.png",
+  UTAH: "https://a.espncdn.com/i/teamlogos/nba/500/utah.png",
+  WAS:  "https://a.espncdn.com/i/teamlogos/nba/500/wsh.png",
 };
 
 const FALLBACK = {
@@ -464,6 +499,17 @@ function renderResults(games) {
   }).join('');
 }
 
+const ABB_TO_NAME = {
+  ATL:"Atlanta Hawks",BOS:"Boston Celtics",BKN:"Brooklyn Nets",CHA:"Charlotte Hornets",
+  CHI:"Chicago Bulls",CLE:"Cleveland Cavaliers",DAL:"Dallas Mavericks",DEN:"Denver Nuggets",
+  DET:"Detroit Pistons",GSW:"Golden State Warriors",HOU:"Houston Rockets",IND:"Indiana Pacers",
+  LAC:"LA Clippers",LAL:"Los Angeles Lakers",MEM:"Memphis Grizzlies",MIA:"Miami Heat",
+  MIL:"Milwaukee Bucks",MIN:"Minnesota Timberwolves",NOP:"New Orleans Pelicans",NYK:"New York Knicks",
+  OKC:"Oklahoma City Thunder",ORL:"Orlando Magic",PHI:"Philadelphia 76ers",PHX:"Phoenix Suns",
+  POR:"Portland Trail Blazers",SAC:"Sacramento Kings",SAS:"San Antonio Spurs",TOR:"Toronto Raptors",
+  UTAH:"Utah Jazz",WAS:"Washington Wizards"
+};
+
 function buildStandingsFromFlat(flatTeams) {
   const eastern = [
     "ATL","BOS","BKN","CHA","CHI","CLE","DET","IND",
@@ -478,13 +524,15 @@ function buildStandingsFromFlat(flatTeams) {
   const westTeams = [];
 
   for (const team of flatTeams) {
+    const name = ABB_TO_NAME[team.abb] || team.abb;
     const entry = {
-      name: {ATL:"Atlanta Hawks",BOS:"Boston Celtics",BKN:"Brooklyn Nets",CHA:"Charlotte Hornets",CHI:"Chicago Bulls",CLE:"Cleveland Cavaliers",DAL:"Dallas Mavericks",DEN:"Denver Nuggets",DET:"Detroit Pistons",GSW:"Golden State Warriors",HOU:"Houston Rockets",IND:"Indiana Pacers",LAC:"LA Clippers",LAL:"Los Angeles Lakers",MEM:"Memphis Grizzlies",MIA:"Miami Heat",MIL:"Milwaukee Bucks",MIN:"Minnesota Timberwolves",NOP:"New Orleans Pelicans",NYK:"New York Knicks",OKC:"Oklahoma City Thunder",ORL:"Orlando Magic",PHI:"Philadelphia 76ers",PHX:"Phoenix Suns",POR:"Portland Trail Blazers",SAC:"Sacramento Kings",SAS:"San Antonio Spurs",TOR:"Toronto Raptors",UTAH:"Utah Jazz",WAS:"Washington Wizards"}[team.abb] || team.abb,
+      name,
       abbr:   team.abb,
       w:      team.wins   || 0,
       l:      team.losses || 0,
       status: team.status || '',
-      logo:   team.logo   || '',
+      // Priority: API-supplied logo → abbr map → full-name map
+      logo:   team.logo || LOGOS_BY_ABB[team.abb] || LOGOS[name] || '',
       streak: team.streak || '—',
       pct:    team.pct    || '0.000',
     };
@@ -545,7 +593,8 @@ function renderConferences(data) {
       const stsCls   = team.status ? `status-${team.status}` : '';
       const badgeCls = team.status || 'e';
       const flash    = changedAbbrs.has(team.abbr) ? ' updated' : '';
-      const logo     = team.logo || LOGOS[team.name] || '';
+      // Resolve logo: team object first, then abbr map, then name map
+      const logo     = team.logo || LOGOS_BY_ABB[team.abbr] || LOGOS[team.name] || '';
 
       return `
         <div class="standing-row ${stsCls}${flash}" data-abbr="${team.abbr}">
@@ -591,9 +640,9 @@ function renderConferences(data) {
 async function fetchStandings() {
   try {
     const res = await fetch(CONFIG.API_URL, {
-  cache: 'no-store',
-  headers: { 'Accept': 'application/json' },
-});
+      cache: 'no-store',
+      headers: { 'Accept': 'application/json' },
+    });
 
     if (!res.ok) throw new Error(`HTTP ${res.status}`);
 
@@ -649,18 +698,9 @@ function connectSSE() {
   if (typeof EventSource === 'undefined') return;
   const SSE_URL = CONFIG.API_URL.replace(/\/standings$/, '/standings/events');
   const es = new EventSource(SSE_URL);
-
-  es.addEventListener('standings', () => {
-    fetchStandings();
-  });
-
-  es.addEventListener('result', () => {
-    fetchStandings();
-  });
-
-  es.onerror = () => {
-    es.close();
-  };
+  es.addEventListener('standings', () => { fetchStandings(); });
+  es.addEventListener('result',    () => { fetchStandings(); });
+  es.onerror = () => { es.close(); };
 }
 connectSSE();
 </script>
