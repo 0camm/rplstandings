@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
 <title>RPL Standings</title>
 <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
 <style>
@@ -28,25 +28,28 @@
     font-family: 'DM Sans', sans-serif;
     font-size: 14px;
     min-height: 100vh;
+    -webkit-text-size-adjust: 100%;
   }
 
+  /* ── NAV ── */
   nav {
     position: sticky; top: 0; z-index: 100;
     display: flex; align-items: center; justify-content: space-between;
-    padding: 0 40px; height: 58px;
+    padding: 0 16px; height: 52px;
     border-bottom: 1px solid var(--border);
-    background: rgba(6,6,8,.92);
+    background: rgba(6,6,8,.95);
     backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
   }
 
   .nav-logo { display: flex; align-items: center; gap: 10px; text-decoration: none; }
   .nav-logo span { font-family: 'Bebas Neue', sans-serif; font-size: 20px; letter-spacing: .06em; color: #fff; }
   .nav-logo span em { color: var(--red); font-style: normal; }
 
-  .nav-right { display: flex; align-items: center; gap: 16px; }
+  .nav-right { display: flex; align-items: center; gap: 10px; }
 
   .live-pill {
-    display: flex; align-items: center; gap: 6px;
+    display: flex; align-items: center; gap: 5px;
     font-size: 11px; font-weight: 600; letter-spacing: .1em;
     color: var(--muted); text-transform: uppercase;
     transition: color .3s;
@@ -66,38 +69,54 @@
     50%      { opacity:.4; transform:scale(.7); }
   }
 
-  .last-sync { font-size: 11px; color: var(--muted); }
+  .last-sync { font-size: 10px; color: var(--muted); }
 
+  /* ── PLAYOFF KEY ── */
   .playoff-key {
     background: var(--surface);
-    border: 1px solid var(--border);
-    border-radius: 10px;
-    padding: 16px 20px;
-    display: flex; flex-wrap: wrap; gap: 16px;
-    margin: 32px 40px 0;
+    border-bottom: 1px solid var(--border);
+    padding: 10px 16px;
+    display: flex; flex-wrap: wrap; gap: 10px 16px;
   }
-  .key-item { display:flex; align-items:center; gap:8px; font-size:12px; color:var(--muted); }
-  .key-dot { width:10px; height:10px; border-radius:2px; flex-shrink:0; }
+  .key-item { display:flex; align-items:center; gap:6px; font-size:11px; color:var(--muted); }
+  .key-dot { width:8px; height:8px; border-radius:2px; flex-shrink:0; }
   .key-dot.z  { background: var(--amber); }
   .key-dot.x  { background: var(--green); }
   .key-dot.pi { background: var(--blue); }
   .key-dot.e  { background: #555; }
+  .key-eligibility {
+    width: 100%;
+    font-size: 10px; color: #333;
+    padding-top: 4px;
+    border-top: 1px solid var(--border);
+  }
 
-  #results-strip {
-    margin: 20px 40px 0;
+  /* ── STATE BANNER ── */
+  .state-banner {
     display: none;
+    margin: 0 16px 8px;
+    padding: 10px 14px;
+    border-radius: 8px;
+    font-size: 12px;
+    border: 1px solid var(--border);
+    color: var(--muted);
+    background: var(--surface);
+  }
+  .state-banner.show { display: block; }
+
+  /* ── RESULTS STRIP ── */
+  #results-strip {
+    display: none;
+    border-bottom: 1px solid var(--border);
   }
   .results-strip-inner {
-    background: var(--surface);
-    border: 1px solid var(--border);
-    border-radius: 10px;
+    background: var(--surface2);
     overflow: hidden;
   }
   .results-header {
     display: flex; align-items: center; gap: 10px;
-    padding: 12px 20px;
+    padding: 10px 16px;
     border-bottom: 1px solid var(--border);
-    background: var(--surface2);
   }
   .results-header-title {
     font-size: 10px; font-weight: 600; letter-spacing: .12em;
@@ -105,18 +124,25 @@
   }
   .results-header-title em { color: var(--red); font-style: normal; }
 
-  .results-list { display: flex; flex-wrap: wrap; }
+  /* Horizontal scroll on mobile */
+  .results-list {
+    display: flex;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: none;
+  }
+  .results-list::-webkit-scrollbar { display: none; }
 
   .result-card {
     display: flex; align-items: center;
-    padding: 14px 24px;
+    padding: 12px 18px;
     border-right: 1px solid var(--border);
-    min-width: 260px;
+    min-width: 200px;
+    flex-shrink: 0;
     position: relative;
     transition: background .15s;
   }
   .result-card:last-child { border-right: none; }
-  .result-card:hover { background: rgba(255,255,255,.02); }
   .result-card::before {
     content: '';
     position: absolute; top: 0; left: 0; right: 0; height: 2px;
@@ -129,17 +155,18 @@
   .result-row { display: flex; align-items: center; gap: 8px; }
   .result-abbr {
     font-family: 'Bebas Neue', sans-serif;
-    font-size: 15px; letter-spacing: .06em; color: #fff;
-    width: 40px;
+    font-size: 14px; letter-spacing: .06em; color: #fff;
+    width: 36px;
   }
-  .result-score { font-size: 14px; font-weight: 700; color: #fff; width: 28px; text-align: right; }
+  .result-score { font-size: 13px; font-weight: 700; color: #fff; width: 24px; text-align: right; }
   .result-score.winner { color: var(--green); }
   .result-score.loser  { color: var(--muted); }
 
-  .result-meta { display: flex; flex-direction: column; align-items: flex-end; gap: 3px; margin-left: 16px; }
+  .result-meta { display: flex; flex-direction: column; align-items: flex-end; gap: 3px; margin-left: 12px; }
   .result-status-badge {
     font-size: 9px; font-weight: 700; letter-spacing: .1em;
-    text-transform: uppercase; padding: 3px 7px; border-radius: 4px;
+    text-transform: uppercase; padding: 3px 6px; border-radius: 4px;
+    white-space: nowrap;
   }
   .result-status-badge.final    { background: rgba(34,197,94,.12); color: var(--green); }
   .result-status-badge.forfeit  { background: rgba(245,158,11,.12); color: var(--amber); }
@@ -147,55 +174,95 @@
   .result-status-badge.ot       { background: rgba(59,130,246,.12); color: var(--blue); }
   .result-quarter { font-size: 10px; color: var(--muted); }
 
+  /* ── CONFERENCE TABS (mobile) ── */
+  .conf-tabs {
+    display: none;
+    position: sticky;
+    top: 52px;
+    z-index: 90;
+    background: rgba(6,6,8,.95);
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+    border-bottom: 1px solid var(--border);
+  }
+  .conf-tab-list {
+    display: flex;
+  }
+  .conf-tab {
+    flex: 1;
+    padding: 12px 16px;
+    font-size: 12px; font-weight: 600; letter-spacing: .08em;
+    text-transform: uppercase;
+    color: var(--muted);
+    background: none; border: none; cursor: pointer;
+    border-bottom: 2px solid transparent;
+    transition: color .2s, border-color .2s;
+    font-family: 'DM Sans', sans-serif;
+  }
+  .conf-tab.active { color: #fff; border-bottom-color: var(--red); }
+  .conf-tab.east.active { border-bottom-color: var(--red); }
+  .conf-tab.west.active { border-bottom-color: #60a5fa; }
+
+  /* ── CONFERENCES LAYOUT ── */
   .conferences {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 2px;
-    padding: 24px 40px 80px;
+    padding: 0 0 80px;
   }
 
-  .conf-header { display: flex; align-items: center; gap: 12px; padding: 28px 0 20px; }
-  .conf-badge {
-    font-family: 'Bebas Neue', sans-serif;
-    font-size: 11px; letter-spacing: .12em;
-    padding: 4px 10px; border-radius: 4px; color: #fff;
+  .conference {
+    display: none; /* hidden by default on mobile, shown via JS */
   }
-  .conf-badge.east { background: rgba(232,0,29,.2); color: var(--red); border: 1px solid rgba(232,0,29,.3); }
-  .conf-badge.west { background: rgba(59,130,246,.15); color: #60a5fa; border: 1px solid rgba(59,130,246,.25); }
-  .conf-title { font-family: 'Bebas Neue', sans-serif; font-size: 26px; letter-spacing: .04em; color: #fff; }
+  .conference.active { display: block; }
 
-  .standings-table {
-    width: 100%;
-    background: var(--surface);
-    border: 1px solid var(--border);
-    border-radius: 12px;
-    overflow: hidden;
-    margin-bottom: 20px;
-  }
-  .standings-table-header {
-    display: grid;
-    grid-template-columns: 28px 36px 1fr 48px 48px 70px 48px;
-    padding: 10px 16px;
+  .conf-header {
+    display: flex; align-items: center; gap: 12px;
+    padding: 16px 16px 12px;
     border-bottom: 1px solid var(--border);
     background: var(--surface2);
   }
+  .conf-badge {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 11px; letter-spacing: .12em;
+    padding: 3px 8px; border-radius: 4px; color: #fff;
+  }
+  .conf-badge.east { background: rgba(232,0,29,.2); color: var(--red); border: 1px solid rgba(232,0,29,.3); }
+  .conf-badge.west { background: rgba(59,130,246,.15); color: #60a5fa; border: 1px solid rgba(59,130,246,.25); }
+  .conf-title { font-family: 'Bebas Neue', sans-serif; font-size: 22px; letter-spacing: .04em; color: #fff; }
+
+  /* ── STANDINGS TABLE ── */
+  .standings-table {
+    width: 100%;
+    background: var(--surface);
+    overflow: hidden;
+  }
+  .standings-table-header {
+    display: grid;
+    grid-template-columns: 26px 32px 1fr 40px 40px 60px 40px;
+    padding: 8px 12px;
+    border-bottom: 1px solid var(--border);
+    background: var(--surface2);
+    position: sticky;
+    top: 52px; /* below nav */
+    z-index: 80;
+  }
   .standings-table-header span {
-    font-size: 10px; font-weight: 600; letter-spacing: .1em;
+    font-size: 9px; font-weight: 600; letter-spacing: .1em;
     text-transform: uppercase; color: var(--muted); text-align: center;
   }
   .standings-table-header span:nth-child(3) { text-align: left; }
 
   .standing-row {
     display: grid;
-    grid-template-columns: 28px 36px 1fr 48px 48px 70px 48px;
-    padding: 11px 16px;
+    grid-template-columns: 26px 32px 1fr 40px 40px 60px 40px;
+    padding: 10px 12px;
     align-items: center;
     border-bottom: 1px solid rgba(255,255,255,.03);
     transition: background .15s;
     position: relative;
+    /* Better tap targets */
+    min-height: 48px;
   }
   .standing-row:last-child { border-bottom: none; }
-  .standing-row:hover { background: rgba(255,255,255,.03); }
+  .standing-row:active { background: rgba(255,255,255,.04); }
   .standing-row::before {
     content: ''; position: absolute;
     left: 0; top: 0; bottom: 0; width: 3px;
@@ -211,19 +278,19 @@
   }
   .standing-row.updated { animation: rowFlash 1.4s ease forwards; }
 
-  .row-rank { font-size:13px; font-weight:600; color:var(--muted); text-align:center; }
-  .row-logo img { width:24px; height:24px; object-fit:contain; display:block; margin:auto; }
-  .row-team-name { font-size:13px; font-weight:600; color:#fff; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
-  .row-team-abbr { font-size:10px; color:var(--muted); letter-spacing:.06em; }
-  .row-w  { text-align:center; font-size:13px; color:var(--green); font-weight:600; }
-  .row-l  { text-align:center; font-size:13px; color:#ef4444; font-weight:600; }
-  .row-pct { text-align:center; font-size:13px; color:#fff; font-weight:600; }
-  .row-gb  { text-align:center; font-size:13px; color:var(--muted); }
+  .row-rank { font-size:12px; font-weight:600; color:var(--muted); text-align:center; }
+  .row-logo img { width:22px; height:22px; object-fit:contain; display:block; margin:auto; }
+  .row-team-name { font-size:12px; font-weight:600; color:#fff; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+  .row-team-abbr { font-size:9px; color:var(--muted); letter-spacing:.06em; display:flex; align-items:center; gap:4px; }
+  .row-w  { text-align:center; font-size:12px; color:var(--green); font-weight:600; }
+  .row-l  { text-align:center; font-size:12px; color:#ef4444; font-weight:600; }
+  .row-pct { text-align:center; font-size:12px; color:#fff; font-weight:600; }
+  .row-gb  { text-align:center; font-size:12px; color:var(--muted); }
 
   .status-badge {
     display: inline-flex; align-items:center; justify-content:center;
-    font-size:10px; font-weight:700; letter-spacing:.06em;
-    width:20px; height:20px; border-radius:4px; flex-shrink:0;
+    font-size:9px; font-weight:700; letter-spacing:.06em;
+    width:18px; height:18px; border-radius:3px; flex-shrink:0;
   }
   .status-badge.z  { background:rgba(245,158,11,.15); color:var(--amber); }
   .status-badge.x  { background:rgba(34,197,94,.12); color:var(--green); }
@@ -235,9 +302,10 @@
   .standing-row.status-e .row-l,
   .standing-row.status-e .row-pct { color: #666; }
 
+  /* ── TOAST ── */
   #toast-container {
-    position: fixed; bottom: 28px; right: 28px;
-    display: flex; flex-direction: column; gap: 10px;
+    position: fixed; bottom: 20px; left: 16px; right: 16px;
+    display: flex; flex-direction: column; gap: 8px;
     z-index: 9999; pointer-events: none;
   }
   .toast {
@@ -245,12 +313,12 @@
     border: 1px solid var(--border);
     border-left: 3px solid var(--red);
     border-radius: 8px;
-    padding: 12px 18px;
+    padding: 10px 14px;
     font-size: 13px; color: #fff;
-    box-shadow: 0 4px 24px rgba(0,0,0,.4);
+    box-shadow: 0 4px 24px rgba(0,0,0,.5);
     animation: toastIn .25s ease forwards;
     pointer-events: all;
-    max-width: 320px;
+    text-align: center;
   }
   .toast.green { border-left-color: var(--green); }
   .toast.amber { border-left-color: var(--amber); }
@@ -264,37 +332,115 @@
   }
   .toast.dying { animation: toastOut .25s ease forwards; }
 
-  .state-banner {
-    display: none;
-    margin: 0 40px;
-    padding: 14px 20px;
-    border-radius: 8px;
-    font-size: 13px;
-    border: 1px solid var(--border);
-    color: var(--muted);
-    background: var(--surface);
+  /* ── DESKTOP OVERRIDES ── */
+  @media (min-width: 768px) {
+    nav { padding: 0 40px; height: 58px; }
+
+    .last-sync { font-size: 11px; }
+
+    .playoff-key {
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      margin: 32px 40px 0;
+      padding: 16px 20px;
+      gap: 16px;
+    }
+    .key-eligibility {
+      width: auto;
+      border-top: none;
+      padding-top: 0;
+      margin-left: auto;
+      font-size: 11px;
+      color: #444;
+    }
+
+    .state-banner { margin: 12px 40px; font-size: 13px; padding: 14px 20px; }
+
+    #results-strip {
+      margin: 20px 40px 0;
+      border: none;
+    }
+    .results-strip-inner {
+      border: 1px solid var(--border);
+      border-radius: 10px;
+    }
+    .results-header { padding: 12px 20px; }
+    .result-card { min-width: 260px; padding: 14px 24px; }
+    .result-abbr { font-size: 15px; width: 40px; }
+    .result-score { font-size: 14px; width: 28px; }
+    .result-meta { margin-left: 16px; }
+
+    .conf-tabs { display: none !important; }
+
+    .conferences {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 2px;
+      padding: 24px 40px 80px;
+    }
+
+    .conference { display: block !important; }
+
+    .conf-header { padding: 28px 0 20px; background: transparent; border-bottom: none; }
+    .conf-title { font-size: 26px; }
+
+    .standings-table {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      margin-bottom: 20px;
+      overflow: hidden;
+    }
+    .standings-table-header {
+      grid-template-columns: 28px 36px 1fr 48px 48px 70px 48px;
+      padding: 10px 16px;
+      position: static; /* not sticky on desktop */
+      top: auto;
+    }
+    .standings-table-header span { font-size: 10px; }
+
+    .standing-row {
+      grid-template-columns: 28px 36px 1fr 48px 48px 70px 48px;
+      padding: 11px 16px;
+      min-height: auto;
+    }
+    .standing-row:hover { background: rgba(255,255,255,.03); }
+    .standing-row:active { background: none; }
+
+    .row-rank { font-size: 13px; }
+    .row-logo img { width: 24px; height: 24px; }
+    .row-team-name { font-size: 13px; }
+    .row-team-abbr { font-size: 10px; }
+    .row-w, .row-l, .row-pct, .row-gb { font-size: 13px; }
+
+    .status-badge { width: 20px; height: 20px; font-size: 10px; }
+
+    #toast-container {
+      left: auto;
+      right: 28px;
+      bottom: 28px;
+      width: 320px;
+    }
+    .toast { text-align: left; }
   }
-  .state-banner.show { display: block; }
 </style>
 </head>
 <body>
 
 <nav>
-    <span class="last-sync" id="last-sync">Never synced</span>
-    <span class="live-pill" id="live-pill">
-      <span class="live-dot"></span>
-      <span id="live-label">Offline</span>
-    </span>
+  <span class="last-sync" id="last-sync">Never synced</span>
+  <span class="live-pill" id="live-pill">
+    <span class="live-dot"></span>
+    <span id="live-label">Offline</span>
+  </span>
 </nav>
 
 <div class="playoff-key">
-  <div class="key-item"><div class="key-dot z"></div> z — 1 Seed (Conference Leader)</div>
-  <div class="key-item"><div class="key-dot x"></div> x — Playoff Berth</div>
-  <div class="key-item"><div class="key-dot pi"></div> pi — Play-In Berth</div>
+  <div class="key-item"><div class="key-dot z"></div> z — 1 Seed</div>
+  <div class="key-item"><div class="key-dot x"></div> x — Playoff</div>
+  <div class="key-item"><div class="key-dot pi"></div> pi — Play-In</div>
   <div class="key-item"><div class="key-dot e"></div> e — Eliminated</div>
-  <div class="key-item" style="margin-left:auto;color:#444;font-size:11px;">
-    Playoff Eligibility: 7 matches played &nbsp;·&nbsp; Updates live after every game
-  </div>
+  <div class="key-eligibility">Playoff Eligibility: 7 matches played · Updates live</div>
 </div>
 
 <div class="state-banner" id="state-banner"></div>
@@ -308,6 +454,14 @@
   </div>
 </div>
 
+<!-- Mobile-only conference tabs -->
+<div class="conf-tabs" id="conf-tabs">
+  <div class="conf-tab-list">
+    <button class="conf-tab east active" data-conf="0">East</button>
+    <button class="conf-tab west" data-conf="1">West</button>
+  </div>
+</div>
+
 <div class="conferences" id="conferences"></div>
 
 <div id="toast-container"></div>
@@ -318,7 +472,6 @@ const CONFIG = {
   POLL_MS: 30000,
 };
 
-// Keyed by full team name — used as a secondary fallback
 const LOGOS = {
   "Atlanta Hawks":"https://a.espncdn.com/i/teamlogos/nba/500/atl.png",
   "Boston Celtics":"https://a.espncdn.com/i/teamlogos/nba/500/bos.png",
@@ -352,38 +505,37 @@ const LOGOS = {
   "Washington Wizards":"https://a.espncdn.com/i/teamlogos/nba/500/wsh.png"
 };
 
-// Keyed by abbreviation — primary client-side logo source
 const LOGOS_BY_ABB = {
-  ATL:  "https://a.espncdn.com/i/teamlogos/nba/500/atl.png",
-  BOS:  "https://a.espncdn.com/i/teamlogos/nba/500/bos.png",
-  BKN:  "https://a.espncdn.com/i/teamlogos/nba/500/bkn.png",
-  CHA:  "https://a.espncdn.com/i/teamlogos/nba/500/cha.png",
-  CHI:  "https://a.espncdn.com/i/teamlogos/nba/500/chi.png",
-  CLE:  "https://a.espncdn.com/i/teamlogos/nba/500/cle.png",
-  DAL:  "https://a.espncdn.com/i/teamlogos/nba/500/dal.png",
-  DEN:  "https://a.espncdn.com/i/teamlogos/nba/500/den.png",
-  DET:  "https://a.espncdn.com/i/teamlogos/nba/500/det.png",
-  GSW:  "https://a.espncdn.com/i/teamlogos/nba/500/gs.png",
-  HOU:  "https://a.espncdn.com/i/teamlogos/nba/500/hou.png",
-  IND:  "https://a.espncdn.com/i/teamlogos/nba/500/ind.png",
-  LAC:  "https://a.espncdn.com/i/teamlogos/nba/500/lac.png",
-  LAL:  "https://a.espncdn.com/i/teamlogos/nba/500/lal.png",
-  MEM:  "https://a.espncdn.com/i/teamlogos/nba/500/mem.png",
-  MIA:  "https://a.espncdn.com/i/teamlogos/nba/500/mia.png",
-  MIL:  "https://a.espncdn.com/i/teamlogos/nba/500/mil.png",
-  MIN:  "https://a.espncdn.com/i/teamlogos/nba/500/min.png",
-  NOP:  "https://a.espncdn.com/i/teamlogos/nba/500/no.png",
-  NYK:  "https://a.espncdn.com/i/teamlogos/nba/500/ny.png",
-  OKC:  "https://a.espncdn.com/i/teamlogos/nba/500/okc.png",
-  ORL:  "https://a.espncdn.com/i/teamlogos/nba/500/orl.png",
-  PHI:  "https://a.espncdn.com/i/teamlogos/nba/500/phi.png",
-  PHX:  "https://a.espncdn.com/i/teamlogos/nba/500/phx.png",
-  POR:  "https://a.espncdn.com/i/teamlogos/nba/500/por.png",
-  SAC:  "https://a.espncdn.com/i/teamlogos/nba/500/sac.png",
-  SAS:  "https://a.espncdn.com/i/teamlogos/nba/500/sa.png",
-  TOR:  "https://a.espncdn.com/i/teamlogos/nba/500/tor.png",
-  UTAH: "https://a.espncdn.com/i/teamlogos/nba/500/utah.png",
-  WAS:  "https://a.espncdn.com/i/teamlogos/nba/500/wsh.png",
+  ATL:"https://a.espncdn.com/i/teamlogos/nba/500/atl.png",
+  BOS:"https://a.espncdn.com/i/teamlogos/nba/500/bos.png",
+  BKN:"https://a.espncdn.com/i/teamlogos/nba/500/bkn.png",
+  CHA:"https://a.espncdn.com/i/teamlogos/nba/500/cha.png",
+  CHI:"https://a.espncdn.com/i/teamlogos/nba/500/chi.png",
+  CLE:"https://a.espncdn.com/i/teamlogos/nba/500/cle.png",
+  DAL:"https://a.espncdn.com/i/teamlogos/nba/500/dal.png",
+  DEN:"https://a.espncdn.com/i/teamlogos/nba/500/den.png",
+  DET:"https://a.espncdn.com/i/teamlogos/nba/500/det.png",
+  GSW:"https://a.espncdn.com/i/teamlogos/nba/500/gs.png",
+  HOU:"https://a.espncdn.com/i/teamlogos/nba/500/hou.png",
+  IND:"https://a.espncdn.com/i/teamlogos/nba/500/ind.png",
+  LAC:"https://a.espncdn.com/i/teamlogos/nba/500/lac.png",
+  LAL:"https://a.espncdn.com/i/teamlogos/nba/500/lal.png",
+  MEM:"https://a.espncdn.com/i/teamlogos/nba/500/mem.png",
+  MIA:"https://a.espncdn.com/i/teamlogos/nba/500/mia.png",
+  MIL:"https://a.espncdn.com/i/teamlogos/nba/500/mil.png",
+  MIN:"https://a.espncdn.com/i/teamlogos/nba/500/min.png",
+  NOP:"https://a.espncdn.com/i/teamlogos/nba/500/no.png",
+  NYK:"https://a.espncdn.com/i/teamlogos/nba/500/ny.png",
+  OKC:"https://a.espncdn.com/i/teamlogos/nba/500/okc.png",
+  ORL:"https://a.espncdn.com/i/teamlogos/nba/500/orl.png",
+  PHI:"https://a.espncdn.com/i/teamlogos/nba/500/phi.png",
+  PHX:"https://a.espncdn.com/i/teamlogos/nba/500/phx.png",
+  POR:"https://a.espncdn.com/i/teamlogos/nba/500/por.png",
+  SAC:"https://a.espncdn.com/i/teamlogos/nba/500/sac.png",
+  SAS:"https://a.espncdn.com/i/teamlogos/nba/500/sa.png",
+  TOR:"https://a.espncdn.com/i/teamlogos/nba/500/tor.png",
+  UTAH:"https://a.espncdn.com/i/teamlogos/nba/500/utah.png",
+  WAS:"https://a.espncdn.com/i/teamlogos/nba/500/wsh.png",
 };
 
 const FALLBACK = {
@@ -406,6 +558,11 @@ const FALLBACK = {
 
 let prevStandings = null;
 let consecutiveFails = 0;
+let activeConfIndex = 0;
+
+function isMobile() {
+  return window.innerWidth < 768;
+}
 
 function pct(w, l) {
   const gp = w + l;
@@ -511,14 +668,8 @@ const ABB_TO_NAME = {
 };
 
 function buildStandingsFromFlat(flatTeams) {
-  const eastern = [
-    "ATL","BOS","BKN","CHA","CHI","CLE","DET","IND",
-    "MIA","MIL","NYK","ORL","PHI","TOR","WAS"
-  ];
-  const western = [
-    "DAL","DEN","GSW","HOU","LAC","LAL","MEM","MIN",
-    "NOP","OKC","PHX","POR","SAC","SAS","UTAH"
-  ];
+  const eastern = ["ATL","BOS","BKN","CHA","CHI","CLE","DET","IND","MIA","MIL","NYK","ORL","PHI","TOR","WAS"];
+  const western = ["DAL","DEN","GSW","HOU","LAC","LAL","MEM","MIN","NOP","OKC","PHX","POR","SAC","SAS","UTAH"];
 
   const eastTeams = [];
   const westTeams = [];
@@ -526,38 +677,56 @@ function buildStandingsFromFlat(flatTeams) {
   for (const team of flatTeams) {
     const name = ABB_TO_NAME[team.abb] || team.abb;
     const entry = {
-      name,
-      abbr:   team.abb,
-      w:      team.wins   || 0,
-      l:      team.losses || 0,
+      name, abbr: team.abb,
+      w: team.wins || 0, l: team.losses || 0,
       status: team.status || '',
-      // Priority: API-supplied logo → abbr map → full-name map
-      logo:   team.logo || LOGOS_BY_ABB[team.abb] || LOGOS[name] || '',
+      logo: team.logo || LOGOS_BY_ABB[team.abb] || LOGOS[name] || '',
       streak: team.streak || '—',
-      pct:    team.pct    || '0.000',
+      pct: team.pct || '0.000',
     };
-    if (eastern.includes(team.abb)) {
-      eastTeams.push(entry);
-    } else {
-      westTeams.push(entry);
-    }
+    if (eastern.includes(team.abb)) eastTeams.push(entry);
+    else westTeams.push(entry);
   }
 
   return { eastern: eastTeams, western: westTeams };
+}
+
+function setActiveConf(index) {
+  activeConfIndex = index;
+  document.querySelectorAll('.conf-tab').forEach((tab, i) => {
+    tab.classList.toggle('active', i === index);
+  });
+  document.querySelectorAll('.conference').forEach((conf, i) => {
+    conf.classList.toggle('active', i === index);
+  });
+}
+
+function initTabs() {
+  const tabs = document.getElementById('conf-tabs');
+  tabs.style.display = 'block';
+
+  document.querySelectorAll('.conf-tab').forEach((tab, i) => {
+    tab.addEventListener('click', () => setActiveConf(i));
+  });
+
+  // Update visibility on resize
+  window.addEventListener('resize', () => {
+    if (!isMobile()) {
+      document.querySelectorAll('.conference').forEach(c => c.classList.add('active'));
+    } else {
+      document.querySelectorAll('.conference').forEach((c, i) => {
+        c.classList.toggle('active', i === activeConfIndex);
+      });
+    }
+  });
 }
 
 function renderConferences(data) {
   const container = document.getElementById('conferences');
 
   let standingsData = data.standings;
-
-  if (Array.isArray(data.standings)) {
-    standingsData = buildStandingsFromFlat(data.standings);
-  }
-
-  if (!standingsData || (!standingsData.eastern && !standingsData.western)) {
-    standingsData = FALLBACK.standings;
-  }
+  if (Array.isArray(data.standings)) standingsData = buildStandingsFromFlat(data.standings);
+  if (!standingsData || (!standingsData.eastern && !standingsData.western)) standingsData = FALLBACK.standings;
 
   const confDefs = [
     { key: 'eastern', name: 'Eastern Conference', cls: 'east', badge: 'EAST' },
@@ -571,14 +740,12 @@ function renderConferences(data) {
       const next = standingsData[ck]  || [];
       for (const team of next) {
         const p = prev.find(t => t.abbr === team.abbr);
-        if (!p || p.w !== team.w || p.l !== team.l || p.status !== team.status) {
-          changedAbbrs.add(team.abbr);
-        }
+        if (!p || p.w !== team.w || p.l !== team.l || p.status !== team.status) changedAbbrs.add(team.abbr);
       }
     }
   }
 
-  container.innerHTML = confDefs.map(conf => {
+  container.innerHTML = confDefs.map((conf, confIndex) => {
     const teams  = [...(standingsData[conf.key] || [])];
     const sorted = teams.sort((a,b) => {
       const pa = pct(a.w, a.l) ?? -1;
@@ -593,7 +760,6 @@ function renderConferences(data) {
       const stsCls   = team.status ? `status-${team.status}` : '';
       const badgeCls = team.status || 'e';
       const flash    = changedAbbrs.has(team.abbr) ? ' updated' : '';
-      // Resolve logo: team object first, then abbr map, then name map
       const logo     = team.logo || LOGOS_BY_ABB[team.abbr] || LOGOS[team.name] || '';
 
       return `
@@ -613,8 +779,11 @@ function renderConferences(data) {
         </div>`;
     }).join('');
 
+    // On mobile, only first conf is active initially
+    const isActive = !isMobile() || confIndex === activeConfIndex;
+
     return `
-      <div class="conference">
+      <div class="conference${isActive ? ' active' : ''}">
         <div class="conf-header">
           <span class="conf-badge ${conf.cls}">${conf.badge}</span>
           <span class="conf-title">${conf.name}</span>
@@ -629,9 +798,15 @@ function renderConferences(data) {
       </div>`;
   }).join('');
 
+  // Re-bind tab clicks after re-render
+  if (isMobile()) {
+    document.querySelectorAll('.conference').forEach((c, i) => {
+      c.classList.toggle('active', i === activeConfIndex);
+    });
+  }
+
   setTimeout(() => {
-    document.querySelectorAll('.standing-row.updated')
-      .forEach(el => el.classList.remove('updated'));
+    document.querySelectorAll('.standing-row.updated').forEach(el => el.classList.remove('updated'));
   }, 1500);
 
   prevStandings = JSON.parse(JSON.stringify(standingsData));
@@ -682,25 +857,20 @@ async function fetchStandings() {
       banner.classList.add('show');
     }
 
-    if (!prevStandings) {
-      renderConferences(FALLBACK);
-    }
+    if (!prevStandings) renderConferences(FALLBACK);
   }
 }
 
 (async function init() {
+  // Show tabs on mobile
+  if (isMobile()) initTabs();
+
   await fetchStandings();
   setInterval(fetchStandings, CONFIG.POLL_MS);
 })();
 
 function connectSSE() {
   return;
-  if (typeof EventSource === 'undefined') return;
-  const SSE_URL = CONFIG.API_URL.replace(/\/standings$/, '/standings/events');
-  const es = new EventSource(SSE_URL);
-  es.addEventListener('standings', () => { fetchStandings(); });
-  es.addEventListener('result',    () => { fetchStandings(); });
-  es.onerror = () => { es.close(); };
 }
 connectSSE();
 </script>
