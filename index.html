@@ -3,813 +3,443 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>RPL Standings</title>
-<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+<title>RPL Standings — Season 10</title>
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
 <style>
   :root {
-    --red: #e8001d;
-    --bg: #060608;
-    --surface: #0d0d10;
-    --surface2: #111115;
-    --border: rgba(255,255,255,.06);
-    --muted: #555;
-    --text: #e8e8ee;
-    --green: #22c55e;
-    --amber: #f59e0b;
-    --blue: #3b82f6;
+    --red:     #e8001d;
+    --bg:      #06060a;
+    --surface: #0e0e14;
+    --surface2:#131319;
+    --surface3:#18181f;
+    --border:  rgba(255,255,255,.07);
+    --border2: rgba(255,255,255,.04);
+    --muted:   #52525e;
+    --muted2:  #3a3a45;
+    --text:    #e2e2ea;
+    --green:   #22c55e;
+    --amber:   #f59e0b;
+    --blue:    #3b82f6;
+    --win-col: #4ade80;
+    --los-col: #f87171;
   }
 
   *, *::before, *::after { margin:0; padding:0; box-sizing:border-box; }
-  html { scroll-behavior: smooth; }
-
+  html { scroll-behavior:smooth; }
   body {
     background: var(--bg);
     color: var(--text);
-    font-family: 'DM Sans', sans-serif;
+    font-family: 'Inter', sans-serif;
     font-size: 14px;
     min-height: 100vh;
-    /* Prevent horizontal overflow on mobile */
     overflow-x: hidden;
   }
 
-  /* ─── NAV ─── */
+  /* ── NAV ── */
   nav {
-    position: sticky; top: 0; z-index: 100;
-    display: flex; align-items: center; justify-content: space-between;
-    padding: 0 40px; height: 58px;
+    position: sticky; top:0; z-index:100;
+    display: flex; align-items:center; justify-content:space-between;
+    padding: 0 36px; height: 56px;
+    background: rgba(6,6,10,.9);
+    backdrop-filter: blur(24px);
     border-bottom: 1px solid var(--border);
-    background: rgba(6,6,8,.92);
-    backdrop-filter: blur(20px);
   }
-
-  .nav-logo { display: flex; align-items: center; gap: 10px; text-decoration: none; }
-  .nav-logo span { font-family: 'Bebas Neue', sans-serif; font-size: 20px; letter-spacing: .06em; color: #fff; }
-  .nav-logo span em { color: var(--red); font-style: normal; }
-
-  .nav-right { display: flex; align-items: center; gap: 16px; }
-
+  .nav-brand {
+    display: flex; align-items:center; gap:10px;
+    text-decoration: none;
+  }
+  .nav-brand-icon {
+    width:30px; height:30px; border-radius:6px;
+    background: var(--red);
+    display:flex; align-items:center; justify-content:center;
+    font-family:'Bebas Neue',sans-serif; font-size:16px; color:#fff;
+    letter-spacing:.04em;
+  }
+  .nav-brand-text {
+    font-family:'Bebas Neue',sans-serif;
+    font-size:18px; letter-spacing:.08em; color:#fff;
+  }
+  .nav-brand-text em { color:var(--red); font-style:normal; }
+  .nav-season {
+    font-size:11px; font-weight:500; color:var(--muted);
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius:20px; padding:3px 10px; letter-spacing:.06em;
+  }
+  .nav-right { display:flex; align-items:center; gap:14px; }
   .live-pill {
-    display: flex; align-items: center; gap: 6px;
-    font-size: 11px; font-weight: 600; letter-spacing: .1em;
-    color: var(--muted); text-transform: uppercase;
-    transition: color .3s;
+    display:flex; align-items:center; gap:6px;
+    font-size:11px; font-weight:600; letter-spacing:.1em;
+    color:var(--muted); text-transform:uppercase; transition:color .3s;
   }
-  .live-pill.live { color: var(--green); }
+  .live-pill.live { color:var(--green); }
   .live-dot {
-    width: 7px; height: 7px; border-radius: 50%;
-    background: var(--muted); flex-shrink: 0;
-    transition: background .3s;
+    width:7px; height:7px; border-radius:50%;
+    background:var(--muted); flex-shrink:0; transition:background .3s;
   }
-  .live-pill.live .live-dot {
-    background: var(--green);
-    animation: pulse 1.8s ease infinite;
-  }
+  .live-pill.live .live-dot { background:var(--green); animation:pulse 1.8s ease infinite; }
   @keyframes pulse {
-    0%,100% { opacity:1; transform:scale(1); }
-    50%      { opacity:.4; transform:scale(.7); }
+    0%,100%{opacity:1;transform:scale(1);}
+    50%{opacity:.35;transform:scale(.65);}
   }
+  .last-sync { font-size:11px; color:var(--muted); }
 
-  .last-sync { font-size: 11px; color: var(--muted); }
+  /* ── PAGE BODY ── */
+  .page-wrap { max-width:1400px; margin:0 auto; padding:0 28px 80px; }
 
-  /* ─── PLAYOFF KEY ─── */
+  /* ── HERO STRIP ── */
+  .hero-strip {
+    display:flex; align-items:center; justify-content:space-between;
+    padding:28px 0 0;
+    border-bottom: 1px solid var(--border2);
+    margin-bottom: 24px;
+    padding-bottom: 20px;
+  }
+  .hero-title {
+    font-family:'Bebas Neue',sans-serif;
+    font-size:32px; letter-spacing:.04em; color:#fff;
+    line-height:1;
+  }
+  .hero-title em { color:var(--red); font-style:normal; }
+  .hero-sub { font-size:12px; color:var(--muted); margin-top:4px; }
+
+  /* ── PLAYOFF KEY ── */
   .playoff-key {
-    background: var(--surface);
-    border: 1px solid var(--border);
-    border-radius: 10px;
-    padding: 16px 20px;
-    display: flex; flex-wrap: wrap; gap: 16px;
-    margin: 32px 40px 0;
+    display:flex; flex-wrap:wrap; gap:20px;
+    align-items:center;
   }
-  .key-item { display:flex; align-items:center; gap:8px; font-size:12px; color:var(--muted); }
-  .key-dot { width:10px; height:10px; border-radius:2px; flex-shrink:0; }
-  .key-dot.z  { background: var(--amber); }
-  .key-dot.x  { background: var(--green); }
-  .key-dot.pi { background: var(--blue); }
-  .key-dot.e  { background: #555; }
+  .key-item { display:flex; align-items:center; gap:7px; font-size:11px; color:var(--muted); }
+  .key-pip { width:3px; height:16px; border-radius:2px; flex-shrink:0; }
+  .key-pip.z  { background:var(--amber); }
+  .key-pip.x  { background:var(--green); }
+  .key-pip.pi { background:var(--blue); }
+  .key-pip.e  { background:var(--muted2); }
 
-  /* ─── RESULTS STRIP ─── */
-  #results-strip {
-    margin: 20px 40px 0;
-    display: none;
+  /* ── STATE BANNER ── */
+  .state-banner {
+    display:none; margin-top:16px;
+    padding:12px 18px; border-radius:8px;
+    font-size:13px; color:var(--muted);
+    background:var(--surface); border:1px solid var(--border);
   }
+  .state-banner.show { display:block; }
+
+  /* ── RESULTS STRIP ── */
+  #results-strip { margin-top:20px; display:none; }
   .results-strip-inner {
-    background: var(--surface);
-    border: 1px solid var(--border);
-    border-radius: 10px;
-    overflow: hidden;
+    background:var(--surface);
+    border:1px solid var(--border);
+    border-radius:12px; overflow:hidden;
   }
   .results-header {
-    display: flex; align-items: center; gap: 10px;
-    padding: 12px 20px;
-    border-bottom: 1px solid var(--border);
-    background: var(--surface2);
+    display:flex; align-items:center; justify-content:space-between;
+    padding:11px 18px;
+    border-bottom:1px solid var(--border);
+    background:var(--surface2);
   }
   .results-header-title {
-    font-size: 10px; font-weight: 600; letter-spacing: .12em;
-    text-transform: uppercase; color: var(--muted);
+    font-size:10px; font-weight:700; letter-spacing:.12em;
+    text-transform:uppercase; color:var(--muted);
   }
-  .results-header-title em { color: var(--red); font-style: normal; }
-
+  .results-header-title em { color:var(--red); font-style:normal; margin-left:4px; }
   .results-list {
-    display: flex; flex-wrap: wrap;
-    /* Enable horizontal scroll on mobile */
-    overflow-x: auto;
-    -webkit-overflow-scrolling: touch;
-    scrollbar-width: none;
+    display:flex; overflow-x:auto;
+    scrollbar-width:none;
+    -webkit-overflow-scrolling:touch;
   }
-  .results-list::-webkit-scrollbar { display: none; }
+  .results-list::-webkit-scrollbar { display:none; }
 
   .result-card {
-    display: flex; align-items: center;
-    padding: 14px 24px;
-    border-right: 1px solid var(--border);
-    min-width: 260px;
-    position: relative;
-    transition: background .15s;
-    /* Don't shrink cards on mobile */
-    flex-shrink: 0;
+    display:flex; align-items:center; flex-shrink:0;
+    padding:14px 20px; min-width:220px;
+    border-right:1px solid var(--border2);
+    position:relative; transition:background .15s;
   }
-  .result-card:last-child { border-right: none; }
-  .result-card:hover { background: rgba(255,255,255,.02); }
+  .result-card:last-child { border-right:none; }
+  .result-card:hover { background:rgba(255,255,255,.02); }
   .result-card::before {
-    content: '';
-    position: absolute; top: 0; left: 0; right: 0; height: 2px;
+    content:''; position:absolute;
+    top:0; left:0; right:0; height:2px;
   }
-  .result-card.final::before    { background: var(--green); }
-  .result-card.forfeit::before  { background: var(--amber); }
-  .result-card.incomplete::before { background: #555; }
+  .result-card.final::before    { background:var(--green); }
+  .result-card.forfeit::before  { background:var(--amber); }
+  .result-card.incomplete::before { background:var(--muted2); }
 
-  .result-teams { flex: 1; display: flex; flex-direction: column; gap: 4px; }
-  .result-row { display: flex; align-items: center; gap: 8px; }
+  .result-teams { flex:1; display:flex; flex-direction:column; gap:5px; }
+  .result-row { display:flex; align-items:center; gap:8px; }
+  .result-logo { width:18px; height:18px; object-fit:contain; flex-shrink:0; }
   .result-abbr {
-    font-family: 'Bebas Neue', sans-serif;
-    font-size: 15px; letter-spacing: .06em; color: #fff;
-    width: 40px;
+    font-family:'Bebas Neue',sans-serif;
+    font-size:14px; letter-spacing:.05em; color:#fff; width:38px;
   }
-  .result-score { font-size: 14px; font-weight: 700; color: #fff; width: 28px; text-align: right; }
-  .result-score.winner { color: var(--green); }
-  .result-score.loser  { color: var(--muted); }
-
-  .result-meta { display: flex; flex-direction: column; align-items: flex-end; gap: 3px; margin-left: 16px; }
-  .result-status-badge {
-    font-size: 9px; font-weight: 700; letter-spacing: .1em;
-    text-transform: uppercase; padding: 3px 7px; border-radius: 4px;
+  .result-score {
+    font-size:14px; font-weight:700; color:#fff;
+    width:26px; text-align:right; font-variant-numeric:tabular-nums;
   }
-  .result-status-badge.final    { background: rgba(34,197,94,.12); color: var(--green); }
-  .result-status-badge.forfeit  { background: rgba(245,158,11,.12); color: var(--amber); }
-  .result-status-badge.incomplete { background: rgba(85,85,85,.2); color: var(--muted); }
-  .result-status-badge.ot       { background: rgba(59,130,246,.12); color: var(--blue); }
-  .result-quarter { font-size: 10px; color: var(--muted); }
+  .result-score.winner { color:var(--win-col); }
+  .result-score.loser  { color:var(--muted); }
+  .result-meta {
+    display:flex; flex-direction:column; align-items:flex-end; gap:4px; margin-left:14px;
+  }
+  .result-badge {
+    font-size:9px; font-weight:700; letter-spacing:.1em;
+    text-transform:uppercase; padding:3px 7px; border-radius:4px; white-space:nowrap;
+  }
+  .result-badge.final      { background:rgba(34,197,94,.12); color:var(--green); }
+  .result-badge.forfeit    { background:rgba(245,158,11,.12); color:var(--amber); }
+  .result-badge.incomplete { background:rgba(82,82,94,.15); color:var(--muted); }
+  .result-badge.ot         { background:rgba(59,130,246,.12); color:var(--blue); }
+  .result-note { font-size:10px; color:var(--muted); max-width:110px; text-align:right; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
 
-  /* ─── CONFERENCES GRID ─── */
+  /* ── CONFERENCES GRID ── */
   .conferences {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 2px;
-    padding: 24px 40px 80px;
+    display:grid;
+    grid-template-columns:1fr 1fr;
+    gap:28px;
+    margin-top:28px;
   }
 
-  .conf-header { display: flex; align-items: center; gap: 12px; padding: 28px 0 20px; }
+  .conf-header {
+    display:flex; align-items:center; gap:10px;
+    margin-bottom:12px;
+  }
   .conf-badge {
-    font-family: 'Bebas Neue', sans-serif;
-    font-size: 11px; letter-spacing: .12em;
-    padding: 4px 10px; border-radius: 4px; color: #fff;
+    font-family:'Bebas Neue',sans-serif;
+    font-size:10px; letter-spacing:.14em; padding:4px 10px;
+    border-radius:4px; color:#fff;
   }
-  .conf-badge.east { background: rgba(232,0,29,.2); color: var(--red); border: 1px solid rgba(232,0,29,.3); }
-  .conf-badge.west { background: rgba(59,130,246,.15); color: #60a5fa; border: 1px solid rgba(59,130,246,.25); }
-  .conf-title { font-family: 'Bebas Neue', sans-serif; font-size: 26px; letter-spacing: .04em; color: #fff; }
+  .conf-badge.east { background:rgba(232,0,29,.18); color:var(--red); border:1px solid rgba(232,0,29,.28); }
+  .conf-badge.west { background:rgba(59,130,246,.15); color:#60a5fa; border:1px solid rgba(59,130,246,.25); }
+  .conf-title {
+    font-family:'Bebas Neue',sans-serif;
+    font-size:22px; letter-spacing:.04em; color:#fff;
+  }
 
-  /* ─── STANDINGS TABLE ─── */
+  /* ── STANDINGS TABLE ── */
   .standings-table {
-    width: 100%;
-    background: var(--surface);
-    border: 1px solid var(--border);
-    border-radius: 12px;
-    overflow: hidden;
-    margin-bottom: 20px;
+    background:var(--surface);
+    border:1px solid var(--border);
+    border-radius:12px; overflow:hidden;
   }
+
+  /* columns: # | logo | team | W | L | PCT | STRK */
+  .tbl-cols { grid-template-columns: 26px 32px 1fr 42px 42px 62px 56px; }
+
   .standings-table-header {
-    display: grid;
-    grid-template-columns: 28px 36px 1fr 48px 48px 70px 48px;
-    padding: 10px 16px;
-    border-bottom: 1px solid var(--border);
-    background: var(--surface2);
+    display:grid; padding:9px 14px;
+    border-bottom:1px solid var(--border);
+    background:var(--surface2);
   }
+  .standings-table-header.tbl-cols {}
   .standings-table-header span {
-    font-size: 10px; font-weight: 600; letter-spacing: .1em;
-    text-transform: uppercase; color: var(--muted); text-align: center;
+    font-size:10px; font-weight:600; letter-spacing:.1em;
+    text-transform:uppercase; color:var(--muted); text-align:center;
   }
-  .standings-table-header span:nth-child(3) { text-align: left; }
+  .standings-table-header span:nth-child(3) { text-align:left; padding-left:2px; }
 
   .standing-row {
-    display: grid;
-    grid-template-columns: 28px 36px 1fr 48px 48px 70px 48px;
-    padding: 11px 16px;
-    align-items: center;
-    border-bottom: 1px solid rgba(255,255,255,.03);
-    transition: background .15s;
-    position: relative;
+    display:grid; padding:10px 14px;
+    align-items:center;
+    border-bottom:1px solid var(--border2);
+    position:relative; transition:background .15s;
   }
-  .standing-row:last-child { border-bottom: none; }
-  .standing-row:hover { background: rgba(255,255,255,.03); }
+  .standing-row.tbl-cols {}
+  .standing-row:last-child { border-bottom:none; }
+  .standing-row:hover { background:rgba(255,255,255,.025); }
   .standing-row::before {
-    content: ''; position: absolute;
-    left: 0; top: 0; bottom: 0; width: 3px;
+    content:''; position:absolute;
+    left:0; top:0; bottom:0; width:3px; border-radius:0 2px 2px 0;
   }
-  .standing-row.status-z::before  { background: var(--amber); }
-  .standing-row.status-x::before  { background: var(--green); }
-  .standing-row.status-pi::before { background: var(--blue); }
-  .standing-row.status-e::before  { background: transparent; }
+  .standing-row.status-z::before  { background:var(--amber); }
+  .standing-row.status-x::before  { background:var(--green); }
+  .standing-row.status-pi::before { background:var(--blue); }
 
   @keyframes rowFlash {
-    0%   { background: rgba(232,0,29,.18); }
-    100% { background: transparent; }
+    0%   { background:rgba(232,0,29,.15); }
+    100% { background:transparent; }
   }
-  .standing-row.updated { animation: rowFlash 1.4s ease forwards; }
+  .standing-row.updated { animation:rowFlash 1.6s ease forwards; }
 
-  .row-rank { font-size:13px; font-weight:600; color:var(--muted); text-align:center; }
-  .row-logo img { width:24px; height:24px; object-fit:contain; display:block; margin:auto; }
-  .row-team-name { font-size:13px; font-weight:600; color:#fff; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
-  .row-team-abbr { font-size:10px; color:var(--muted); letter-spacing:.06em; }
-  .row-w  { text-align:center; font-size:13px; color:var(--green); font-weight:600; }
-  .row-l  { text-align:center; font-size:13px; color:#ef4444; font-weight:600; }
-  .row-pct { text-align:center; font-size:13px; color:#fff; font-weight:600; }
-  .row-gb  { text-align:center; font-size:13px; color:var(--muted); }
-
+  .row-rank { font-size:12px; font-weight:600; color:var(--muted); text-align:center; }
+  .row-logo img { width:22px; height:22px; object-fit:contain; display:block; margin:auto; }
+  .row-logo .logo-placeholder {
+    width:22px; height:22px; border-radius:50%;
+    background:var(--surface3); display:block; margin:auto;
+  }
+  .row-team-name {
+    font-size:13px; font-weight:600; color:#fff;
+    white-space:nowrap; overflow:hidden; text-overflow:ellipsis;
+  }
+  .row-team-meta {
+    display:flex; align-items:center; gap:5px; margin-top:1px;
+  }
+  .row-team-abbr { font-size:10px; color:var(--muted); letter-spacing:.05em; }
   .status-badge {
-    display: inline-flex; align-items:center; justify-content:center;
-    font-size:10px; font-weight:700; letter-spacing:.06em;
-    width:20px; height:20px; border-radius:4px; flex-shrink:0;
+    display:inline-flex; align-items:center; justify-content:center;
+    font-size:9px; font-weight:700; letter-spacing:.06em;
+    height:15px; padding:0 5px; border-radius:3px; flex-shrink:0;
   }
   .status-badge.z  { background:rgba(245,158,11,.15); color:var(--amber); }
   .status-badge.x  { background:rgba(34,197,94,.12); color:var(--green); }
   .status-badge.pi { background:rgba(59,130,246,.15); color:#60a5fa; }
   .status-badge.e  { display:none; }
 
+  .row-w   { text-align:center; font-size:13px; color:var(--win-col); font-weight:600; font-variant-numeric:tabular-nums; }
+  .row-l   { text-align:center; font-size:13px; color:var(--los-col); font-weight:600; font-variant-numeric:tabular-nums; }
+  .row-pct { text-align:center; font-size:12px; color:var(--text); font-variant-numeric:tabular-nums; }
+  .row-strk {
+    text-align:center; font-size:12px; font-weight:600;
+    font-variant-numeric:tabular-nums;
+  }
+  .row-strk.win  { color:var(--win-col); }
+  .row-strk.loss { color:var(--los-col); }
+  .row-strk.none { color:var(--muted); }
+
   .standing-row.status-e .row-team-name,
   .standing-row.status-e .row-w,
   .standing-row.status-e .row-l,
-  .standing-row.status-e .row-pct { color: #666; }
+  .standing-row.status-e .row-pct,
+  .standing-row.status-e .row-strk { color:#444; }
 
-  /* ─── TOAST ─── */
+  /* ── TOAST ── */
   #toast-container {
-    position: fixed; bottom: 28px; right: 28px;
-    display: flex; flex-direction: column; gap: 10px;
-    z-index: 9999; pointer-events: none;
+    position:fixed; bottom:24px; right:24px;
+    display:flex; flex-direction:column; gap:8px;
+    z-index:9999; pointer-events:none;
   }
   .toast {
-    background: var(--surface2);
-    border: 1px solid var(--border);
-    border-left: 3px solid var(--red);
-    border-radius: 8px;
-    padding: 12px 18px;
-    font-size: 13px; color: #fff;
-    box-shadow: 0 4px 24px rgba(0,0,0,.4);
-    animation: toastIn .25s ease forwards;
-    pointer-events: all;
-    max-width: 320px;
+    background:var(--surface2);
+    border:1px solid var(--border);
+    border-left:3px solid var(--red);
+    border-radius:8px; padding:11px 16px;
+    font-size:13px; color:#fff;
+    box-shadow:0 8px 32px rgba(0,0,0,.5);
+    animation:toastIn .22s ease forwards;
+    pointer-events:all; max-width:300px;
   }
-  .toast.green { border-left-color: var(--green); }
-  .toast.amber { border-left-color: var(--amber); }
-  @keyframes toastIn {
-    from { opacity:0; transform:translateY(12px); }
-    to   { opacity:1; transform:translateY(0); }
+  .toast.green { border-left-color:var(--green); }
+  .toast.amber { border-left-color:var(--amber); }
+  @keyframes toastIn  { from{opacity:0;transform:translateY(10px);}to{opacity:1;transform:translateY(0);} }
+  @keyframes toastOut { from{opacity:1;}to{opacity:0;transform:translateY(-6px);} }
+  .toast.dying { animation:toastOut .22s ease forwards; }
+
+  /* ══════════════════════════════════
+     RESPONSIVE
+  ══════════════════════════════════ */
+  @media (max-width: 1100px) {
+    .conferences { grid-template-columns:1fr; gap:20px; }
+    .conferences .tbl-cols { grid-template-columns:26px 32px 1fr 40px 40px 58px 52px; }
   }
-  @keyframes toastOut {
-    from { opacity:1; }
-    to   { opacity:0; transform:translateY(-8px); }
-  }
-  .toast.dying { animation: toastOut .25s ease forwards; }
-
-  .state-banner {
-    display: none;
-    margin: 0 40px;
-    padding: 14px 20px;
-    border-radius: 8px;
-    font-size: 13px;
-    border: 1px solid var(--border);
-    color: var(--muted);
-    background: var(--surface);
-  }
-  .state-banner.show { display: block; }
-
-  /* ═══════════════════════════════════════
-     RESPONSIVE — TABLET  (≤ 900px)
-  ═══════════════════════════════════════ */
-  @media (max-width: 900px) {
-    nav {
-      padding: 0 20px;
-      height: 52px;
-    }
-
-    .playoff-key {
-      margin: 20px 16px 0;
-      padding: 14px 16px;
-      gap: 12px;
-    }
-
-    /* Hide the small eligibility note on tablet to save space */
-    .playoff-key .key-item:last-child {
-      display: none;
-    }
-
-    .state-banner {
-      margin: 12px 16px 0;
-    }
-
-    #results-strip {
-      margin: 16px 16px 0;
-    }
-
-    /* Stack conferences vertically on tablet */
-    .conferences {
-      grid-template-columns: 1fr;
-      padding: 16px 16px 60px;
-      gap: 0;
-    }
-
-    .conf-header {
-      padding: 20px 0 16px;
-    }
-
-    .conf-title {
-      font-size: 22px;
-    }
-
-    /* Tighten column widths slightly on tablet */
-    .standings-table-header,
-    .standing-row {
-      grid-template-columns: 24px 32px 1fr 42px 42px 60px 42px;
-      padding: 10px 12px;
+  @media (max-width: 760px) {
+    .page-wrap { padding:0 14px 80px; }
+    nav { padding:0 16px; }
+    .hero-strip { flex-direction:column; align-items:flex-start; gap:14px; padding-bottom:16px; }
+    .hero-title { font-size:26px; }
+    .playoff-key { gap:14px; }
+    .result-card { min-width:190px; padding:12px 14px; }
+    .tbl-cols,
+    .standings-table-header.tbl-cols,
+    .standing-row.tbl-cols {
+      grid-template-columns:22px 28px 1fr 38px 38px 54px 48px;
+      padding-left:10px; padding-right:10px;
     }
   }
-
-  /* ═══════════════════════════════════════
-     RESPONSIVE — MOBILE  (≤ 600px)
-  ═══════════════════════════════════════ */
-  @media (max-width: 600px) {
-    body {
-      font-size: 13px;
+  @media (max-width: 500px) {
+    .hero-title { font-size:22px; }
+    .conf-title { font-size:19px; }
+    /* Hide streak on very small screens */
+    .tbl-cols,
+    .standings-table-header.tbl-cols,
+    .standing-row.tbl-cols {
+      grid-template-columns:20px 0 1fr 36px 36px 52px 0;
     }
-
-    /* NAV — tighter on mobile */
-    nav {
-      padding: 0 14px;
-      height: 48px;
-    }
-
-    .last-sync {
-      font-size: 10px;
-      /* Truncate if too long */
-      white-space: nowrap;
-      overflow: hidden;
-      text-overflow: ellipsis;
-      max-width: 120px;
-    }
-
-    #live-label {
-      display: none; /* show only dot on very small screens */
-    }
-
-    /* PLAYOFF KEY — vertical wrap, smaller text */
-    .playoff-key {
-      margin: 12px 12px 0;
-      padding: 12px 14px;
-      gap: 10px;
-      border-radius: 8px;
-    }
-
-    .key-item {
-      font-size: 11px;
-      gap: 6px;
-    }
-
-    /* Eligibility note already hidden at tablet; keep hidden */
-
-    /* STATE BANNER */
-    .state-banner {
-      margin: 10px 12px 0;
-      padding: 12px 14px;
-      font-size: 12px;
-    }
-
-    /* RESULTS STRIP */
-    #results-strip {
-      margin: 12px 12px 0;
-    }
-
-    .results-header {
-      padding: 10px 14px;
-    }
-
-    .results-header-title {
-      font-size: 9px;
-    }
-
-    /* Cards scroll horizontally — smaller padding */
-    .result-card {
-      padding: 12px 16px;
-      min-width: 200px;
-    }
-
-    .result-abbr {
-      font-size: 13px;
-      width: 34px;
-    }
-
-    .result-score {
-      font-size: 13px;
-      width: 24px;
-    }
-
-    /* CONFERENCES */
-    .conferences {
-      grid-template-columns: 1fr;
-      padding: 12px 12px 80px;
-    }
-
-    .conf-header {
-      padding: 16px 0 12px;
-      gap: 8px;
-    }
-
-    .conf-title {
-      font-size: 19px;
-    }
-
-    .conf-badge {
-      font-size: 10px;
-      padding: 3px 8px;
-    }
-
-    /* STANDINGS TABLE — compact mobile layout
-       Drop GB column on very small screens, keep W/L/PCT */
-    .standings-table {
-      border-radius: 8px;
-      /* Allow table to scroll if needed instead of overflowing */
-      overflow-x: auto;
-      -webkit-overflow-scrolling: touch;
-    }
-
-    .standings-table-header {
-      /* #  logo  team  W  L  PCT  (GB hidden via opacity trick) */
-      grid-template-columns: 22px 28px 1fr 36px 36px 54px 0px;
-      padding: 8px 10px 8px 6px;
-      gap: 0;
-    }
-
-    /* Hide GB header label */
-    .standings-table-header span:last-child {
-      display: none;
-    }
-
-    .standing-row {
-      grid-template-columns: 22px 28px 1fr 36px 36px 54px 0px;
-      padding: 9px 10px 9px 6px;
-      gap: 0;
-    }
-
-    /* Hide GB data cell */
-    .row-gb {
-      display: none;
-    }
-
-    .row-rank {
-      font-size: 11px;
-    }
-
-    .row-logo img {
-      width: 20px;
-      height: 20px;
-    }
-
-    .row-team-name {
-      font-size: 12px;
-    }
-
-    .row-team-abbr {
-      font-size: 9px;
-    }
-
-    /* Shrink status badge so it fits next to abbr */
-    .status-badge {
-      font-size: 8px;
-      width: 16px;
-      height: 16px;
-      border-radius: 3px;
-    }
-
-    .row-w,
-    .row-l {
-      font-size: 12px;
-    }
-
-    .row-pct {
-      font-size: 11px;
-    }
-
-    /* TOAST — full-width at bottom on mobile */
-    #toast-container {
-      bottom: 16px;
-      right: 12px;
-      left: 12px;
-    }
-
-    .toast {
-      max-width: 100%;
-      font-size: 12px;
-      padding: 10px 14px;
-    }
-  }
-
-  /* ═══════════════════════════════════════
-     RESPONSIVE — TINY  (≤ 380px)
-     iPhone SE, older Androids
-  ═══════════════════════════════════════ */
-  @media (max-width: 380px) {
-    .standings-table-header,
-    .standing-row {
-      /* Also drop logo column at extreme narrow — keep #, team, W, L, PCT */
-      grid-template-columns: 18px 0px 1fr 34px 34px 50px 0px;
-    }
-
-    .row-logo {
-      display: none;
-    }
-
-    .standings-table-header span:nth-child(2) {
-      display: none;
-    }
-
-    .row-team-name {
-      font-size: 11px;
-    }
-
-    .conf-title {
-      font-size: 17px;
-    }
-
-    .playoff-key {
-      margin: 10px 10px 0;
-    }
-  }
-
-  /* ═══════════════════════════════════════
-     TOUCH IMPROVEMENTS (all mobile)
-  ═══════════════════════════════════════ */
-  @media (hover: none) and (pointer: coarse) {
-    /* Larger tap targets */
-    .standing-row {
-      min-height: 48px;
-    }
-
-    .result-card {
-      min-height: 56px;
-    }
-
-    /* Remove hover effects that feel wrong on touch */
-    .standing-row:hover,
-    .result-card:hover {
-      background: transparent;
-    }
-
-    /* Show active state instead */
-    .standing-row:active {
-      background: rgba(255,255,255,.04);
-    }
-
-    .result-card:active {
-      background: rgba(255,255,255,.04);
-    }
-
-    /* Scroll indicator shadow on results list */
-    .results-strip-inner {
-      position: relative;
-    }
+    .row-logo, .row-strk,
+    .standings-table-header span:nth-child(2),
+    .standings-table-header span:last-child { display:none; }
+    .row-team-name { font-size:12px; }
   }
 </style>
 </head>
 <body>
 
 <nav>
+  <span class="nav-season">Season 10</span>
+  <div class="nav-right">
     <span class="last-sync" id="last-sync">Never synced</span>
     <span class="live-pill" id="live-pill">
       <span class="live-dot"></span>
       <span id="live-label">Offline</span>
     </span>
+  </div>
 </nav>
 
-<div class="playoff-key">
-  <div class="key-item"><div class="key-dot z"></div> z — 1 Seed (Conference Leader)</div>
-  <div class="key-item"><div class="key-dot x"></div> x — Playoff Berth</div>
-  <div class="key-item"><div class="key-dot pi"></div> pi — Play-In Berth</div>
-  <div class="key-item"><div class="key-dot e"></div> e — Eliminated</div>
-  <div class="key-item" style="margin-left:auto;color:#444;font-size:11px;">
-    Playoff Eligibility: 7 matches played &nbsp;·&nbsp; Updates live after every game
-  </div>
-</div>
+<div class="page-wrap">
 
-<div class="state-banner" id="state-banner"></div>
-
-<div id="results-strip">
-  <div class="results-strip-inner">
-    <div class="results-header">
-      <span class="results-header-title">Recent Results &nbsp;<em>●</em></span>
+  <div class="hero-strip">
+    <div>
+      <div class="hero-title"><em>2024–25</em> RPL Standings</div>
+      <div class="hero-sub">Live standings · Updates after every game</div>
     </div>
-    <div class="results-list" id="results-list"></div>
+    <div class="playoff-key">
+      <div class="key-item"><div class="key-pip z"></div> z – Conference Leader</div>
+      <div class="key-item"><div class="key-pip x"></div> x – Playoff Berth</div>
+      <div class="key-item"><div class="key-pip pi"></div> pi – Play-In</div>
+      <div class="key-item"><div class="key-pip e"></div> e – Eliminated</div>
+    </div>
   </div>
-</div>
 
-<div class="conferences" id="conferences"></div>
+  <div class="state-banner" id="state-banner"></div>
+
+  <div id="results-strip">
+    <div class="results-strip-inner">
+      <div class="results-header">
+        <span class="results-header-title">Recent Results <em>●</em></span>
+      </div>
+      <div class="results-list" id="results-list"></div>
+    </div>
+  </div>
+
+  <div class="conferences" id="conferences"></div>
+
+</div>
 
 <div id="toast-container"></div>
 
 <script>
-const CONFIG = {
-  API_URL: 'https://rplstandings.onrender.com/rpl/standings',
-  POLL_MS: 30000,
-};
+const CONFIG = { API_URL:'https://rplstandings.onrender.com/rpl/standings', POLL_MS:30000 };
 
-// Keyed by full team name — used as a secondary fallback
-const LOGOS = {
-  "Atlanta Hawks":"https://a.espncdn.com/i/teamlogos/nba/500/atl.png",
-  "Boston Celtics":"https://a.espncdn.com/i/teamlogos/nba/500/bos.png",
-  "Brooklyn Nets":"https://a.espncdn.com/i/teamlogos/nba/500/bkn.png",
-  "Charlotte Hornets":"https://a.espncdn.com/i/teamlogos/nba/500/cha.png",
-  "Chicago Bulls":"https://a.espncdn.com/i/teamlogos/nba/500/chi.png",
-  "Cleveland Cavaliers":"https://a.espncdn.com/i/teamlogos/nba/500/cle.png",
-  "Dallas Mavericks":"https://a.espncdn.com/i/teamlogos/nba/500/dal.png",
-  "Denver Nuggets":"https://a.espncdn.com/i/teamlogos/nba/500/den.png",
-  "Detroit Pistons":"https://a.espncdn.com/i/teamlogos/nba/500/det.png",
-  "Golden State Warriors":"https://a.espncdn.com/i/teamlogos/nba/500/gs.png",
-  "Houston Rockets":"https://a.espncdn.com/i/teamlogos/nba/500/hou.png",
-  "Indiana Pacers":"https://a.espncdn.com/i/teamlogos/nba/500/ind.png",
-  "LA Clippers":"https://a.espncdn.com/i/teamlogos/nba/500/lac.png",
-  "Los Angeles Lakers":"https://a.espncdn.com/i/teamlogos/nba/500/lal.png",
-  "Memphis Grizzlies":"https://a.espncdn.com/i/teamlogos/nba/500/mem.png",
-  "Miami Heat":"https://a.espncdn.com/i/teamlogos/nba/500/mia.png",
-  "Milwaukee Bucks":"https://a.espncdn.com/i/teamlogos/nba/500/mil.png",
-  "Minnesota Timberwolves":"https://a.espncdn.com/i/teamlogos/nba/500/min.png",
-  "New Orleans Pelicans":"https://a.espncdn.com/i/teamlogos/nba/500/no.png",
-  "New York Knicks":"https://a.espncdn.com/i/teamlogos/nba/500/ny.png",
-  "Oklahoma City Thunder":"https://a.espncdn.com/i/teamlogos/nba/500/okc.png",
-  "Orlando Magic":"https://a.espncdn.com/i/teamlogos/nba/500/orl.png",
-  "Philadelphia 76ers":"https://a.espncdn.com/i/teamlogos/nba/500/phi.png",
-  "Phoenix Suns":"https://a.espncdn.com/i/teamlogos/nba/500/phx.png",
-  "Portland Trail Blazers":"https://a.espncdn.com/i/teamlogos/nba/500/por.png",
-  "Sacramento Kings":"https://a.espncdn.com/i/teamlogos/nba/500/sac.png",
-  "San Antonio Spurs":"https://a.espncdn.com/i/teamlogos/nba/500/sa.png",
-  "Toronto Raptors":"https://a.espncdn.com/i/teamlogos/nba/500/tor.png",
-  "Utah Jazz":"https://a.espncdn.com/i/teamlogos/nba/500/utah.png",
-  "Washington Wizards":"https://a.espncdn.com/i/teamlogos/nba/500/wsh.png"
-};
-
-// Keyed by abbreviation — primary client-side logo source
 const LOGOS_BY_ABB = {
-  ATL:  "https://a.espncdn.com/i/teamlogos/nba/500/atl.png",
-  BOS:  "https://a.espncdn.com/i/teamlogos/nba/500/bos.png",
-  BKN:  "https://a.espncdn.com/i/teamlogos/nba/500/bkn.png",
-  CHA:  "https://a.espncdn.com/i/teamlogos/nba/500/cha.png",
-  CHI:  "https://a.espncdn.com/i/teamlogos/nba/500/chi.png",
-  CLE:  "https://a.espncdn.com/i/teamlogos/nba/500/cle.png",
-  DAL:  "https://a.espncdn.com/i/teamlogos/nba/500/dal.png",
-  DEN:  "https://a.espncdn.com/i/teamlogos/nba/500/den.png",
-  DET:  "https://a.espncdn.com/i/teamlogos/nba/500/det.png",
-  GSW:  "https://a.espncdn.com/i/teamlogos/nba/500/gs.png",
-  HOU:  "https://a.espncdn.com/i/teamlogos/nba/500/hou.png",
-  IND:  "https://a.espncdn.com/i/teamlogos/nba/500/ind.png",
-  LAC:  "https://a.espncdn.com/i/teamlogos/nba/500/lac.png",
-  LAL:  "https://a.espncdn.com/i/teamlogos/nba/500/lal.png",
-  MEM:  "https://a.espncdn.com/i/teamlogos/nba/500/mem.png",
-  MIA:  "https://a.espncdn.com/i/teamlogos/nba/500/mia.png",
-  MIL:  "https://a.espncdn.com/i/teamlogos/nba/500/mil.png",
-  MIN:  "https://a.espncdn.com/i/teamlogos/nba/500/min.png",
-  NOP:  "https://a.espncdn.com/i/teamlogos/nba/500/no.png",
-  NYK:  "https://a.espncdn.com/i/teamlogos/nba/500/ny.png",
-  OKC:  "https://a.espncdn.com/i/teamlogos/nba/500/okc.png",
-  ORL:  "https://a.espncdn.com/i/teamlogos/nba/500/orl.png",
-  PHI:  "https://a.espncdn.com/i/teamlogos/nba/500/phi.png",
-  PHX:  "https://a.espncdn.com/i/teamlogos/nba/500/phx.png",
-  POR:  "https://a.espncdn.com/i/teamlogos/nba/500/por.png",
-  SAC:  "https://a.espncdn.com/i/teamlogos/nba/500/sac.png",
-  SAS:  "https://a.espncdn.com/i/teamlogos/nba/500/sa.png",
-  TOR:  "https://a.espncdn.com/i/teamlogos/nba/500/tor.png",
-  UTAH: "https://a.espncdn.com/i/teamlogos/nba/500/utah.png",
-  WAS:  "https://a.espncdn.com/i/teamlogos/nba/500/wsh.png",
+  ATL:"https://a.espncdn.com/i/teamlogos/nba/500/atl.png",
+  BOS:"https://a.espncdn.com/i/teamlogos/nba/500/bos.png",
+  BKN:"https://a.espncdn.com/i/teamlogos/nba/500/bkn.png",
+  CHA:"https://a.espncdn.com/i/teamlogos/nba/500/cha.png",
+  CHI:"https://a.espncdn.com/i/teamlogos/nba/500/chi.png",
+  CLE:"https://a.espncdn.com/i/teamlogos/nba/500/cle.png",
+  DAL:"https://a.espncdn.com/i/teamlogos/nba/500/dal.png",
+  DEN:"https://a.espncdn.com/i/teamlogos/nba/500/den.png",
+  DET:"https://a.espncdn.com/i/teamlogos/nba/500/det.png",
+  GSW:"https://a.espncdn.com/i/teamlogos/nba/500/gs.png",
+  HOU:"https://a.espncdn.com/i/teamlogos/nba/500/hou.png",
+  IND:"https://a.espncdn.com/i/teamlogos/nba/500/ind.png",
+  LAC:"https://a.espncdn.com/i/teamlogos/nba/500/lac.png",
+  LAL:"https://a.espncdn.com/i/teamlogos/nba/500/lal.png",
+  MEM:"https://a.espncdn.com/i/teamlogos/nba/500/mem.png",
+  MIA:"https://a.espncdn.com/i/teamlogos/nba/500/mia.png",
+  MIL:"https://a.espncdn.com/i/teamlogos/nba/500/mil.png",
+  MIN:"https://a.espncdn.com/i/teamlogos/nba/500/min.png",
+  NOP:"https://a.espncdn.com/i/teamlogos/nba/500/no.png",
+  NYK:"https://a.espncdn.com/i/teamlogos/nba/500/ny.png",
+  OKC:"https://a.espncdn.com/i/teamlogos/nba/500/okc.png",
+  ORL:"https://a.espncdn.com/i/teamlogos/nba/500/orl.png",
+  PHI:"https://a.espncdn.com/i/teamlogos/nba/500/phi.png",
+  PHX:"https://a.espncdn.com/i/teamlogos/nba/500/phx.png",
+  POR:"https://a.espncdn.com/i/teamlogos/nba/500/por.png",
+  SAC:"https://a.espncdn.com/i/teamlogos/nba/500/sac.png",
+  SAS:"https://a.espncdn.com/i/teamlogos/nba/500/sa.png",
+  TOR:"https://a.espncdn.com/i/teamlogos/nba/500/tor.png",
+  UTAH:"https://a.espncdn.com/i/teamlogos/nba/500/utah.png",
+  WAS:"https://a.espncdn.com/i/teamlogos/nba/500/wsh.png",
 };
-
-const FALLBACK = {
-  standings: {
-    eastern: [
-      "Atlanta Hawks","Boston Celtics","Brooklyn Nets","Charlotte Hornets",
-      "Chicago Bulls","Cleveland Cavaliers","Detroit Pistons","Indiana Pacers",
-      "Miami Heat","Milwaukee Bucks","New York Knicks","Orlando Magic",
-      "Philadelphia 76ers","Toronto Raptors","Washington Wizards"
-    ].map(n => ({ name:n, abbr:n.split(' ').map(w=>w[0]).join('').slice(0,3).toUpperCase(), w:0, l:0, status:'' })),
-    western: [
-      "Dallas Mavericks","Denver Nuggets","Golden State Warriors","Houston Rockets",
-      "LA Clippers","Los Angeles Lakers","Memphis Grizzlies","Minnesota Timberwolves",
-      "New Orleans Pelicans","Oklahoma City Thunder","Phoenix Suns",
-      "Portland Trail Blazers","Sacramento Kings","San Antonio Spurs","Utah Jazz"
-    ].map(n => ({ name:n, abbr:n.split(' ').map(w=>w[0]).join('').slice(0,3).toUpperCase(), w:0, l:0, status:'' })),
-  },
-  results: [],
-};
-
-let prevStandings = null;
-let consecutiveFails = 0;
-
-function pct(w, l) {
-  const gp = w + l;
-  return gp === 0 ? null : w / gp;
-}
-
-function fmtPct(w, l) {
-  const p = pct(w, l);
-  return p === null ? '—' : p.toFixed(3).replace(/^0/, '');
-}
-
-function calcGB(lw, ll, w, l) {
-  const gb = ((lw - w) + (l - ll)) / 2;
-  if (gb === 0) return '—';
-  return gb % 1 === 0 ? gb.toFixed(0) : gb.toFixed(1);
-}
-
-function timeAgo(isoStr) {
-  if (!isoStr) return 'Unknown';
-  const diff = Math.floor((Date.now() - new Date(isoStr).getTime()) / 1000);
-  if (diff < 60)    return `${diff}s ago`;
-  if (diff < 3600)  return `${Math.floor(diff/60)}m ago`;
-  if (diff < 86400) return `${Math.floor(diff/3600)}h ago`;
-  return `${Math.floor(diff/86400)}d ago`;
-}
-
-function showToast(msg, colour = 'red', duration = 4000) {
-  const container = document.getElementById('toast-container');
-  const t = document.createElement('div');
-  t.className = `toast ${colour}`;
-  t.textContent = msg;
-  container.appendChild(t);
-  setTimeout(() => {
-    t.classList.add('dying');
-    setTimeout(() => t.remove(), 300);
-  }, duration);
-}
-
-function setLive(isLive) {
-  const pill  = document.getElementById('live-pill');
-  const label = document.getElementById('live-label');
-  pill.classList.toggle('live', isLive);
-  label.textContent = isLive ? 'Live' : 'Offline';
-}
-
-function setLastSync(isoStr) {
-  document.getElementById('last-sync').textContent =
-    isoStr ? `Updated ${timeAgo(isoStr)}` : 'Never synced';
-}
-
-function renderResults(games) {
-  const strip = document.getElementById('results-strip');
-  const list  = document.getElementById('results-list');
-
-  if (!games || games.length === 0) {
-    strip.style.display = 'none';
-    return;
-  }
-
-  strip.style.display = 'block';
-  list.innerHTML = games.slice(0, 5).map(g => {
-    const homeWin = g.homeScore > g.awayScore;
-    const status  = (g.status || 'final').toLowerCase();
-
-    let badgeLabel = status.toUpperCase();
-    let badgeClass = status;
-    if (status === 'final' && g.quarter === 'OT') {
-      badgeLabel = 'FINAL/OT';
-      badgeClass = 'ot';
-    }
-    if (status === 'forfeit')    badgeLabel = 'FORFEIT';
-    if (status === 'incomplete') badgeLabel = 'NO RESULT';
-
-    return `
-      <div class="result-card ${status}">
-        <div class="result-teams">
-          <div class="result-row">
-            <span class="result-abbr">${g.awayABB || '???'}</span>
-            <span class="result-score ${!homeWin ? 'winner' : 'loser'}">${g.awayScore ?? '—'}</span>
-          </div>
-          <div class="result-row">
-            <span class="result-abbr">${g.homeABB || '???'}</span>
-            <span class="result-score ${homeWin ? 'winner' : 'loser'}">${g.homeScore ?? '—'}</span>
-          </div>
-        </div>
-        <div class="result-meta">
-          <span class="result-status-badge ${badgeClass}">${badgeLabel}</span>
-          ${g.note ? `<span class="result-quarter">${g.note}</span>` : ''}
-        </div>
-      </div>`;
-  }).join('');
-}
 
 const ABB_TO_NAME = {
   ATL:"Atlanta Hawks",BOS:"Boston Celtics",BKN:"Brooklyn Nets",CHA:"Charlotte Hornets",
@@ -822,140 +452,203 @@ const ABB_TO_NAME = {
   UTAH:"Utah Jazz",WAS:"Washington Wizards"
 };
 
+const EASTERN = new Set(["ATL","BOS","BKN","CHA","CHI","CLE","DET","IND","MIA","MIL","NYK","ORL","PHI","TOR","WAS"]);
+const WESTERN = new Set(["DAL","DEN","GSW","HOU","LAC","LAL","MEM","MIN","NOP","OKC","PHX","POR","SAC","SAS","UTAH"]);
+
+let prevStandings = null;
+let consecutiveFails = 0;
+let lastResultId = null;
+
+function fmtPct(w, l) {
+  const gp = w + l;
+  if (gp === 0) return '—';
+  return (w / gp).toFixed(3).replace(/^0/, '');
+}
+
+function timeAgo(isoStr) {
+  if (!isoStr) return '';
+  const diff = Math.floor((Date.now() - new Date(isoStr).getTime()) / 1000);
+  if (diff < 60)   return `${diff}s ago`;
+  if (diff < 3600) return `${Math.floor(diff/60)}m ago`;
+  if (diff < 86400)return `${Math.floor(diff/3600)}h ago`;
+  return `${Math.floor(diff/86400)}d ago`;
+}
+
+function showToast(msg, colour='red', duration=5000) {
+  const c = document.getElementById('toast-container');
+  const t = document.createElement('div');
+  t.className = `toast ${colour}`;
+  t.textContent = msg;
+  c.appendChild(t);
+  setTimeout(() => { t.classList.add('dying'); setTimeout(()=>t.remove(),250); }, duration);
+}
+
+function setLive(v) {
+  const pill  = document.getElementById('live-pill');
+  const label = document.getElementById('live-label');
+  pill.classList.toggle('live', v);
+  label.textContent = v ? 'Live' : 'Offline';
+}
+
+function setLastSync(iso) {
+  document.getElementById('last-sync').textContent = iso ? `Updated ${timeAgo(iso)}` : '';
+}
+
+/* ── Results strip ── */
+function renderResults(games) {
+  const strip = document.getElementById('results-strip');
+  const list  = document.getElementById('results-list');
+  if (!games || !games.length) { strip.style.display='none'; return; }
+  strip.style.display='block';
+
+  list.innerHTML = games.slice(0,6).map(g => {
+    const homeWin = g.homeScore > g.awayScore;
+    const st = (g.status||'final').toLowerCase();
+    let badgeLabel = st.toUpperCase(), badgeCls = st;
+    if (st==='final' && g.quarter==='OT') { badgeLabel='FINAL/OT'; badgeCls='ot'; }
+    if (st==='incomplete') badgeLabel='NO RESULT';
+
+    const awayLogo = g.awayLogo || LOGOS_BY_ABB[g.awayABB] || '';
+    const homeLogo = g.homeLogo || LOGOS_BY_ABB[g.homeABB] || '';
+
+    return `<div class="result-card ${st}">
+      <div class="result-teams">
+        <div class="result-row">
+          ${awayLogo ? `<img class="result-logo" src="${awayLogo}" alt="${g.awayABB}">` : ''}
+          <span class="result-abbr">${g.awayABB||'???'}</span>
+          <span class="result-score ${!homeWin?'winner':'loser'}">${g.awayScore??'—'}</span>
+        </div>
+        <div class="result-row">
+          ${homeLogo ? `<img class="result-logo" src="${homeLogo}" alt="${g.homeABB}">` : ''}
+          <span class="result-abbr">${g.homeABB||'???'}</span>
+          <span class="result-score ${homeWin?'winner':'loser'}">${g.homeScore??'—'}</span>
+        </div>
+      </div>
+      <div class="result-meta">
+        <span class="result-badge ${badgeCls}">${badgeLabel}</span>
+        ${g.note ? `<span class="result-note">${g.note}</span>` : ''}
+      </div>
+    </div>`;
+  }).join('');
+}
+
+/* ── Streak cell helper ── */
+function streakCell(raw) {
+  if (!raw || raw === '—') return `<span class="row-strk none">—</span>`;
+  const letter = raw[0];
+  const cls    = letter === 'W' ? 'win' : 'loss';
+  return `<span class="row-strk ${cls}">${raw}</span>`;
+}
+
+/* ── Standings ── */
 function buildStandingsFromFlat(flatTeams) {
-  const eastern = [
-    "ATL","BOS","BKN","CHA","CHI","CLE","DET","IND",
-    "MIA","MIL","NYK","ORL","PHI","TOR","WAS"
-  ];
-  const western = [
-    "DAL","DEN","GSW","HOU","LAC","LAL","MEM","MIN",
-    "NOP","OKC","PHX","POR","SAC","SAS","UTAH"
-  ];
-
-  const eastTeams = [];
-  const westTeams = [];
-
-  for (const team of flatTeams) {
-    const name = ABB_TO_NAME[team.abb] || team.abb;
+  const east = [], west = [], other = [];
+  for (const t of flatTeams) {
     const entry = {
-      name,
-      abbr:   team.abb,
-      w:      team.wins   || 0,
-      l:      team.losses || 0,
-      status: team.status || '',
-      logo:   team.logo || LOGOS_BY_ABB[team.abb] || LOGOS[name] || '',
-      streak: team.streak || '—',
-      pct:    team.pct    || '0.000',
+      name:   ABB_TO_NAME[t.abb] || t.abb,
+      abbr:   t.abb,
+      w:      t.wins   || 0,
+      l:      t.losses || 0,
+      status: t.status || '',
+      logo:   t.logo   || LOGOS_BY_ABB[t.abb] || '',
+      streak: t.streak || '—',
     };
-    if (eastern.includes(team.abb)) {
-      eastTeams.push(entry);
-    } else {
-      westTeams.push(entry);
-    }
+    if (EASTERN.has(t.abb))      east.push(entry);
+    else if (WESTERN.has(t.abb)) west.push(entry);
+    else                         other.push(entry);
   }
+  // unknown teams spill into west
+  return { eastern: east, western: [...west, ...other] };
+}
 
-  return { eastern: eastTeams, western: westTeams };
+function sortTeams(teams) {
+  return [...teams].sort((a,b) => {
+    if (b.w !== a.w) return b.w - a.w;
+    return a.l - b.l;
+  });
 }
 
 function renderConferences(data) {
   const container = document.getElementById('conferences');
+  let sd = Array.isArray(data.standings)
+    ? buildStandingsFromFlat(data.standings)
+    : (data.standings || { eastern:[], western:[] });
 
-  let standingsData = data.standings;
-
-  if (Array.isArray(data.standings)) {
-    standingsData = buildStandingsFromFlat(data.standings);
-  }
-
-  if (!standingsData || (!standingsData.eastern && !standingsData.western)) {
-    standingsData = FALLBACK.standings;
-  }
-
-  const confDefs = [
-    { key: 'eastern', name: 'Eastern Conference', cls: 'east', badge: 'EAST' },
-    { key: 'western', name: 'Western Conference', cls: 'west', badge: 'WEST' },
-  ];
-
-  const changedAbbrs = new Set();
+  // detect changes
+  const changed = new Set();
   if (prevStandings) {
-    for (const ck of ['eastern', 'western']) {
-      const prev = prevStandings[ck] || [];
-      const next = standingsData[ck]  || [];
-      for (const team of next) {
-        const p = prev.find(t => t.abbr === team.abbr);
-        if (!p || p.w !== team.w || p.l !== team.l || p.status !== team.status) {
-          changedAbbrs.add(team.abbr);
-        }
+    for (const ck of ['eastern','western']) {
+      for (const team of (sd[ck]||[])) {
+        const p = (prevStandings[ck]||[]).find(t => t.abbr===team.abbr);
+        if (!p || p.w!==team.w || p.l!==team.l || p.status!==team.status || p.streak!==team.streak)
+          changed.add(team.abbr);
       }
     }
   }
 
+  const confDefs = [
+    { key:'eastern', name:'Eastern Conference', cls:'east', badge:'EAST' },
+    { key:'western', name:'Western Conference', cls:'west', badge:'WEST' },
+  ];
+
   container.innerHTML = confDefs.map(conf => {
-    const teams  = [...(standingsData[conf.key] || [])];
-    const sorted = teams.sort((a,b) => {
-      const pa = pct(a.w, a.l) ?? -1;
-      const pb = pct(b.w, b.l) ?? -1;
-      if (pb !== pa) return pb - pa;
-      return b.w - a.w;
-    });
-    const leader = sorted[0];
+    const teams = sortTeams(sd[conf.key] || []);
 
-    const rows = sorted.map((team, i) => {
-      const gb       = i === 0 ? '—' : calcGB(leader.w, leader.l, team.w, team.l);
-      const stsCls   = team.status ? `status-${team.status}` : '';
+    const rows = teams.map((team, i) => {
+      const stsCls  = team.status ? `status-${team.status}` : 'status-e';
       const badgeCls = team.status || 'e';
-      const flash    = changedAbbrs.has(team.abbr) ? ' updated' : '';
-      const logo     = team.logo || LOGOS_BY_ABB[team.abbr] || LOGOS[team.name] || '';
+      const flash    = changed.has(team.abbr) ? ' updated' : '';
+      const logo     = team.logo || LOGOS_BY_ABB[team.abbr] || '';
+      const logoEl   = logo
+        ? `<img src="${logo}" alt="${team.abbr}" loading="lazy">`
+        : `<div class="logo-placeholder"></div>`;
 
-      return `
-        <div class="standing-row ${stsCls}${flash}" data-abbr="${team.abbr}">
-          <span class="row-rank">${i+1}</span>
-          <span class="row-logo">${logo ? `<img src="${logo}" alt="${team.abbr}" loading="lazy">` : ''}</span>
-          <span class="row-team">
-            <div class="row-team-name">${team.name || team.abbr}</div>
-            <div class="row-team-abbr">${team.abbr}
-              <span class="status-badge ${badgeCls}">${(team.status||'').toUpperCase()}</span>
-            </div>
-          </span>
-          <span class="row-w">${team.w}</span>
-          <span class="row-l">${team.l}</span>
-          <span class="row-pct">${fmtPct(team.w, team.l)}</span>
-          <span class="row-gb">${gb}</span>
-        </div>`;
+      return `<div class="standing-row tbl-cols ${stsCls}${flash}" data-abbr="${team.abbr}">
+        <span class="row-rank">${i+1}</span>
+        <span class="row-logo">${logoEl}</span>
+        <span class="row-team">
+          <div class="row-team-name">${team.name}</div>
+          <div class="row-team-meta">
+            <span class="row-team-abbr">${team.abbr}</span>
+            <span class="status-badge ${badgeCls}">${(team.status||'').toUpperCase()}</span>
+          </div>
+        </span>
+        <span class="row-w">${team.w}</span>
+        <span class="row-l">${team.l}</span>
+        <span class="row-pct">${fmtPct(team.w, team.l)}</span>
+        ${streakCell(team.streak)}
+      </div>`;
     }).join('');
 
-    return `
-      <div class="conference">
-        <div class="conf-header">
-          <span class="conf-badge ${conf.cls}">${conf.badge}</span>
-          <span class="conf-title">${conf.name}</span>
+    return `<div class="conference">
+      <div class="conf-header">
+        <span class="conf-badge ${conf.cls}">${conf.badge}</span>
+        <span class="conf-title">${conf.name}</span>
+      </div>
+      <div class="standings-table">
+        <div class="standings-table-header tbl-cols">
+          <span>#</span><span></span><span>Team</span>
+          <span>W</span><span>L</span><span>PCT</span><span>STRK</span>
         </div>
-        <div class="standings-table">
-          <div class="standings-table-header">
-            <span>#</span><span></span><span>Team</span>
-            <span>W</span><span>L</span><span>PCT</span><span>GB</span>
-          </div>
-          ${rows}
-        </div>
-      </div>`;
+        ${rows}
+      </div>
+    </div>`;
   }).join('');
 
+  // remove flash class after animation
   setTimeout(() => {
     document.querySelectorAll('.standing-row.updated')
       .forEach(el => el.classList.remove('updated'));
-  }, 1500);
+  }, 1700);
 
-  prevStandings = JSON.parse(JSON.stringify(standingsData));
+  prevStandings = JSON.parse(JSON.stringify(sd));
 }
 
+/* ── Fetch ── */
 async function fetchStandings() {
   try {
-    const res = await fetch(CONFIG.API_URL, {
-      cache: 'no-store',
-      headers: { 'Accept': 'application/json' },
-    });
-
+    const res  = await fetch(CONFIG.API_URL, { cache:'no-store', headers:{'Accept':'application/json'} });
     if (!res.ok) throw new Error(`HTTP ${res.status}`);
-
     const data = await res.json();
 
     consecutiveFails = 0;
@@ -963,56 +656,56 @@ async function fetchStandings() {
     setLastSync(data.lastUpdated || new Date().toISOString());
     document.getElementById('state-banner').classList.remove('show');
 
-    if (prevStandings && data.results?.length) {
+    // toast only when a NEW result arrives
+    if (data.results?.length) {
       const latest = data.results[0];
-      if (latest && latest.homeABB && latest.status) {
+      if (latest && latest.id && latest.id !== lastResultId && prevStandings) {
+        lastResultId = latest.id;
+        const st = latest.status;
         showToast(
           `${latest.awayABB} @ ${latest.homeABB} — ${
-            latest.status === 'final'      ? `${latest.awayScore}–${latest.homeScore} FINAL` :
-            latest.status === 'forfeit'    ? 'FORFEIT' :
-            latest.status === 'incomplete' ? 'NO RESULT' : latest.status.toUpperCase()
+            st==='final'      ? `${latest.awayScore}–${latest.homeScore} FINAL` :
+            st==='forfeit'    ? 'FORFEIT' :
+            st==='incomplete' ? 'NO RESULT' : st.toUpperCase()
           }`,
-          latest.status === 'forfeit' ? 'amber' : 'green',
-          6000
+          st==='forfeit' ? 'amber' : 'green', 6000
         );
       }
+      if (!lastResultId) lastResultId = latest?.id;
     }
 
     renderResults(data.results || []);
     renderConferences(data);
 
-  } catch (err) {
+  } catch(err) {
     consecutiveFails++;
     console.warn('[RPL] Fetch failed:', err.message);
-
     if (consecutiveFails >= 3) {
       setLive(false);
-      const banner = document.getElementById('state-banner');
-      banner.textContent = `⚠ Standings server unreachable. Showing last known data. (${err.message})`;
-      banner.classList.add('show');
+      const b = document.getElementById('state-banner');
+      b.textContent = `⚠ Standings server unreachable — showing last known data. (${err.message})`;
+      b.classList.add('show');
     }
-
-    if (!prevStandings) {
-      renderConferences(FALLBACK);
-    }
+    if (!prevStandings) renderConferences({ standings:[] });
   }
 }
 
-(async function init() {
+/* ── SSE live push ── */
+function connectSSE() {
+  if (typeof EventSource === 'undefined') return;
+  const url = CONFIG.API_URL.replace(/\/standings$/, '/standings/events');
+  const es  = new EventSource(url);
+  es.addEventListener('standings', () => fetchStandings());
+  es.addEventListener('result',    () => fetchStandings());
+  es.onerror = () => es.close();
+}
+
+/* ── Init ── */
+(async () => {
   await fetchStandings();
   setInterval(fetchStandings, CONFIG.POLL_MS);
+  connectSSE();
 })();
-
-function connectSSE() {
-  return;
-  if (typeof EventSource === 'undefined') return;
-  const SSE_URL = CONFIG.API_URL.replace(/\/standings$/, '/standings/events');
-  const es = new EventSource(SSE_URL);
-  es.addEventListener('standings', () => { fetchStandings(); });
-  es.addEventListener('result',    () => { fetchStandings(); });
-  es.onerror = () => { es.close(); };
-}
-connectSSE();
 </script>
 </body>
 </html>
