@@ -466,12 +466,14 @@ let lastResultId = null;
    as empty so we fall back to LOGOS_BY_ABB.
 */
 function safeLogo(url, abb) {
-  if (!url) return LOGOS_BY_ABB[abb] || '';
-  // upgrade insecure Roblox (or any http) asset URL to https
+  // Always prefer our static ESPN map if we have it
+  if (LOGOS_BY_ABB[abb]) return LOGOS_BY_ABB[abb];
+  if (!url) return '';
+  // Reject Roblox asset URLs — they block external hotlinking
+  if (url.includes('roblox.com')) return '';
+  // Upgrade any remaining http:// to https://
   if (url.startsWith('http://')) url = 'https://' + url.slice(7);
-  // if the result looks like a valid URL, use it; otherwise fall back
-  if (url.startsWith('https://') || url.startsWith('//')) return url;
-  return LOGOS_BY_ABB[abb] || '';
+  return url;
 }
 
 function fmtPct(w, l) {
