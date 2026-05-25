@@ -459,6 +459,21 @@ let prevStandings = null;
 let consecutiveFails = 0;
 let lastResultId = null;
 
+/* ── Logo sanitizer ──
+   Roblox asset URLs come down as http:// which browsers block as
+   mixed content on the HTTPS Vercel page.  Upgrade to https:// so
+   the request succeeds; if it still isn't http(s) at all, treat it
+   as empty so we fall back to LOGOS_BY_ABB.
+*/
+function safeLogo(url, abb) {
+  if (!url) return LOGOS_BY_ABB[abb] || '';
+  // upgrade insecure Roblox (or any http) asset URL to https
+  if (url.startsWith('http://')) url = 'https://' + url.slice(7);
+  // if the result looks like a valid URL, use it; otherwise fall back
+  if (url.startsWith('https://') || url.startsWith('//')) return url;
+  return LOGOS_BY_ABB[abb] || '';
+}
+
 function fmtPct(w, l) {
   const gp = w + l;
   if (gp === 0) return '—';
@@ -508,8 +523,8 @@ function renderResults(games) {
     if (st==='final' && g.quarter==='OT') { badgeLabel='FINAL/OT'; badgeCls='ot'; }
     if (st==='incomplete') badgeLabel='NO RESULT';
 
-    const awayLogo = g.awayLogo || LOGOS_BY_ABB[g.awayABB] || '';
-    const homeLogo = g.homeLogo || LOGOS_BY_ABB[g.homeABB] || '';
+    const awayLogo = safeLogo(g.awayLogo, g.awayABB);
+    const homeLogo = safeLogo(g.homeLogo, g.homeABB);
 
     return `<div class="result-card ${st}">
       <div class="result-teams">
@@ -550,7 +565,7 @@ function buildStandingsFromFlat(flatTeams) {
       w:      t.wins   || 0,
       l:      t.losses || 0,
       status: t.status || '',
-      logo:   t.logo   || LOGOS_BY_ABB[t.abb] || '',
+      logo:   safeLogo(t.logo, t.abb),
       streak: t.streak || '—',
     };
     if (EASTERN.has(t.abb))      east.push(entry);
