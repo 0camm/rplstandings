@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>RPL Standings — Season 10</title>
+<title>RPL Standings</title>
 <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
 <style>
   :root {
@@ -358,19 +358,19 @@
     .hero-title { font-size:24px; }
     .playoff-key { gap:8px 14px; }
 
-    /* on mobile hide streak column */
+    /* hide only the streak column; keep logos */
     .tbl-head,
     .tbl-row {
-      grid-template-columns: 22px 0px 1fr 38px 38px 52px 0px;
+      grid-template-columns: 20px 28px 1fr 36px 36px 50px;
     }
-    .tbl-head span:nth-child(2),
     .tbl-head span:last-child,
-    .r-logo,
     .r-strk { display:none; }
 
+    .r-logo img { width:18px; height:18px; }
+    .r-logo .placeholder { width:18px; height:18px; }
     .r-name { font-size:12px; }
-    .tbl-head { padding:7px 11px; }
-    .tbl-row  { padding:9px 11px; }
+    .tbl-head { padding:7px 10px; }
+    .tbl-row  { padding:8px 10px; }
     .result-card { min-width:175px; padding:10px 13px; }
   }
 
@@ -385,6 +385,7 @@
 <body>
 
 <nav>
+  <div class="nav-left">
     <span class="nav-pill">Season 10</span>
   </div>
   <div class="nav-right">
