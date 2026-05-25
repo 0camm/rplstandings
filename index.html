@@ -3,399 +3,423 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>RPL Standings</title>
+<title>RPL Standings — Season 10</title>
 <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
 <style>
   :root {
     --red:     #e8001d;
-    --bg:      #06060a;
-    --surface: #0e0e14;
-    --surface2:#131319;
-    --surface3:#18181f;
-    --border:  rgba(255,255,255,.07);
+    --red-dim: rgba(232,0,29,.12);
+    --bg:      #07070c;
+    --surface: #0f0f16;
+    --surface2:#161620;
+    --surface3:#1c1c28;
+    --border:  rgba(255,255,255,.08);
     --border2: rgba(255,255,255,.04);
-    --muted:   #52525e;
-    --muted2:  #3a3a45;
-    --text:    #e2e2ea;
+    --muted:   #56566a;
+    --muted2:  #3a3a4e;
+    --text:    #e0e0f0;
     --green:   #22c55e;
+    --green-dim:rgba(34,197,94,.12);
     --amber:   #f59e0b;
-    --blue:    #3b82f6;
-    --win-col: #4ade80;
-    --los-col: #f87171;
+    --amber-dim:rgba(245,158,11,.12);
+    --blue:    #60a5fa;
+    --blue-dim:rgba(96,165,250,.12);
+    --win:     #4ade80;
+    --lose:    #f87171;
   }
 
   *, *::before, *::after { margin:0; padding:0; box-sizing:border-box; }
   html { scroll-behavior:smooth; }
+
   body {
     background: var(--bg);
     color: var(--text);
     font-family: 'Inter', sans-serif;
     font-size: 14px;
     min-height: 100vh;
-    overflow-x: hidden;
+    -webkit-font-smoothing: antialiased;
   }
 
   /* ── NAV ── */
   nav {
     position: sticky; top:0; z-index:100;
+    height: 52px;
     display: flex; align-items:center; justify-content:space-between;
-    padding: 0 36px; height: 56px;
-    background: rgba(6,6,10,.9);
-    backdrop-filter: blur(24px);
+    padding: 0 20px;
+    background: rgba(7,7,12,.85);
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
     border-bottom: 1px solid var(--border);
   }
-  .nav-brand {
-    display: flex; align-items:center; gap:10px;
-    text-decoration: none;
-  }
-  .nav-brand-icon {
-    width:30px; height:30px; border-radius:6px;
+
+  .nav-left { display:flex; align-items:center; gap:12px; }
+
+  .nav-logo {
+    width:28px; height:28px; border-radius:6px;
     background: var(--red);
     display:flex; align-items:center; justify-content:center;
-    font-family:'Bebas Neue',sans-serif; font-size:16px; color:#fff;
-    letter-spacing:.04em;
+    font-family:'Bebas Neue',sans-serif; font-size:15px; color:#fff;
+    letter-spacing:.02em; flex-shrink:0;
   }
-  .nav-brand-text {
+
+  .nav-title {
     font-family:'Bebas Neue',sans-serif;
-    font-size:18px; letter-spacing:.08em; color:#fff;
+    font-size:17px; letter-spacing:.08em; color:#fff;
   }
-  .nav-brand-text em { color:var(--red); font-style:normal; }
-  .nav-season {
-    font-size:11px; font-weight:500; color:var(--muted);
+  .nav-title em { color:var(--red); font-style:normal; }
+
+  .nav-pill {
+    font-size:10px; font-weight:600; letter-spacing:.08em;
+    color:var(--muted); text-transform:uppercase;
     background: var(--surface2);
     border: 1px solid var(--border);
-    border-radius:20px; padding:3px 10px; letter-spacing:.06em;
+    border-radius:20px; padding:3px 9px;
+    display:none;
   }
-  .nav-right { display:flex; align-items:center; gap:14px; }
+  @media (min-width:480px) { .nav-pill { display:block; } }
+
+  .nav-right { display:flex; align-items:center; gap:12px; }
+
+  .sync-label { font-size:11px; color:var(--muted); display:none; }
+  @media (min-width:600px) { .sync-label { display:block; } }
+
   .live-pill {
-    display:flex; align-items:center; gap:6px;
-    font-size:11px; font-weight:600; letter-spacing:.1em;
-    color:var(--muted); text-transform:uppercase; transition:color .3s;
+    display:flex; align-items:center; gap:5px;
+    font-size:10px; font-weight:700; letter-spacing:.1em;
+    text-transform:uppercase; color:var(--muted);
   }
   .live-pill.live { color:var(--green); }
   .live-dot {
-    width:7px; height:7px; border-radius:50%;
-    background:var(--muted); flex-shrink:0; transition:background .3s;
+    width:6px; height:6px; border-radius:50%; background:var(--muted); flex-shrink:0;
   }
   .live-pill.live .live-dot { background:var(--green); animation:pulse 1.8s ease infinite; }
-  @keyframes pulse {
-    0%,100%{opacity:1;transform:scale(1);}
-    50%{opacity:.35;transform:scale(.65);}
-  }
-  .last-sync { font-size:11px; color:var(--muted); }
+  @keyframes pulse { 0%,100%{opacity:1;transform:scale(1)} 50%{opacity:.3;transform:scale(.6)} }
 
-  /* ── PAGE BODY ── */
-  .page-wrap { max-width:1400px; margin:0 auto; padding:0 28px 80px; }
+  /* ── PAGE ── */
+  .page { max-width:1340px; margin:0 auto; padding:0 16px 80px; }
 
-  /* ── HERO STRIP ── */
-  .hero-strip {
-    display:flex; align-items:center; justify-content:space-between;
-    padding:28px 0 0;
+  /* ── HERO ── */
+  .hero {
+    padding: 24px 0 20px;
+    display:flex; align-items:flex-start; justify-content:space-between;
+    gap:16px;
     border-bottom: 1px solid var(--border2);
-    margin-bottom: 24px;
-    padding-bottom: 20px;
+    margin-bottom:20px;
+    flex-wrap:wrap;
   }
+
   .hero-title {
     font-family:'Bebas Neue',sans-serif;
-    font-size:32px; letter-spacing:.04em; color:#fff;
-    line-height:1;
+    font-size:28px; letter-spacing:.04em; color:#fff; line-height:1;
   }
   .hero-title em { color:var(--red); font-style:normal; }
-  .hero-sub { font-size:12px; color:var(--muted); margin-top:4px; }
+  .hero-sub { font-size:11px; color:var(--muted); margin-top:5px; letter-spacing:.02em; }
 
-  /* ── PLAYOFF KEY ── */
   .playoff-key {
-    display:flex; flex-wrap:wrap; gap:20px;
-    align-items:center;
+    display:flex; flex-wrap:wrap; gap:10px 18px; align-items:center;
+    margin-top:2px;
   }
-  .key-item { display:flex; align-items:center; gap:7px; font-size:11px; color:var(--muted); }
-  .key-pip { width:3px; height:16px; border-radius:2px; flex-shrink:0; }
+  .key-item { display:flex; align-items:center; gap:6px; font-size:11px; color:var(--muted); }
+  .key-pip { width:3px; height:14px; border-radius:2px; flex-shrink:0; }
   .key-pip.z  { background:var(--amber); }
   .key-pip.x  { background:var(--green); }
   .key-pip.pi { background:var(--blue); }
   .key-pip.e  { background:var(--muted2); }
 
-  /* ── STATE BANNER ── */
-  .state-banner {
-    display:none; margin-top:16px;
-    padding:12px 18px; border-radius:8px;
-    font-size:13px; color:var(--muted);
+  /* ── ALERT BANNER ── */
+  .alert {
+    display:none; margin-bottom:16px;
+    padding:11px 16px; border-radius:8px;
+    font-size:12px; color:var(--muted);
     background:var(--surface); border:1px solid var(--border);
   }
-  .state-banner.show { display:block; }
+  .alert.show { display:block; }
 
   /* ── RESULTS STRIP ── */
-  #results-strip { margin-top:20px; display:none; }
-  .results-strip-inner {
+  #results-strip { display:none; margin-bottom:24px; }
+
+  .strip-box {
     background:var(--surface);
     border:1px solid var(--border);
     border-radius:12px; overflow:hidden;
   }
-  .results-header {
-    display:flex; align-items:center; justify-content:space-between;
-    padding:11px 18px;
+
+  .strip-head {
+    display:flex; align-items:center; gap:8px;
+    padding:9px 16px;
     border-bottom:1px solid var(--border);
     background:var(--surface2);
   }
-  .results-header-title {
-    font-size:10px; font-weight:700; letter-spacing:.12em;
+  .strip-head-label {
+    font-size:10px; font-weight:700; letter-spacing:.14em;
     text-transform:uppercase; color:var(--muted);
   }
-  .results-header-title em { color:var(--red); font-style:normal; margin-left:4px; }
-  .results-list {
+  .strip-dot { width:6px; height:6px; border-radius:50%; background:var(--red); }
+
+  .strip-scroll {
     display:flex; overflow-x:auto;
-    scrollbar-width:none;
     -webkit-overflow-scrolling:touch;
+    scrollbar-width:none;
+    gap:0;
   }
-  .results-list::-webkit-scrollbar { display:none; }
+  .strip-scroll::-webkit-scrollbar { display:none; }
 
   .result-card {
-    display:flex; align-items:center; flex-shrink:0;
-    padding:14px 20px; min-width:220px;
+    flex-shrink:0; min-width:200px;
+    padding:12px 16px;
     border-right:1px solid var(--border2);
-    position:relative; transition:background .15s;
+    position:relative;
+    transition:background .15s;
+    cursor:default;
   }
   .result-card:last-child { border-right:none; }
-  .result-card:hover { background:rgba(255,255,255,.02); }
+  .result-card:hover { background:rgba(255,255,255,.025); }
   .result-card::before {
     content:''; position:absolute;
-    top:0; left:0; right:0; height:2px;
+    top:0; left:0; right:0; height:2px; border-radius:2px 2px 0 0;
   }
   .result-card.final::before    { background:var(--green); }
   .result-card.forfeit::before  { background:var(--amber); }
   .result-card.incomplete::before { background:var(--muted2); }
 
-  .result-teams { flex:1; display:flex; flex-direction:column; gap:5px; }
-  .result-row { display:flex; align-items:center; gap:8px; }
-  .result-logo { width:18px; height:18px; object-fit:contain; flex-shrink:0; }
-  .result-abbr {
+  .rc-teams { display:flex; flex-direction:column; gap:6px; }
+  .rc-row { display:flex; align-items:center; gap:8px; }
+  .rc-logo { width:18px; height:18px; object-fit:contain; flex-shrink:0; }
+  .rc-abbr {
     font-family:'Bebas Neue',sans-serif;
-    font-size:14px; letter-spacing:.05em; color:#fff; width:38px;
+    font-size:13px; letter-spacing:.04em; color:#fff; flex:1;
   }
-  .result-score {
-    font-size:14px; font-weight:700; color:#fff;
-    width:26px; text-align:right; font-variant-numeric:tabular-nums;
+  .rc-score {
+    font-size:14px; font-weight:700;
+    font-variant-numeric:tabular-nums; min-width:22px; text-align:right;
+    color:var(--muted);
   }
-  .result-score.winner { color:var(--win-col); }
-  .result-score.loser  { color:var(--muted); }
-  .result-meta {
-    display:flex; flex-direction:column; align-items:flex-end; gap:4px; margin-left:14px;
-  }
-  .result-badge {
-    font-size:9px; font-weight:700; letter-spacing:.1em;
-    text-transform:uppercase; padding:3px 7px; border-radius:4px; white-space:nowrap;
-  }
-  .result-badge.final      { background:rgba(34,197,94,.12); color:var(--green); }
-  .result-badge.forfeit    { background:rgba(245,158,11,.12); color:var(--amber); }
-  .result-badge.incomplete { background:rgba(82,82,94,.15); color:var(--muted); }
-  .result-badge.ot         { background:rgba(59,130,246,.12); color:var(--blue); }
-  .result-note { font-size:10px; color:var(--muted); max-width:110px; text-align:right; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+  .rc-score.w { color:var(--win); }
 
-  /* ── CONFERENCES GRID ── */
+  .rc-meta {
+    margin-top:8px; display:flex; align-items:center; justify-content:space-between;
+  }
+  .rc-badge {
+    font-size:9px; font-weight:700; letter-spacing:.1em;
+    text-transform:uppercase; padding:2px 6px; border-radius:4px;
+  }
+  .rc-badge.final   { background:var(--green-dim); color:var(--green); }
+  .rc-badge.forfeit { background:var(--amber-dim); color:var(--amber); }
+  .rc-badge.incomplete { background:rgba(82,82,110,.2); color:var(--muted); }
+  .rc-badge.ot      { background:var(--blue-dim); color:var(--blue); }
+  .rc-note { font-size:10px; color:var(--muted); max-width:90px; text-align:right; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+
+  /* ── CONFERENCES ── */
   .conferences {
     display:grid;
-    grid-template-columns:1fr 1fr;
-    gap:28px;
-    margin-top:28px;
+    grid-template-columns: 1fr 1fr;
+    gap:24px;
+  }
+  @media (max-width:900px) {
+    .conferences { grid-template-columns:1fr; gap:18px; }
   }
 
-  .conf-header {
-    display:flex; align-items:center; gap:10px;
-    margin-bottom:12px;
+  .conf-label {
+    display:flex; align-items:center; gap:10px; margin-bottom:10px;
   }
-  .conf-badge {
-    font-family:'Bebas Neue',sans-serif;
-    font-size:10px; letter-spacing:.14em; padding:4px 10px;
-    border-radius:4px; color:#fff;
+  .conf-tag {
+    font-size:9px; font-weight:700; letter-spacing:.14em;
+    text-transform:uppercase; padding:3px 9px; border-radius:4px;
   }
-  .conf-badge.east { background:rgba(232,0,29,.18); color:var(--red); border:1px solid rgba(232,0,29,.28); }
-  .conf-badge.west { background:rgba(59,130,246,.15); color:#60a5fa; border:1px solid rgba(59,130,246,.25); }
-  .conf-title {
+  .conf-tag.east { background:rgba(232,0,29,.15); color:var(--red); border:1px solid rgba(232,0,29,.25); }
+  .conf-tag.west { background:rgba(96,165,250,.12); color:var(--blue); border:1px solid rgba(96,165,250,.2); }
+  .conf-name {
     font-family:'Bebas Neue',sans-serif;
-    font-size:22px; letter-spacing:.04em; color:#fff;
+    font-size:20px; letter-spacing:.04em; color:#fff;
   }
 
-  /* ── STANDINGS TABLE ── */
-  .standings-table {
+  /* ── TABLE ── */
+  .tbl {
     background:var(--surface);
     border:1px solid var(--border);
     border-radius:12px; overflow:hidden;
   }
 
-  /* columns: # | logo | team | W | L | PCT | STRK */
-  .tbl-cols { grid-template-columns: 26px 32px 1fr 42px 42px 62px 56px; }
-
-  .standings-table-header {
-    display:grid; padding:9px 14px;
+  .tbl-head {
+    display:grid;
+    grid-template-columns: 28px 34px 1fr 44px 44px 60px 56px;
+    padding:8px 14px;
     border-bottom:1px solid var(--border);
     background:var(--surface2);
   }
-  .standings-table-header.tbl-cols {}
-  .standings-table-header span {
+  .tbl-head span {
     font-size:10px; font-weight:600; letter-spacing:.1em;
-    text-transform:uppercase; color:var(--muted); text-align:center;
+    text-transform:uppercase; color:var(--muted);
+    text-align:center;
   }
-  .standings-table-header span:nth-child(3) { text-align:left; padding-left:2px; }
+  .tbl-head span:nth-child(3) { text-align:left; }
 
-  .standing-row {
-    display:grid; padding:10px 14px;
+  .tbl-row {
+    display:grid;
+    grid-template-columns: 28px 34px 1fr 44px 44px 60px 56px;
+    padding:9px 14px;
     align-items:center;
     border-bottom:1px solid var(--border2);
-    position:relative; transition:background .15s;
+    position:relative; transition:background .14s;
   }
-  .standing-row.tbl-cols {}
-  .standing-row:last-child { border-bottom:none; }
-  .standing-row:hover { background:rgba(255,255,255,.025); }
-  .standing-row::before {
+  .tbl-row:last-child { border-bottom:none; }
+  .tbl-row:hover { background:rgba(255,255,255,.022); }
+
+  .tbl-row::before {
     content:''; position:absolute;
-    left:0; top:0; bottom:0; width:3px; border-radius:0 2px 2px 0;
+    left:0; top:0; bottom:0; width:3px;
   }
-  .standing-row.status-z::before  { background:var(--amber); }
-  .standing-row.status-x::before  { background:var(--green); }
-  .standing-row.status-pi::before { background:var(--blue); }
+  .tbl-row.s-z::before  { background:var(--amber); }
+  .tbl-row.s-x::before  { background:var(--green); }
+  .tbl-row.s-pi::before { background:var(--blue); }
 
   @keyframes rowFlash {
-    0%   { background:rgba(232,0,29,.15); }
+    0% { background:rgba(232,0,29,.14); }
     100% { background:transparent; }
   }
-  .standing-row.updated { animation:rowFlash 1.6s ease forwards; }
+  .tbl-row.flash { animation:rowFlash 1.6s ease forwards; }
 
-  .row-rank { font-size:12px; font-weight:600; color:var(--muted); text-align:center; }
-  .row-logo img { width:22px; height:22px; object-fit:contain; display:block; margin:auto; }
-  .row-logo .logo-placeholder {
+  /* eliminated dim */
+  .tbl-row.s-e .r-name,
+  .tbl-row.s-e .r-w,
+  .tbl-row.s-e .r-l,
+  .tbl-row.s-e .r-pct { color:#3a3a50; }
+
+  .r-rank { font-size:12px; font-weight:600; color:var(--muted); text-align:center; }
+
+  .r-logo { display:flex; align-items:center; justify-content:center; }
+  .r-logo img { width:22px; height:22px; object-fit:contain; display:block; }
+  .r-logo .placeholder {
     width:22px; height:22px; border-radius:50%;
-    background:var(--surface3); display:block; margin:auto;
+    background:var(--surface3);
   }
-  .row-team-name {
+
+  .r-team {}
+  .r-name {
     font-size:13px; font-weight:600; color:#fff;
     white-space:nowrap; overflow:hidden; text-overflow:ellipsis;
   }
-  .row-team-meta {
-    display:flex; align-items:center; gap:5px; margin-top:1px;
-  }
-  .row-team-abbr { font-size:10px; color:var(--muted); letter-spacing:.05em; }
-  .status-badge {
-    display:inline-flex; align-items:center; justify-content:center;
-    font-size:9px; font-weight:700; letter-spacing:.06em;
-    height:15px; padding:0 5px; border-radius:3px; flex-shrink:0;
-  }
-  .status-badge.z  { background:rgba(245,158,11,.15); color:var(--amber); }
-  .status-badge.x  { background:rgba(34,197,94,.12); color:var(--green); }
-  .status-badge.pi { background:rgba(59,130,246,.15); color:#60a5fa; }
-  .status-badge.e  { display:none; }
+  .r-meta { display:flex; align-items:center; gap:5px; margin-top:1px; }
+  .r-abbr { font-size:10px; color:var(--muted); letter-spacing:.04em; }
 
-  .row-w   { text-align:center; font-size:13px; color:var(--win-col); font-weight:600; font-variant-numeric:tabular-nums; }
-  .row-l   { text-align:center; font-size:13px; color:var(--los-col); font-weight:600; font-variant-numeric:tabular-nums; }
-  .row-pct { text-align:center; font-size:12px; color:var(--text); font-variant-numeric:tabular-nums; }
-  .row-strk {
-    text-align:center; font-size:12px; font-weight:600;
+  .r-badge {
+    font-size:9px; font-weight:700; letter-spacing:.06em;
+    padding:1px 5px; border-radius:3px; flex-shrink:0;
+  }
+  .r-badge.z  { background:var(--amber-dim); color:var(--amber); }
+  .r-badge.x  { background:var(--green-dim); color:var(--green); }
+  .r-badge.pi { background:var(--blue-dim); color:var(--blue); }
+  .r-badge.e  { display:none; }
+
+  .r-w, .r-l, .r-pct {
+    text-align:center;
+    font-variant-numeric:tabular-nums;
+    font-size:13px;
+  }
+  .r-w { color:var(--win); font-weight:600; }
+  .r-l { color:var(--lose); font-weight:600; }
+  .r-pct { color:var(--text); }
+
+  .r-strk {
+    text-align:center;
+    font-size:12px; font-weight:600;
     font-variant-numeric:tabular-nums;
   }
-  .row-strk.win  { color:var(--win-col); }
-  .row-strk.loss { color:var(--los-col); }
-  .row-strk.none { color:var(--muted); }
-
-  .standing-row.status-e .row-team-name,
-  .standing-row.status-e .row-w,
-  .standing-row.status-e .row-l,
-  .standing-row.status-e .row-pct,
-  .standing-row.status-e .row-strk { color:#444; }
+  .r-strk.w { color:var(--win); }
+  .r-strk.l { color:var(--lose); }
+  .r-strk.n { color:var(--muted); }
 
   /* ── TOAST ── */
-  #toast-container {
-    position:fixed; bottom:24px; right:24px;
-    display:flex; flex-direction:column; gap:8px;
+  #toasts {
+    position:fixed; bottom:20px; right:16px;
+    display:flex; flex-direction:column-reverse; gap:8px;
     z-index:9999; pointer-events:none;
+    max-width: min(300px, calc(100vw - 32px));
   }
   .toast {
     background:var(--surface2);
     border:1px solid var(--border);
     border-left:3px solid var(--red);
-    border-radius:8px; padding:11px 16px;
+    border-radius:8px; padding:10px 14px;
     font-size:13px; color:#fff;
     box-shadow:0 8px 32px rgba(0,0,0,.5);
-    animation:toastIn .22s ease forwards;
-    pointer-events:all; max-width:300px;
+    pointer-events:all;
+    animation:toastIn .22s ease;
   }
   .toast.green { border-left-color:var(--green); }
   .toast.amber { border-left-color:var(--amber); }
-  @keyframes toastIn  { from{opacity:0;transform:translateY(10px);}to{opacity:1;transform:translateY(0);} }
-  @keyframes toastOut { from{opacity:1;}to{opacity:0;transform:translateY(-6px);} }
-  .toast.dying { animation:toastOut .22s ease forwards; }
+  .toast.out   { animation:toastOut .22s ease forwards; }
+  @keyframes toastIn  { from{opacity:0;transform:translateY(8px)} to{opacity:1;transform:translateY(0)} }
+  @keyframes toastOut { from{opacity:1} to{opacity:0;transform:translateY(-5px)} }
 
-  /* ══════════════════════════════════
-     RESPONSIVE
-  ══════════════════════════════════ */
-  @media (max-width: 1100px) {
-    .conferences { grid-template-columns:1fr; gap:20px; }
-    .conferences .tbl-cols { grid-template-columns:26px 32px 1fr 40px 40px 58px 52px; }
-  }
-  @media (max-width: 760px) {
-    .page-wrap { padding:0 14px 80px; }
-    nav { padding:0 16px; }
-    .hero-strip { flex-direction:column; align-items:flex-start; gap:14px; padding-bottom:16px; }
-    .hero-title { font-size:26px; }
-    .playoff-key { gap:14px; }
-    .result-card { min-width:190px; padding:12px 14px; }
-    .tbl-cols,
-    .standings-table-header.tbl-cols,
-    .standing-row.tbl-cols {
-      grid-template-columns:22px 28px 1fr 38px 38px 54px 48px;
-      padding-left:10px; padding-right:10px;
+  /* ── MOBILE ── */
+  @media (max-width:640px) {
+    .hero { padding:18px 0 16px; }
+    .hero-title { font-size:24px; }
+    .playoff-key { gap:8px 14px; }
+
+    /* on mobile hide streak column */
+    .tbl-head,
+    .tbl-row {
+      grid-template-columns: 22px 0px 1fr 38px 38px 52px 0px;
     }
+    .tbl-head span:nth-child(2),
+    .tbl-head span:last-child,
+    .r-logo,
+    .r-strk { display:none; }
+
+    .r-name { font-size:12px; }
+    .tbl-head { padding:7px 11px; }
+    .tbl-row  { padding:9px 11px; }
+    .result-card { min-width:175px; padding:10px 13px; }
   }
-  @media (max-width: 500px) {
-    .hero-title { font-size:22px; }
-    .conf-title { font-size:19px; }
-    /* Hide streak on very small screens */
-    .tbl-cols,
-    .standings-table-header.tbl-cols,
-    .standing-row.tbl-cols {
-      grid-template-columns:20px 0 1fr 36px 36px 52px 0;
-    }
-    .row-logo, .row-strk,
-    .standings-table-header span:nth-child(2),
-    .standings-table-header span:last-child { display:none; }
-    .row-team-name { font-size:12px; }
+
+  @media (max-width:380px) {
+    .hero-title { font-size:21px; }
+    .conf-name { font-size:18px; }
+    .playoff-key .key-item:nth-child(3),
+    .playoff-key .key-item:nth-child(4) { display:none; }
   }
 </style>
 </head>
 <body>
 
 <nav>
-  <span class="nav-season">Season 10</span>
+    <span class="nav-pill">Season 10</span>
+  </div>
   <div class="nav-right">
-    <span class="last-sync" id="last-sync">Never synced</span>
-    <span class="live-pill" id="live-pill">
-      <span class="live-dot"></span>
+    <span class="sync-label" id="last-sync"></span>
+    <div class="live-pill" id="live-pill">
+      <div class="live-dot"></div>
       <span id="live-label">Offline</span>
-    </span>
+    </div>
   </div>
 </nav>
 
-<div class="page-wrap">
+<div class="page">
 
-  <div class="hero-strip">
+  <div class="hero">
     <div>
-      <div class="hero-title"><em>S10</em> RPL Standings</div>
-      <div class="hero-sub">Live standings · Updates after every game</div>
+      <div class="hero-title"><em>RPL</em> League Standings</div>
+      <div class="hero-sub">Live · Updates after every game · Season 10</div>
     </div>
     <div class="playoff-key">
-      <div class="key-item"><div class="key-pip z"></div> z – Conference Leader</div>
-      <div class="key-item"><div class="key-pip x"></div> x – Playoff Berth</div>
-      <div class="key-item"><div class="key-pip pi"></div> pi – Play-In</div>
-      <div class="key-item"><div class="key-pip e"></div> e – Eliminated</div>
+      <div class="key-item"><div class="key-pip z"></div>z – Leader</div>
+      <div class="key-item"><div class="key-pip x"></div>x – Playoff</div>
+      <div class="key-item"><div class="key-pip pi"></div>pi – Play-In</div>
+      <div class="key-item"><div class="key-pip e"></div>e – Eliminated</div>
     </div>
   </div>
 
-  <div class="state-banner" id="state-banner"></div>
+  <div class="alert" id="alert"></div>
 
   <div id="results-strip">
-    <div class="results-strip-inner">
-      <div class="results-header">
-        <span class="results-header-title">Recent Results <em>●</em></span>
+    <div class="strip-box">
+      <div class="strip-head">
+        <div class="strip-dot"></div>
+        <span class="strip-head-label">Recent Results</span>
       </div>
-      <div class="results-list" id="results-list"></div>
+      <div class="strip-scroll" id="results-list"></div>
     </div>
   </div>
 
@@ -403,247 +427,172 @@
 
 </div>
 
-<div id="toast-container"></div>
+<div id="toasts"></div>
 
 <script>
-const CONFIG = { API_URL:'https://rplstandings.onrender.com/rpl/standings', POLL_MS:30000 };
+const CFG = { API:'https://rplstandings.onrender.com/rpl/standings', POLL:30000 };
 
-const LOGOS_BY_ABB = {
-  ATL:"https://a.espncdn.com/i/teamlogos/nba/500/atl.png",
-  BOS:"https://a.espncdn.com/i/teamlogos/nba/500/bos.png",
-  BKN:"https://a.espncdn.com/i/teamlogos/nba/500/bkn.png",
-  CHA:"https://a.espncdn.com/i/teamlogos/nba/500/cha.png",
-  CHI:"https://a.espncdn.com/i/teamlogos/nba/500/chi.png",
-  CLE:"https://a.espncdn.com/i/teamlogos/nba/500/cle.png",
-  DAL:"https://a.espncdn.com/i/teamlogos/nba/500/dal.png",
-  DEN:"https://a.espncdn.com/i/teamlogos/nba/500/den.png",
-  DET:"https://a.espncdn.com/i/teamlogos/nba/500/det.png",
-  GSW:"https://a.espncdn.com/i/teamlogos/nba/500/gs.png",
-  HOU:"https://a.espncdn.com/i/teamlogos/nba/500/hou.png",
-  IND:"https://a.espncdn.com/i/teamlogos/nba/500/ind.png",
-  LAC:"https://a.espncdn.com/i/teamlogos/nba/500/lac.png",
-  LAL:"https://a.espncdn.com/i/teamlogos/nba/500/lal.png",
-  MEM:"https://a.espncdn.com/i/teamlogos/nba/500/mem.png",
-  MIA:"https://a.espncdn.com/i/teamlogos/nba/500/mia.png",
-  MIL:"https://a.espncdn.com/i/teamlogos/nba/500/mil.png",
-  MIN:"https://a.espncdn.com/i/teamlogos/nba/500/min.png",
-  NOP:"https://a.espncdn.com/i/teamlogos/nba/500/no.png",
-  NYK:"https://a.espncdn.com/i/teamlogos/nba/500/ny.png",
-  OKC:"https://a.espncdn.com/i/teamlogos/nba/500/okc.png",
-  ORL:"https://a.espncdn.com/i/teamlogos/nba/500/orl.png",
-  PHI:"https://a.espncdn.com/i/teamlogos/nba/500/phi.png",
-  PHX:"https://a.espncdn.com/i/teamlogos/nba/500/phx.png",
-  POR:"https://a.espncdn.com/i/teamlogos/nba/500/por.png",
-  SAC:"https://a.espncdn.com/i/teamlogos/nba/500/sac.png",
-  SAS:"https://a.espncdn.com/i/teamlogos/nba/500/sa.png",
-  TOR:"https://a.espncdn.com/i/teamlogos/nba/500/tor.png",
-  UTAH:"https://a.espncdn.com/i/teamlogos/nba/500/utah.png",
-  WAS:"https://a.espncdn.com/i/teamlogos/nba/500/wsh.png",
+const ESPN_LOGOS = {
+  ATL:'atl',BOS:'bos',BKN:'bkn',CHA:'cha',CHI:'chi',CLE:'cle',
+  DAL:'dal',DEN:'den',DET:'det',GSW:'gs',HOU:'hou',IND:'ind',
+  LAC:'lac',LAL:'lal',MEM:'mem',MIA:'mia',MIL:'mil',MIN:'min',
+  NOP:'no',NYK:'ny',OKC:'okc',ORL:'orl',PHI:'phi',PHX:'phx',
+  POR:'por',SAC:'sac',SAS:'sa',TOR:'tor',UTAH:'utah',WAS:'wsh',
 };
-
-const ABB_TO_NAME = {
-  ATL:"Atlanta Hawks",BOS:"Boston Celtics",BKN:"Brooklyn Nets",CHA:"Charlotte Hornets",
-  CHI:"Chicago Bulls",CLE:"Cleveland Cavaliers",DAL:"Dallas Mavericks",DEN:"Denver Nuggets",
-  DET:"Detroit Pistons",GSW:"Golden State Warriors",HOU:"Houston Rockets",IND:"Indiana Pacers",
-  LAC:"LA Clippers",LAL:"Los Angeles Lakers",MEM:"Memphis Grizzlies",MIA:"Miami Heat",
-  MIL:"Milwaukee Bucks",MIN:"Minnesota Timberwolves",NOP:"New Orleans Pelicans",NYK:"New York Knicks",
-  OKC:"Oklahoma City Thunder",ORL:"Orlando Magic",PHI:"Philadelphia 76ers",PHX:"Phoenix Suns",
-  POR:"Portland Trail Blazers",SAC:"Sacramento Kings",SAS:"San Antonio Spurs",TOR:"Toronto Raptors",
-  UTAH:"Utah Jazz",WAS:"Washington Wizards"
-};
-
-const EASTERN = new Set(["ATL","BOS","BKN","CHA","CHI","CLE","DET","IND","MIA","MIL","NYK","ORL","PHI","TOR","WAS"]);
-const WESTERN = new Set(["DAL","DEN","GSW","HOU","LAC","LAL","MEM","MIN","NOP","OKC","PHX","POR","SAC","SAS","UTAH"]);
-
-let prevStandings = null;
-let consecutiveFails = 0;
-let lastResultId = null;
-
-/* ── Logo sanitizer ──
-   Roblox asset URLs come down as http:// which browsers block as
-   mixed content on the HTTPS Vercel page.  Upgrade to https:// so
-   the request succeeds; if it still isn't http(s) at all, treat it
-   as empty so we fall back to LOGOS_BY_ABB.
-*/
-function safeLogo(url, abb) {
-  // Always prefer our static ESPN map if we have it
-  if (LOGOS_BY_ABB[abb]) return LOGOS_BY_ABB[abb];
+const logo = (url, abb) => {
+  if (ESPN_LOGOS[abb]) return `https://a.espncdn.com/i/teamlogos/nba/500/${ESPN_LOGOS[abb]}.png`;
   if (!url) return '';
-  // Reject Roblox asset URLs — they block external hotlinking
   if (url.includes('roblox.com')) return '';
-  // Upgrade any remaining http:// to https://
-  if (url.startsWith('http://')) url = 'https://' + url.slice(7);
-  return url;
-}
+  return url.startsWith('http://') ? 'https://'+url.slice(7) : url;
+};
 
-function fmtPct(w, l) {
-  const gp = w + l;
-  if (gp === 0) return '—';
-  return (w / gp).toFixed(3).replace(/^0/, '');
-}
+const NAMES = {
+  ATL:'Atlanta Hawks',BOS:'Boston Celtics',BKN:'Brooklyn Nets',CHA:'Charlotte Hornets',
+  CHI:'Chicago Bulls',CLE:'Cleveland Cavaliers',DAL:'Dallas Mavericks',DEN:'Denver Nuggets',
+  DET:'Detroit Pistons',GSW:'Golden State Warriors',HOU:'Houston Rockets',IND:'Indiana Pacers',
+  LAC:'LA Clippers',LAL:'Los Angeles Lakers',MEM:'Memphis Grizzlies',MIA:'Miami Heat',
+  MIL:'Milwaukee Bucks',MIN:'Minnesota Timberwolves',NOP:'New Orleans Pelicans',NYK:'New York Knicks',
+  OKC:'Oklahoma City Thunder',ORL:'Orlando Magic',PHI:'Philadelphia 76ers',PHX:'Phoenix Suns',
+  POR:'Portland Trail Blazers',SAC:'Sacramento Kings',SAS:'San Antonio Spurs',TOR:'Toronto Raptors',
+  UTAH:'Utah Jazz',WAS:'Washington Wizards',
+};
+const EAST = new Set(['ATL','BOS','BKN','CHA','CHI','CLE','DET','IND','MIA','MIL','NYK','ORL','PHI','TOR','WAS']);
+const WEST = new Set(['DAL','DEN','GSW','HOU','LAC','LAL','MEM','MIN','NOP','OKC','PHX','POR','SAC','SAS','UTAH']);
 
-function timeAgo(isoStr) {
-  if (!isoStr) return '';
-  const diff = Math.floor((Date.now() - new Date(isoStr).getTime()) / 1000);
-  if (diff < 60)   return `${diff}s ago`;
-  if (diff < 3600) return `${Math.floor(diff/60)}m ago`;
-  if (diff < 86400)return `${Math.floor(diff/3600)}h ago`;
-  return `${Math.floor(diff/86400)}d ago`;
-}
+let prevData = null, fails = 0, lastResultId = null;
 
-function showToast(msg, colour='red', duration=5000) {
-  const c = document.getElementById('toast-container');
-  const t = document.createElement('div');
-  t.className = `toast ${colour}`;
-  t.textContent = msg;
-  c.appendChild(t);
-  setTimeout(() => { t.classList.add('dying'); setTimeout(()=>t.remove(),250); }, duration);
+const pct = (w,l) => { const g=w+l; return g?( w/g).toFixed(3).replace(/^0/,''):'—'; };
+
+const timeAgo = iso => {
+  if(!iso) return '';
+  const s = Math.floor((Date.now()-new Date(iso))/1000);
+  if(s<60) return `${s}s ago`;
+  if(s<3600) return `${Math.floor(s/60)}m ago`;
+  if(s<86400) return `${Math.floor(s/3600)}h ago`;
+  return `${Math.floor(s/86400)}d ago`;
+};
+
+function toast(msg, c='red', dur=5000) {
+  const t = Object.assign(document.createElement('div'),{className:`toast ${c}`,textContent:msg});
+  document.getElementById('toasts').prepend(t);
+  setTimeout(()=>{ t.classList.add('out'); setTimeout(()=>t.remove(),240); }, dur);
 }
 
 function setLive(v) {
-  const pill  = document.getElementById('live-pill');
-  const label = document.getElementById('live-label');
-  pill.classList.toggle('live', v);
-  label.textContent = v ? 'Live' : 'Offline';
+  const p=document.getElementById('live-pill'), l=document.getElementById('live-label');
+  p.classList.toggle('live',v); l.textContent=v?'Live':'Offline';
+}
+function setSync(iso) {
+  document.getElementById('last-sync').textContent = iso ? `Synced ${timeAgo(iso)}` : '';
 }
 
-function setLastSync(iso) {
-  document.getElementById('last-sync').textContent = iso ? `Updated ${timeAgo(iso)}` : '';
-}
-
-/* ── Results strip ── */
+/* Results strip */
 function renderResults(games) {
-  const strip = document.getElementById('results-strip');
-  const list  = document.getElementById('results-list');
-  if (!games || !games.length) { strip.style.display='none'; return; }
+  const strip=document.getElementById('results-strip'), list=document.getElementById('results-list');
+  if(!games?.length){ strip.style.display='none'; return; }
   strip.style.display='block';
 
-  list.innerHTML = games.slice(0,6).map(g => {
-    const homeWin = g.homeScore > g.awayScore;
+  list.innerHTML = games.slice(0,8).map(g=>{
+    const hw = g.homeScore > g.awayScore;
     const st = (g.status||'final').toLowerCase();
-    let badgeLabel = st.toUpperCase(), badgeCls = st;
-    if (st==='final' && g.quarter==='OT') { badgeLabel='FINAL/OT'; badgeCls='ot'; }
-    if (st==='incomplete') badgeLabel='NO RESULT';
-
-    const awayLogo = safeLogo(g.awayLogo, g.awayABB);
-    const homeLogo = safeLogo(g.homeLogo, g.homeABB);
-
+    let badge=st.toUpperCase(), bcls=st;
+    if(st==='final'&&g.quarter==='OT'){badge='FINAL/OT';bcls='ot';}
+    if(st==='incomplete'){badge='NO RESULT';}
+    const aLogo=logo(g.awayLogo,g.awayABB), hLogo=logo(g.homeLogo,g.homeABB);
     return `<div class="result-card ${st}">
-      <div class="result-teams">
-        <div class="result-row">
-          ${awayLogo ? `<img class="result-logo" src="${awayLogo}" alt="${g.awayABB}">` : ''}
-          <span class="result-abbr">${g.awayABB||'???'}</span>
-          <span class="result-score ${!homeWin?'winner':'loser'}">${g.awayScore??'—'}</span>
+      <div class="rc-teams">
+        <div class="rc-row">
+          ${aLogo?`<img class="rc-logo" src="${aLogo}" alt="" loading="lazy">`:''}
+          <span class="rc-abbr">${g.awayABB||'???'}</span>
+          <span class="rc-score ${!hw?'w':''}">${g.awayScore??'—'}</span>
         </div>
-        <div class="result-row">
-          ${homeLogo ? `<img class="result-logo" src="${homeLogo}" alt="${g.homeABB}">` : ''}
-          <span class="result-abbr">${g.homeABB||'???'}</span>
-          <span class="result-score ${homeWin?'winner':'loser'}">${g.homeScore??'—'}</span>
+        <div class="rc-row">
+          ${hLogo?`<img class="rc-logo" src="${hLogo}" alt="" loading="lazy">`:''}
+          <span class="rc-abbr">${g.homeABB||'???'}</span>
+          <span class="rc-score ${hw?'w':''}">${g.homeScore??'—'}</span>
         </div>
       </div>
-      <div class="result-meta">
-        <span class="result-badge ${badgeCls}">${badgeLabel}</span>
-        ${g.note ? `<span class="result-note">${g.note}</span>` : ''}
+      <div class="rc-meta">
+        <span class="rc-badge ${bcls}">${badge}</span>
+        ${g.note?`<span class="rc-note">${g.note}</span>`:''}
       </div>
     </div>`;
   }).join('');
 }
 
-/* ── Streak cell helper ── */
-function streakCell(raw) {
-  if (!raw || raw === '—') return `<span class="row-strk none">—</span>`;
-  const letter = raw[0];
-  const cls    = letter === 'W' ? 'win' : 'loss';
-  return `<span class="row-strk ${cls}">${raw}</span>`;
-}
-
-/* ── Standings ── */
-function buildStandingsFromFlat(flatTeams) {
-  const east = [], west = [], other = [];
-  for (const t of flatTeams) {
-    const entry = {
-      name:   ABB_TO_NAME[t.abb] || t.abb,
-      abbr:   t.abb,
-      w:      t.wins   || 0,
-      l:      t.losses || 0,
-      status: t.status || '',
-      logo:   safeLogo(t.logo, t.abb),
-      streak: t.streak || '—',
+/* Standings */
+function flatToConfs(teams) {
+  const e=[], w=[], o=[];
+  for(const t of teams){
+    const entry={
+      name:NAMES[t.abb]||t.abb, abbr:t.abb,
+      w:t.wins||0, l:t.losses||0,
+      status:t.status||'', logo:logo(t.logo,t.abb), streak:t.streak||'—',
     };
-    if (EASTERN.has(t.abb))      east.push(entry);
-    else if (WESTERN.has(t.abb)) west.push(entry);
-    else                         other.push(entry);
+    if(EAST.has(t.abb)) e.push(entry);
+    else if(WEST.has(t.abb)) w.push(entry);
+    else o.push(entry);
   }
-  // unknown teams spill into west
-  return { eastern: east, western: [...west, ...other] };
+  return { eastern:e, western:[...w,...o] };
 }
 
-function sortTeams(teams) {
-  return [...teams].sort((a,b) => {
-    if (b.w !== a.w) return b.w - a.w;
-    return a.l - b.l;
-  });
+function sortTeams(arr){ return [...arr].sort((a,b)=>b.w!==a.w?b.w-a.w:a.l-b.l); }
+
+function strk(raw){
+  if(!raw||raw==='—') return `<span class="r-strk n">—</span>`;
+  return `<span class="r-strk ${raw[0]==='W'?'w':'l'}">${raw}</span>`;
 }
 
-function renderConferences(data) {
-  const container = document.getElementById('conferences');
-  let sd = Array.isArray(data.standings)
-    ? buildStandingsFromFlat(data.standings)
-    : (data.standings || { eastern:[], western:[] });
+function renderConfs(data) {
+  const el = document.getElementById('conferences');
+  const sd = Array.isArray(data.standings)
+    ? flatToConfs(data.standings)
+    : (data.standings||{eastern:[],western:[]});
 
-  // detect changes
   const changed = new Set();
-  if (prevStandings) {
-    for (const ck of ['eastern','western']) {
-      for (const team of (sd[ck]||[])) {
-        const p = (prevStandings[ck]||[]).find(t => t.abbr===team.abbr);
-        if (!p || p.w!==team.w || p.l!==team.l || p.status!==team.status || p.streak!==team.streak)
-          changed.add(team.abbr);
+  if(prevData){
+    for(const ck of ['eastern','western']){
+      for(const t of (sd[ck]||[])){
+        const p=(prevData[ck]||[]).find(x=>x.abbr===t.abbr);
+        if(!p||p.w!==t.w||p.l!==t.l||p.status!==t.status||p.streak!==t.streak) changed.add(t.abbr);
       }
     }
   }
 
-  const confDefs = [
-    { key:'eastern', name:'Eastern Conference', cls:'east', badge:'EAST' },
-    { key:'western', name:'Western Conference', cls:'west', badge:'WEST' },
+  const CONFS = [
+    {key:'eastern',name:'Eastern Conference',cls:'east',tag:'EAST'},
+    {key:'western',name:'Western Conference',cls:'west',tag:'WEST'},
   ];
 
-  container.innerHTML = confDefs.map(conf => {
-    const teams = sortTeams(sd[conf.key] || []);
-
-    const rows = teams.map((team, i) => {
-      const stsCls  = team.status ? `status-${team.status}` : 'status-e';
-      const badgeCls = team.status || 'e';
-      const flash    = changed.has(team.abbr) ? ' updated' : '';
-      const logo     = team.logo || LOGOS_BY_ABB[team.abbr] || '';
-      const logoEl   = logo
-        ? `<img src="${logo}" alt="${team.abbr}" loading="lazy">`
-        : `<div class="logo-placeholder"></div>`;
-
-      return `<div class="standing-row tbl-cols ${stsCls}${flash}" data-abbr="${team.abbr}">
-        <span class="row-rank">${i+1}</span>
-        <span class="row-logo">${logoEl}</span>
-        <span class="row-team">
-          <div class="row-team-name">${team.name}</div>
-          <div class="row-team-meta">
-            <span class="row-team-abbr">${team.abbr}</span>
-            <span class="status-badge ${badgeCls}">${(team.status||'').toUpperCase()}</span>
+  el.innerHTML = CONFS.map(c=>{
+    const teams = sortTeams(sd[c.key]||[]);
+    const rows = teams.map((t,i)=>{
+      const sc = t.status||'e', fl = changed.has(t.abbr)?' flash':'';
+      const lg = t.logo||'';
+      return `<div class="tbl-row s-${sc}${fl}" data-abbr="${t.abbr}">
+        <span class="r-rank">${i+1}</span>
+        <span class="r-logo">${lg?`<img src="${lg}" alt="" loading="lazy">`:`<div class="placeholder"></div>`}</span>
+        <span class="r-team">
+          <div class="r-name">${t.name}</div>
+          <div class="r-meta">
+            <span class="r-abbr">${t.abbr}</span>
+            ${t.status?`<span class="r-badge ${sc}">${sc.toUpperCase()}</span>`:''}
           </div>
         </span>
-        <span class="row-w">${team.w}</span>
-        <span class="row-l">${team.l}</span>
-        <span class="row-pct">${fmtPct(team.w, team.l)}</span>
-        ${streakCell(team.streak)}
+        <span class="r-w">${t.w}</span>
+        <span class="r-l">${t.l}</span>
+        <span class="r-pct">${pct(t.w,t.l)}</span>
+        ${strk(t.streak)}
       </div>`;
     }).join('');
 
-    return `<div class="conference">
-      <div class="conf-header">
-        <span class="conf-badge ${conf.cls}">${conf.badge}</span>
-        <span class="conf-title">${conf.name}</span>
+    return `<div>
+      <div class="conf-label">
+        <span class="conf-tag ${c.cls}">${c.tag}</span>
+        <span class="conf-name">${c.name}</span>
       </div>
-      <div class="standings-table">
-        <div class="standings-table-header tbl-cols">
+      <div class="tbl">
+        <div class="tbl-head">
           <span>#</span><span></span><span>Team</span>
           <span>W</span><span>L</span><span>PCT</span><span>STRK</span>
         </div>
@@ -652,75 +601,65 @@ function renderConferences(data) {
     </div>`;
   }).join('');
 
-  // remove flash class after animation
-  setTimeout(() => {
-    document.querySelectorAll('.standing-row.updated')
-      .forEach(el => el.classList.remove('updated'));
-  }, 1700);
+  setTimeout(()=>{
+    document.querySelectorAll('.tbl-row.flash').forEach(r=>r.classList.remove('flash'));
+  }, 1800);
 
-  prevStandings = JSON.parse(JSON.stringify(sd));
+  prevData = JSON.parse(JSON.stringify(sd));
 }
 
-/* ── Fetch ── */
-async function fetchStandings() {
+async function fetchStandings(){
   try {
-    const res  = await fetch(CONFIG.API_URL, { cache:'no-store', headers:{'Accept':'application/json'} });
-    if (!res.ok) throw new Error(`HTTP ${res.status}`);
+    const res = await fetch(CFG.API,{cache:'no-store',headers:{Accept:'application/json'}});
+    if(!res.ok) throw new Error(`HTTP ${res.status}`);
     const data = await res.json();
+    fails = 0; setLive(true);
+    setSync(data.lastUpdated||new Date().toISOString());
+    document.getElementById('alert').classList.remove('show');
 
-    consecutiveFails = 0;
-    setLive(true);
-    setLastSync(data.lastUpdated || new Date().toISOString());
-    document.getElementById('state-banner').classList.remove('show');
-
-    // toast only when a NEW result arrives
-    if (data.results?.length) {
+    if(data.results?.length){
       const latest = data.results[0];
-      if (latest && latest.id && latest.id !== lastResultId && prevStandings) {
+      if(latest?.id && latest.id!==lastResultId && prevData){
         lastResultId = latest.id;
-        const st = latest.status;
-        showToast(
+        const st=latest.status;
+        toast(
           `${latest.awayABB} @ ${latest.homeABB} — ${
-            st==='final'      ? `${latest.awayScore}–${latest.homeScore} FINAL` :
-            st==='forfeit'    ? 'FORFEIT' :
-            st==='incomplete' ? 'NO RESULT' : st.toUpperCase()
-          }`,
-          st==='forfeit' ? 'amber' : 'green', 6000
+            st==='final'?`${latest.awayScore}–${latest.homeScore} FINAL`:
+            st==='forfeit'?'FORFEIT':
+            st==='incomplete'?'NO RESULT':st.toUpperCase()}`,
+          st==='forfeit'?'amber':'green', 6000
         );
       }
-      if (!lastResultId) lastResultId = latest?.id;
+      if(!lastResultId) lastResultId=data.results[0]?.id;
     }
 
-    renderResults(data.results || []);
-    renderConferences(data);
+    renderResults(data.results||[]);
+    renderConfs(data);
 
-  } catch(err) {
-    consecutiveFails++;
-    console.warn('[RPL] Fetch failed:', err.message);
-    if (consecutiveFails >= 3) {
+  } catch(err){
+    fails++;
+    if(fails>=3){
       setLive(false);
-      const b = document.getElementById('state-banner');
-      b.textContent = `⚠ Standings server unreachable — showing last known data. (${err.message})`;
-      b.classList.add('show');
+      const a=document.getElementById('alert');
+      a.textContent=`⚠ Standings server unreachable — showing last known data. (${err.message})`;
+      a.classList.add('show');
     }
-    if (!prevStandings) renderConferences({ standings:[] });
+    if(!prevData) renderConfs({standings:[]});
   }
 }
 
-/* ── SSE live push ── */
-function connectSSE() {
-  if (typeof EventSource === 'undefined') return;
-  const url = CONFIG.API_URL.replace(/\/standings$/, '/standings/events');
-  const es  = new EventSource(url);
-  es.addEventListener('standings', () => fetchStandings());
-  es.addEventListener('result',    () => fetchStandings());
-  es.onerror = () => es.close();
+function connectSSE(){
+  if(typeof EventSource==='undefined') return;
+  const url=CFG.API.replace(/\/standings$/,'/standings/events');
+  const es=new EventSource(url);
+  es.addEventListener('standings',()=>fetchStandings());
+  es.addEventListener('result',()=>fetchStandings());
+  es.onerror=()=>es.close();
 }
 
-/* ── Init ── */
-(async () => {
+(async()=>{
   await fetchStandings();
-  setInterval(fetchStandings, CONFIG.POLL_MS);
+  setInterval(fetchStandings,CFG.POLL);
   connectSSE();
 })();
 </script>
