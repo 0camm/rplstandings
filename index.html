@@ -874,7 +874,7 @@ function flatToConfs(teams) {
   for(const t of teams){
     const entry={
       name:NAMES[t.abb]||t.abb, abbr:t.abb,
-      w:t.wins||0, l:t.losses||0,
+      w:t.wins||0, l:t.losses||0, pct:t.pct||'0.000',
       status:t.status||'', logo:logo(t.logo,t.abb), streak:t.streak||'—',
     };
     if(EAST.has(t.abb)) e.push(entry);
@@ -884,7 +884,7 @@ function flatToConfs(teams) {
   return { eastern:e, western:[...w,...o] };
 }
 
-function sortTeams(arr){ return [...arr].sort((a,b)=>b.w!==a.w?b.w-a.w:a.l-b.l); }
+function sortTeams(arr){ return [...arr].sort((a,b)=>{ const pa=parseFloat(a.pct)||0,pb=parseFloat(b.pct)||0; if(pb!==pa) return pb-pa; const ga=a.w+a.l,gb=b.w+b.l; if(gb!==ga) return gb-ga; return b.w-a.w; }); }
 
 function strk(raw){
   if(!raw||raw==='—') return `<span class="r-strk n">—</span>`;
