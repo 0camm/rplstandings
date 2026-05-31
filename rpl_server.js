@@ -348,7 +348,15 @@ async function handleTeamOverride(req, res) {
 function buildPublicPayload() {
   const sorted = Object.entries(state.teams)
     .map(([abb, data]) => ({ abb, ...data }))
-    .sort((a, b) => b.wins !== a.wins ? b.wins - a.wins : a.losses - b.losses);
+    .sort((a, b) => {
+      const pctA = parseFloat(a.pct) || 0;
+      const pctB = parseFloat(b.pct) || 0;
+      if (pctB !== pctA) return pctB - pctA;
+      const gpA = a.wins + a.losses;
+      const gpB = b.wins + b.losses;
+      if (gpB !== gpA) return gpB - gpA;
+      return b.wins - a.wins;
+    });
   return { standings: sorted, results: state.results.slice(0, 10), lastUpdated: state.lastUpdated };
 }
 
