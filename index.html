@@ -784,7 +784,7 @@ function openBoxScore(g) {
     </div>`;
 
   // Refs — use dedicated referees field sent from Roblox
-  const refText = (g.referees && g.referees !== 'None' && g.referees !== '') ? g.referees : null;
+  const refText = (g.referees && g.referees !== '') ? g.referees : null;
   const refsHtml = `
     <div class="info-card">
       <div class="info-card-label">📋 Referee(s)</div>
