@@ -3,7 +3,7 @@
   ============================================
   Deploy on Render (or any Node host).
   Set environment variables:
-    RPL_SECRET       = RPLSTANDINGS$
+    RPL_SECRET       = your-new-secret   (change this!)
     SUPABASE_URL     = https://xxxx.supabase.co
     SUPABASE_KEY     = your anon/service key
 */
@@ -14,10 +14,12 @@ const http  = require("http");
 const https = require("https");
 
 const PORT         = process.env.PORT         || 3000;
-const SECRET       = process.env.RPL_SECRET   || "RPLSTANDINGS$";
+const SECRET       = process.env.RPL_SECRET   || "CHANGE_ME"; // set via env var, never hardcode
 const SUPABASE_URL = process.env.SUPABASE_URL || "";
 const SUPABASE_KEY = process.env.SUPABASE_KEY || "";
-const RESULTS_MAX  = 20;
+
+// Store and serve the same number — no more storing 20 and serving 10
+const RESULTS_MAX  = 10;
 
 let state = {
   teams:       {},
@@ -180,19 +182,10 @@ function sendJSON(res, status, data) {
 }
 
 // ── Duplicate / double-result guard ───────────────────────────
-//
-// Problem: Roblox fires both "forfeit" and then "final" for the same game,
-// giving teams 2 wins and 2 losses.
-//
-// Fix: for a given matchup (homeABB + awayABB), once we record a
-// terminal result (final OR forfeit), any subsequent terminal result
-// for the SAME matchup within GAME_SESSION_WINDOW ms is silently dropped.
-//
 const GAME_SESSION_WINDOW = 5 * 60 * 1000; // 5 minutes
-const recentTerminalGames = new Map(); // key → timestamp
+const recentTerminalGames = new Map();
 
 function makeMatchupKey(homeABB, awayABB) {
-  // canonical order so home/away swap doesn't matter
   return [homeABB, awayABB].sort().join("|");
 }
 
@@ -212,7 +205,6 @@ function markTerminal(homeABB, awayABB, status) {
   if (!isTerminalStatus(status)) return;
   const key = makeMatchupKey(homeABB, awayABB);
   recentTerminalGames.set(key, Date.now());
-  // auto-clean after window expires
   setTimeout(() => recentTerminalGames.delete(key), GAME_SESSION_WINDOW);
 }
 
@@ -223,13 +215,17 @@ async function handlePostResult(req, res) {
   try { body = await readBody(req); }
   catch (e) { return sendJSON(res, 400, { error: "Bad JSON" }); }
 
-  const { status, homeABB, awayABB, homeLogo, awayLogo, homeScore, awayScore,
-          winnerABB, quarter, note, season, timestamp, playerOfGame, homeStats, awayStats } = body;
+  const {
+    status, homeABB, awayABB, homeLogo, awayLogo, homeScore, awayScore,
+    winnerABB, quarter, note, season, timestamp, playerOfGame,
+    homeStats, awayStats,
+    referees, // ← now accepted from Roblox
+  } = body;
 
   if (!homeABB || !awayABB || !status)
     return sendJSON(res, 422, { error: "Missing required fields" });
 
-  // ── 30-second exact-duplicate guard (same as before) ──
+  // 30-second exact-duplicate guard
   const now30 = Date.now();
   const exactDupe = state.results.find(r => {
     const age = now30 - new Date(r.timestamp).getTime();
@@ -237,7 +233,7 @@ async function handlePostResult(req, res) {
   });
   if (exactDupe) return sendJSON(res, 200, { ok: true, duplicate: true });
 
-  // ── Cross-status duplicate guard (forfeit then final = same game) ──
+  // Cross-status duplicate guard
   if (isDuplicateTerminal(homeABB, awayABB, status)) {
     console.log(`[RPL] Blocked duplicate terminal result: ${awayABB} @ ${homeABB} | ${status}`);
     return sendJSON(res, 200, { ok: true, duplicate: true, reason: "terminal_already_recorded" });
@@ -254,10 +250,11 @@ async function handlePostResult(req, res) {
 
   const result = {
     id: Date.now(), timestamp: timestamp || new Date().toISOString(),
-    season: season || "Season 10", status, quarter: quarter || "---", note: note || "",
+    season: season || "Season 11", status, quarter: quarter || "---", note: note || "",
     homeABB, awayABB, homeLogo: homeLogo || "", awayLogo: awayLogo || "",
     homeScore: homeScore ?? 0, awayScore: awayScore ?? 0,
     winnerABB: winnerABB || null, playerOfGame: playerOfGame || null,
+    referees: referees || "None", // stored alongside result
     homeStats: homeStats || [], awayStats: awayStats || [],
   };
 
@@ -269,7 +266,7 @@ async function handlePostResult(req, res) {
   broadcast("standings", buildPublicPayload());
   broadcast("result", result);
 
-  console.log(`[RPL] Result saved: ${awayABB} @ ${homeABB} | ${status}`);
+  console.log(`[RPL] Result saved: ${awayABB} @ ${homeABB} | ${status} | refs: ${result.referees}`);
   return sendJSON(res, 200, { ok: true, result });
 }
 
@@ -298,21 +295,6 @@ function handleSSE(req, res) {
   req.on("close", () => { clearInterval(heartbeat); sseClients.delete(res); });
 }
 
-// ── Team override — logo-safe upsert ─────────────────────────
-//
-// Old approach used a single POST with Prefer:merge-duplicates.
-// Supabase sometimes 4xx this if the row doesn't exist yet or the
-// table has no unique constraint. New approach:
-//   1. Optimistically POST (insert). If 2xx → done.
-//   2. On conflict (409 / 4xx), PATCH the existing row instead.
-// Logo field is ALWAYS updated regardless of path taken.
-//
-async function upsertTeamLogo(abb, logo) {
-  if (!SUPABASE_URL || !SUPABASE_KEY || !logo) return;
-  // Just update in-memory; Supabase persistence is handled by saveState()
-  ensureTeam(abb, logo);
-}
-
 async function handleTeamOverride(req, res) {
   if (!isAuthorized(req)) return sendJSON(res, 401, { error: "Unauthorized" });
   let body;
@@ -322,22 +304,18 @@ async function handleTeamOverride(req, res) {
   const { abb, wins, losses, streak, logo } = body;
   if (!abb) return sendJSON(res, 422, { error: "Missing abb" });
 
-  // Always ensure the team exists first (even if just a logo update)
   ensureTeam(abb, logo);
 
   const t = state.teams[abb];
   if (wins   !== undefined) t.wins   = Math.max(0, parseInt(wins,   10) || 0);
   if (losses !== undefined) t.losses = Math.max(0, parseInt(losses, 10) || 0);
   if (streak !== undefined) t.streak = streak;
-  // Logo: always overwrite if provided (even blank string clears it)
-  if (logo !== undefined) t.logo = logo;
+  if (logo   !== undefined) t.logo   = logo;
 
   const total = t.wins + t.losses;
   t.pct = total > 0 ? (t.wins / total).toFixed(3) : "0.000";
   state.lastUpdated = new Date().toISOString();
 
-  // Persist to Supabase — use merge-duplicates only for the full state blob,
-  // which we own entirely and know is always safe.
   await saveState();
   broadcast("standings", buildPublicPayload());
 
@@ -357,7 +335,8 @@ function buildPublicPayload() {
       if (gpB !== gpA) return gpB - gpA;
       return b.wins - a.wins;
     });
-  return { standings: sorted, results: state.results.slice(0, 10), lastUpdated: state.lastUpdated };
+  // Serve all stored results — consistent with RESULTS_MAX
+  return { standings: sorted, results: state.results, lastUpdated: state.lastUpdated };
 }
 
 // ── Router ────────────────────────────────────────────────────
