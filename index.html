@@ -783,9 +783,8 @@ function openBoxScore(g) {
       <p class="refs-empty">Not available</p>
     </div>`;
 
-  // Refs — parsed from note or not available
-  const refMatch = (g.note||'').match(/referee[s]?[:\s]+(.+)/i);
-  const refText = refMatch ? refMatch[1].trim() : null;
+  // Refs — use dedicated referees field sent from Roblox
+  const refText = (g.referees && g.referees !== 'None' && g.referees !== '') ? g.referees : null;
   const refsHtml = `
     <div class="info-card">
       <div class="info-card-label">📋 Referee(s)</div>
