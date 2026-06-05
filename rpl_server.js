@@ -18,7 +18,7 @@ const SECRET       = process.env.RPL_SECRET   || "CHANGE_ME"; // set via env var
 const SUPABASE_URL = process.env.SUPABASE_URL || "";
 const SUPABASE_KEY = process.env.SUPABASE_KEY || "";
 
-// Store and serve the same number — no more storing 20 and serving 10
+// Increased to 200 to support full match history browsing
 const RESULTS_MAX  = 200;
 
 let state = {
@@ -219,7 +219,7 @@ async function handlePostResult(req, res) {
     status, homeABB, awayABB, homeLogo, awayLogo, homeScore, awayScore,
     winnerABB, quarter, note, season, timestamp, playerOfGame,
     homeStats, awayStats,
-    referees, // ← now accepted from Roblox
+    referees,
   } = body;
 
   if (!homeABB || !awayABB || !status)
@@ -254,7 +254,7 @@ async function handlePostResult(req, res) {
     homeABB, awayABB, homeLogo: homeLogo || "", awayLogo: awayLogo || "",
     homeScore: homeScore ?? 0, awayScore: awayScore ?? 0,
     winnerABB: winnerABB || null, playerOfGame: playerOfGame || null,
-    referees: referees || "None", // stored alongside result
+    referees: referees || "None",
     homeStats: homeStats || [], awayStats: awayStats || [],
   };
 
@@ -335,7 +335,6 @@ function buildPublicPayload() {
       if (gpB !== gpA) return gpB - gpA;
       return b.wins - a.wins;
     });
-  // Serve all stored results — consistent with RESULTS_MAX
   return { standings: sorted, results: state.results, lastUpdated: state.lastUpdated };
 }
 
