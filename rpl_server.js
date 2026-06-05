@@ -19,7 +19,7 @@ const SUPABASE_URL = process.env.SUPABASE_URL || "";
 const SUPABASE_KEY = process.env.SUPABASE_KEY || "";
 
 // Store and serve the same number — no more storing 20 and serving 10
-const RESULTS_MAX  = 10;
+const RESULTS_MAX  = 200;
 
 let state = {
   teams:       {},
