@@ -927,7 +927,7 @@ function renderConfs(data){
     const teams=sortT(sd[c.key]||[]);
     const rows=teams.map((t,i)=>{
       const sc=t.status||'e',fl=changed.has(t.abbr)?' flash':'';
-      const cut=(i===4||i===6)?' cut':'';
+      const cut=(i===6||i===10)?' cut':'';
       return`<div class="srow s-${sc}${fl}${cut}">
         <span class="rrank">${i+1}</span>
         <span class="rlogo">${t.logo?`<img src="${t.logo}" alt="" loading="lazy">`:'<div class="ph"></div>'}</span>
