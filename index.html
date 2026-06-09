@@ -428,6 +428,17 @@ select.fc{
 #admin-toggle:hover{color:#fff;border-color:rgba(255,255,255,.14)}
 #admin-toggle.active{color:var(--red);border-color:var(--red-edge);background:var(--red-dim)}
 
+/* In-embed mode: toggle and panel become inline/relative */
+body.is-embed #admin-toggle{
+  position:relative;bottom:auto;left:auto;
+  display:block;margin:12px 20px 0;
+}
+body.is-embed .admin-panel{
+  position:relative;bottom:auto;left:auto;
+  width:100%;border-radius:0;box-shadow:none;
+  border-left:none;border-right:none;border-top:none;
+}
+
 .admin-panel{
   position:fixed;bottom:60px;left:16px;
   z-index:8000;width:320px;
@@ -1354,6 +1365,18 @@ function connectSSE(){
     if(panelOpen && authed) renderAdminList();
   });
   adminRefreshObserver.observe(document.getElementById('hist-rows'), {childList:true});
+})();
+
+/* ── EMBED DETECTION ── */
+(function(){
+  try{
+    // We're in an iframe if we can't access top's location (cross-origin) or top !== self
+    const inFrame = window.self !== window.top;
+    if(inFrame) document.body.classList.add('is-embed');
+  }catch(e){
+    // Cross-origin iframe — definitely embedded
+    document.body.classList.add('is-embed');
+  }
 })();
 
 (async()=>{await fetchData();setInterval(fetchData,CFG.POLL);connectSSE()})();
