@@ -21,6 +21,10 @@ const SUPABASE_KEY = process.env.SUPABASE_KEY || "";
 // Increased to 200 to support full match history browsing
 const RESULTS_MAX  = 200;
 
+// Admin secret for void/unvoid operations (separate from RPL_SECRET)
+// Set ADMIN_SECRET env var on your host. Falls back to RPL_SECRET if not set.
+const ADMIN_SECRET = process.env.ADMIN_SECRET || SECRET;
+
 let state = {
   teams:       {},
   results:     [],
@@ -119,6 +123,46 @@ function isAuthorized(req) {
   if (auth.startsWith("Bearer ")) return auth.slice(7) === SECRET;
   const url = new URL(req.url, "http://localhost");
   return url.searchParams.get("secret") === SECRET;
+}
+
+function isAdminAuthorized(req) {
+  const auth = req.headers["authorization"] || "";
+  if (auth.startsWith("Bearer ")) return auth.slice(7) === ADMIN_SECRET;
+  const url = new URL(req.url, "http://localhost");
+  return url.searchParams.get("secret") === ADMIN_SECRET;
+}
+
+// ── Rebuild standings from scratch based on non-voided results ──
+function rebuildStandings() {
+  // Reset all team records
+  for (const abb of Object.keys(state.teams)) {
+    state.teams[abb].wins = 0;
+    state.teams[abb].losses = 0;
+    state.teams[abb].pct = "0.000";
+    state.teams[abb].streak = "—";
+  }
+
+  // Replay results oldest-first (results array is newest-first)
+  const ordered = [...state.results].reverse();
+  for (const r of ordered) {
+    if (r.voided) continue;
+    if (!isTerminalStatus(r.status)) continue;
+    if (!r.winnerABB) continue;
+    const loserABB = r.winnerABB === r.homeABB ? r.awayABB : r.homeABB;
+    ensureTeam(r.winnerABB, r.winnerABB === r.homeABB ? r.homeLogo : r.awayLogo);
+    ensureTeam(loserABB, loserABB === r.homeABB ? r.homeLogo : r.awayLogo);
+    state.teams[r.winnerABB].wins += 1;
+    state.teams[loserABB].losses += 1;
+    state.teams[r.winnerABB].streak = updateStreak(state.teams[r.winnerABB].streak, true);
+    state.teams[loserABB].streak = updateStreak(state.teams[loserABB].streak, false);
+  }
+
+  // Recalculate PCT for all teams
+  for (const abb of Object.keys(state.teams)) {
+    const t = state.teams[abb];
+    const total = t.wins + t.losses;
+    t.pct = total > 0 ? (t.wins / total).toFixed(3) : "0.000";
+  }
 }
 
 // ── Team helpers ──────────────────────────────────────────────
@@ -270,7 +314,33 @@ async function handlePostResult(req, res) {
   return sendJSON(res, 200, { ok: true, result });
 }
 
-function handleGetStandings(req, res) {
+async function handleVoidResult(req, res) {
+  if (!isAdminAuthorized(req)) return sendJSON(res, 401, { error: "Unauthorized" });
+  let body;
+  try { body = await readBody(req); }
+  catch (e) { return sendJSON(res, 400, { error: "Bad JSON" }); }
+
+  const { id, voided } = body;
+  if (id === undefined) return sendJSON(res, 422, { error: "Missing result id" });
+
+  const result = state.results.find(r => r.id === id);
+  if (!result) return sendJSON(res, 404, { error: "Result not found" });
+
+  result.voided = !!voided;
+  state.lastUpdated = new Date().toISOString();
+
+  // Rebuild standings from scratch to reflect void/unvoid
+  rebuildStandings();
+
+  await saveState();
+  broadcast("standings", buildPublicPayload());
+
+  const action = voided ? "voided" : "unvoided";
+  console.log(`[RPL] Result ${action}: ${result.awayABB} @ ${result.homeABB} | id=${id}`);
+  return sendJSON(res, 200, { ok: true, action, result });
+}
+
+
   setCORS(res);
   res.writeHead(200, { "Content-Type": "application/json" });
   res.end(JSON.stringify(buildPublicPayload()));
@@ -351,7 +421,8 @@ const server = http.createServer(async (req, res) => {
     if (method === "GET")  return handleGetStandings(req, res);
   }
   if (url === "/rpl/standings/events" && method === "GET") return handleSSE(req, res);
-  if (url === "/rpl/standings/team"   && method === "POST") return handleTeamOverride(req, res);
+  if (url === "/rpl/standings/void"      && method === "POST") return handleVoidResult(req, res);
+  if (url === "/rpl/standings/team"      && method === "POST") return handleTeamOverride(req, res);
 
   sendJSON(res, 404, { error: "Not found" });
 });
