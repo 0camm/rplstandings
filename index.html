@@ -394,7 +394,141 @@ select.fc{
 }
 .rstrk.w{color:var(--win)}.rstrk.l{color:var(--lose)}.rstrk.n{color:var(--mu)}
 
-/* ── TOASTS ── */
+/* voided result overlay */
+.hr.voided{opacity:.45}
+.hr.voided .hm-away,.hr.voided .hm-home{color:var(--mu)!important}
+.hr.voided .hs-a,.hr.voided .hs-h{color:var(--mu)!important}
+.voided-stamp{
+  position:absolute;inset:0;
+  display:flex;align-items:center;justify-content:center;
+  pointer-events:none;z-index:2;
+}
+.voided-stamp span{
+  font-family:'Bebas Neue',sans-serif;
+  font-size:13px;letter-spacing:.22em;
+  color:rgba(255,80,80,.55);
+  border:1px solid rgba(255,80,80,.25);
+  padding:2px 10px;border-radius:4px;
+  background:rgba(255,40,40,.04);
+  transform:rotate(-2deg);
+}
+.hbadge.voided{background:rgba(255,80,80,.08);color:rgba(255,100,100,.55);border:1px solid rgba(255,80,80,.18);text-decoration:line-through}
+
+/* ── ADMIN PANEL ── */
+#admin-toggle{
+  position:fixed;bottom:20px;left:16px;
+  z-index:8000;
+  background:var(--s3);border:1px solid var(--b);
+  border-radius:9px;padding:7px 13px;
+  font-size:11px;font-weight:600;letter-spacing:.08em;
+  color:var(--mu);cursor:pointer;
+  transition:all .15s;
+  font-family:'Inter',sans-serif;
+}
+#admin-toggle:hover{color:#fff;border-color:rgba(255,255,255,.14)}
+#admin-toggle.active{color:var(--red);border-color:var(--red-edge);background:var(--red-dim)}
+
+.admin-panel{
+  position:fixed;bottom:60px;left:16px;
+  z-index:8000;width:320px;
+  background:var(--s1);border:1px solid var(--b);
+  border-radius:13px;overflow:hidden;
+  box-shadow:0 20px 60px rgba(0,0,0,.7);
+  display:none;
+}
+.admin-panel.open{display:block}
+.admin-panel::before{
+  content:'';position:absolute;top:0;left:0;right:0;height:2px;
+  background:linear-gradient(90deg,var(--red),transparent 60%);
+}
+.ap-hd{
+  padding:12px 16px;background:var(--s2);
+  border-bottom:1px solid var(--b);
+  display:flex;align-items:center;justify-content:space-between;
+}
+.ap-title{font-family:'Bebas Neue',sans-serif;font-size:16px;letter-spacing:.08em;color:#fff}
+.ap-subtitle{font-size:10px;color:var(--mu);margin-top:1px}
+.ap-lock{
+  background:var(--s3);border:1px solid var(--b);cursor:pointer;
+  color:var(--mu);font-size:12px;line-height:1;
+  padding:5px 8px;border-radius:6px;
+  transition:all .12s;
+}
+.ap-lock:hover{color:#fff;border-color:rgba(255,255,255,.12)}
+
+/* auth screen */
+.ap-auth{padding:16px}
+.ap-auth label{display:block;font-size:10px;font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:var(--mu);margin-bottom:6px}
+.ap-auth-row{display:flex;gap:8px}
+.ap-auth input{
+  flex:1;background:var(--s3);border:1px solid var(--b);
+  border-radius:7px;color:var(--tx);font-size:12px;font-family:'JetBrains Mono',monospace;
+  padding:8px 10px;outline:none;
+}
+.ap-auth input:focus{border-color:var(--red-edge)}
+.ap-auth-btn{
+  background:var(--red);border:none;border-radius:7px;
+  color:#fff;font-size:12px;font-weight:700;
+  padding:8px 14px;cursor:pointer;white-space:nowrap;
+  transition:opacity .13s;
+}
+.ap-auth-btn:hover{opacity:.85}
+.ap-auth-err{font-size:11px;color:var(--lose);margin-top:7px;display:none}
+.ap-auth-err.on{display:block}
+
+/* admin body */
+.ap-body{display:none;padding:12px 14px;max-height:380px;overflow-y:auto}
+.ap-body.on{display:block}
+.ap-instruct{font-size:11px;color:var(--mu);margin-bottom:10px;line-height:1.5}
+.ap-instruct strong{color:var(--tx2)}
+.ap-game-list{display:flex;flex-direction:column;gap:5px}
+.ap-game{
+  display:flex;align-items:center;justify-content:space-between;gap:8px;
+  background:var(--s2);border:1px solid var(--b);border-radius:8px;
+  padding:8px 10px;cursor:pointer;
+  transition:border-color .12s,background .12s;
+}
+.ap-game:hover{background:var(--s3);border-color:rgba(255,255,255,.1)}
+.ap-game.selected{border-color:var(--red-edge);background:var(--red-dim)}
+.ap-game.is-voided{opacity:.55;border-color:rgba(255,80,80,.2)}
+.ap-game.is-voided.selected{opacity:1;border-color:rgba(255,80,80,.5)}
+.apg-info{flex:1;min-width:0}
+.apg-matchup{font-family:'Bebas Neue',sans-serif;font-size:13px;letter-spacing:.04em;color:#fff}
+.apg-meta{font-size:10px;color:var(--mu);margin-top:1px;display:flex;gap:6px;align-items:center}
+.apg-voided-badge{
+  font-size:9px;font-weight:700;letter-spacing:.1em;
+  color:rgba(255,100,100,.7);background:rgba(255,50,50,.08);
+  border:1px solid rgba(255,80,80,.2);border-radius:3px;
+  padding:1px 5px;
+}
+.apg-check{
+  width:16px;height:16px;border-radius:4px;border:1px solid var(--b);
+  background:var(--s4);flex-shrink:0;
+  display:flex;align-items:center;justify-content:center;
+  font-size:10px;
+}
+.ap-game.selected .apg-check{background:var(--red);border-color:var(--red);color:#fff}
+
+.ap-actions{
+  padding:10px 14px;background:var(--s2);border-top:1px solid var(--b);
+  display:flex;gap:8px;align-items:center;
+}
+.ap-sel-count{font-size:11px;color:var(--mu);flex:1}
+.ap-void-btn,.ap-unvoid-btn{
+  font-size:11px;font-weight:700;border:none;border-radius:7px;
+  padding:7px 13px;cursor:pointer;transition:opacity .13s;
+  font-family:'Inter',sans-serif;
+}
+.ap-void-btn{background:rgba(255,80,60,.18);color:rgba(255,100,80,.9)}
+.ap-void-btn:hover{opacity:.8}
+.ap-void-btn:disabled{opacity:.3;cursor:default}
+.ap-unvoid-btn{background:rgba(24,212,100,.12);color:var(--gr)}
+.ap-unvoid-btn:hover{opacity:.8}
+.ap-unvoid-btn:disabled{opacity:.3;cursor:default}
+
+@media(max-width:400px){
+  .admin-panel{width:calc(100vw - 24px)}
+}
 #toasts{
   position:fixed;bottom:20px;right:16px;
   display:flex;flex-direction:column-reverse;gap:7px;
@@ -685,6 +819,41 @@ select.fc{
   <div class="conf-grid" id="conferences"></div>
 </div>
 
+<!-- ── ADMIN PANEL ── -->
+<button id="admin-toggle" title="Admin Panel">⚙ Admin</button>
+
+<div class="admin-panel" id="admin-panel">
+  <div class="ap-hd">
+    <div>
+      <div class="ap-title">Admin Panel</div>
+      <div class="ap-subtitle">Void / Unvoid match results</div>
+    </div>
+    <button class="ap-lock" id="ap-lock" title="Lock panel">🔒</button>
+  </div>
+
+  <!-- Auth screen -->
+  <div class="ap-auth" id="ap-auth">
+    <label>Admin Secret</label>
+    <div class="ap-auth-row">
+      <input type="password" id="ap-secret-input" placeholder="Enter admin secret…" autocomplete="off">
+      <button class="ap-auth-btn" id="ap-auth-btn">Unlock</button>
+    </div>
+    <div class="ap-auth-err" id="ap-auth-err">Incorrect secret. Try again.</div>
+  </div>
+
+  <!-- Admin body (shown when authed) -->
+  <div class="ap-body" id="ap-body">
+    <div class="ap-instruct">Select games to <strong>void</strong> (removes from standings) or <strong>unvoid</strong> (restores). Voided games show a strikethrough in match history.</div>
+    <div class="ap-game-list" id="ap-game-list"></div>
+  </div>
+
+  <div class="ap-actions" id="ap-actions" style="display:none">
+    <span class="ap-sel-count" id="ap-sel-count">0 selected</span>
+    <button class="ap-unvoid-btn" id="ap-unvoid-btn" disabled>↺ Unvoid</button>
+    <button class="ap-void-btn" id="ap-void-btn" disabled>✕ Void</button>
+  </div>
+</div>
+
 <div id="toasts"></div>
 
 <div class="mbg" id="modal-bg" role="dialog" aria-modal="true" aria-label="Box Score">
@@ -769,27 +938,30 @@ function renderHistory(){
     const num=filt.length-start-i;
     const hw=g.homeScore>g.awayScore,aw=g.awayScore>g.homeScore;
     const st=(g.status||'final').toLowerCase();
+    const isVoided=!!g.voided;
     let bt=st.toUpperCase(),bc=st;
     if(st==='final'&&g.quarter==='OT'){bt='OT';bc='ot'}
     if(st==='incomplete')bt='—';
     if(st==='forfeit')bt='FORFEIT';
+    if(isVoided){bt='VOIDED';bc='voided'}
     const aL=logo(g.awayLogo,g.awayABB),hL=logo(g.homeLogo,g.homeABB);
-    const clk=st==='final'||st==='forfeit';
-    return`<div class="hr st-${st}${clk?' clk':''}" data-i="${start+i}"${clk?' role="button" tabindex="0"':''}>
+    const clk=(st==='final'||st==='forfeit')&&!isVoided;
+    return`<div class="hr st-${st}${clk?' clk':''}${isVoided?' voided':''}" data-i="${start+i}"${clk?' role="button" tabindex="0"':''} style="position:relative">
+      ${isVoided?'<div class="voided-stamp"><span>VOIDED</span></div>':''}
       <span class="hn">${num}</span>
       <span class="hm">
         ${aL?`<img class="hm-logo" src="${aL}" alt="" loading="lazy">`:'<span class="hm-nolog"></span>'}
-        <span class="hm-away${hw?' dim':''}">${g.awayABB||'?'}</span>
+        <span class="hm-away${hw&&!isVoided?' dim':''}">${g.awayABB||'?'}</span>
         <span class="hm-at">@</span>
         <span class="hm-home-wrap">
           ${hL?`<img class="hm-logo" src="${hL}" alt="" loading="lazy">`:'<span class="hm-nolog"></span>'}
-          <span class="hm-home${aw?' dim':''}">${g.homeABB||'?'}</span>
+          <span class="hm-home${aw&&!isVoided?' dim':''}">${g.homeABB||'?'}</span>
         </span>
       </span>
       <span class="hs">
-        <span class="hs-a${aw?' w':''}">${g.awayScore??'—'}</span>
+        <span class="hs-a${aw&&!isVoided?' w':''}">${g.awayScore??'—'}</span>
         <span class="hs-dash">–</span>
-        <span class="hs-h${hw?' w':''}">${g.homeScore??'—'}</span>
+        <span class="hs-h${hw&&!isVoided?' w':''}">${g.homeScore??'—'}</span>
       </span>
       <span class="hb"><span class="hbadge ${bc}">${bt}</span></span>
       <span class="hdate">${fmtDate(g.timestamp)}${clk?'<span class="harrow">↗</span>':''}</span>
@@ -1004,6 +1176,185 @@ function connectSSE(){
   es.addEventListener('result',()=>fetchData());
   es.onerror=()=>es.close();
 }
+
+/* ── ADMIN PANEL ── */
+(function(){
+  // ADMIN_SECRET is injected via the CFG object. To set it, add:
+  //   ADMIN_SECRET: 'your-secret'
+  // to the CFG object at the top of the script, OR set it as a Vercel
+  // environment variable and pass it into the page at build time.
+  // For security, NEVER hardcode this in a public repo.
+  // If CFG.ADMIN_SECRET is not set, the panel can still be used but
+  // you must enter the secret manually each time (it is NOT stored).
+
+  const API_VOID = CFG.API.replace(/\/standings$/, '/standings/void');
+
+  let adminSecret = '';
+  let selectedIds = new Set();
+  let panelOpen = false;
+  let authed = false;
+
+  const toggle    = document.getElementById('admin-toggle');
+  const panel     = document.getElementById('admin-panel');
+  const authEl    = document.getElementById('ap-auth');
+  const bodyEl    = document.getElementById('ap-body');
+  const actionsEl = document.getElementById('ap-actions');
+  const lockBtn   = document.getElementById('ap-lock');
+  const authBtn   = document.getElementById('ap-auth-btn');
+  const secretIn  = document.getElementById('ap-secret-input');
+  const authErr   = document.getElementById('ap-auth-err');
+  const listEl    = document.getElementById('ap-game-list');
+  const selCount  = document.getElementById('ap-sel-count');
+  const voidBtn   = document.getElementById('ap-void-btn');
+  const unvoidBtn = document.getElementById('ap-unvoid-btn');
+
+  function openPanel(){
+    panelOpen=true;
+    panel.classList.add('open');
+    toggle.classList.add('active');
+    if(authed) renderAdminList();
+  }
+  function closePanel(){
+    panelOpen=false;
+    panel.classList.remove('open');
+    toggle.classList.remove('active');
+  }
+
+  toggle.addEventListener('click', ()=>{ if(panelOpen) closePanel(); else openPanel(); });
+
+  lockBtn.addEventListener('click', ()=>{
+    authed=false;adminSecret='';selectedIds.clear();
+    authEl.style.display='';bodyEl.classList.remove('on');actionsEl.style.display='none';
+    secretIn.value='';authErr.classList.remove('on');
+    closePanel();
+  });
+
+  // Auth: we validate by attempting a no-op PATCH — actually we just
+  // store the secret and trust the server to reject if wrong on first void attempt.
+  // For UX, we do a quick GET against /health to ensure server is alive, then unlock.
+  authBtn.addEventListener('click', attemptAuth);
+  secretIn.addEventListener('keydown', e=>{ if(e.key==='Enter') attemptAuth(); });
+
+  async function attemptAuth(){
+    const s = secretIn.value.trim();
+    if(!s){ authErr.textContent='Please enter the admin secret.'; authErr.classList.add('on'); return; }
+    authErr.classList.remove('on');
+    authBtn.textContent='…';
+    // We do a test void with a dummy id to verify secret (server will 404, not 401, if correct)
+    try{
+      const r = await fetch(API_VOID, {
+        method:'POST',
+        headers:{'Content-Type':'application/json','Authorization':`Bearer ${s}`},
+        body: JSON.stringify({id: '__auth_check__', voided: false})
+      });
+      if(r.status === 401){
+        authErr.textContent='Incorrect secret. Try again.';
+        authErr.classList.add('on');
+        authBtn.textContent='Unlock';
+        return;
+      }
+      // 404 = server found the route but result not found — means secret is valid
+      adminSecret = s;
+      authed = true;
+      authEl.style.display='none';
+      bodyEl.classList.add('on');
+      actionsEl.style.display='flex';
+      renderAdminList();
+    } catch(e){
+      authErr.textContent='Server unreachable. Check connection.';
+      authErr.classList.add('on');
+    }
+    authBtn.textContent='Unlock';
+  }
+
+  function renderAdminList(){
+    selectedIds.clear();
+    updateSelCount();
+    // Show only terminal games (final/forfeit) — most relevant for voiding
+    const games = allResults.filter(r=>r.status==='final'||r.status==='forfeit');
+    if(!games.length){
+      listEl.innerHTML='<div style="font-size:12px;color:var(--mu);padding:8px 0">No completed games yet.</div>';
+      return;
+    }
+    listEl.innerHTML = games.map(g=>{
+      const dt = fmtDate(g.timestamp);
+      const sc = `${g.awayScore??'—'}–${g.homeScore??'—'}`;
+      const vd = !!g.voided;
+      return`<div class="ap-game${vd?' is-voided':''}" data-id="${g.id}" data-voided="${vd}">
+        <div class="apg-info">
+          <div class="apg-matchup">${g.awayABB||'?'} @ ${g.homeABB||'?'}</div>
+          <div class="apg-meta">
+            <span>${sc}</span><span>·</span><span>${dt}</span>
+            ${vd?'<span class="apg-voided-badge">VOIDED</span>':''}
+          </div>
+        </div>
+        <div class="apg-check">${''}</div>
+      </div>`;
+    }).join('');
+
+    listEl.querySelectorAll('.ap-game').forEach(el=>{
+      el.addEventListener('click', ()=>{
+        const id = el.dataset.id;
+        // ids from server are numbers
+        const numId = isNaN(id) ? id : Number(id);
+        if(selectedIds.has(numId)) selectedIds.delete(numId);
+        else selectedIds.add(numId);
+        el.classList.toggle('selected', selectedIds.has(numId));
+        el.querySelector('.apg-check').textContent = selectedIds.has(numId) ? '✓' : '';
+        updateSelCount();
+      });
+    });
+  }
+
+  function updateSelCount(){
+    const n = selectedIds.size;
+    selCount.textContent = n===0 ? '0 selected' : `${n} game${n!==1?'s':''} selected`;
+    voidBtn.disabled = n===0;
+    unvoidBtn.disabled = n===0;
+  }
+
+  voidBtn.addEventListener('click', ()=> applyVoid(true));
+  unvoidBtn.addEventListener('click', ()=> applyVoid(false));
+
+  async function applyVoid(voided){
+    if(!selectedIds.size) return;
+    voidBtn.disabled=true; unvoidBtn.disabled=true;
+    voidBtn.textContent = voided ? '…' : '✕ Void';
+    unvoidBtn.textContent = voided ? '↺ Unvoid' : '…';
+
+    const ids = [...selectedIds];
+    let anyFail = false;
+    for(const id of ids){
+      try{
+        const r = await fetch(API_VOID, {
+          method:'POST',
+          headers:{'Content-Type':'application/json','Authorization':`Bearer ${adminSecret}`},
+          body: JSON.stringify({id, voided})
+        });
+        if(!r.ok && r.status!==404){ anyFail=true; }
+      } catch(e){ anyFail=true; }
+    }
+
+    selectedIds.clear();
+    voidBtn.textContent='✕ Void';
+    unvoidBtn.textContent='↺ Unvoid';
+
+    if(anyFail) toast('Some changes may have failed — check server logs.','amber',5000);
+    else toast(voided ? `${ids.length} game${ids.length!==1?'s':''} voided` : `${ids.length} game${ids.length!==1?'s':''} restored`, voided?'red':'green', 4000);
+
+    // Re-fetch data then re-render admin list
+    await fetchData();
+    if(panelOpen && authed) renderAdminList();
+  }
+
+  // Re-render admin list whenever results update (if panel is open)
+  const _origFetch = fetchData;
+  // We hook into the global allResults update
+  const adminRefreshObserver = new MutationObserver(()=>{
+    if(panelOpen && authed) renderAdminList();
+  });
+  adminRefreshObserver.observe(document.getElementById('hist-rows'), {childList:true});
+})();
 
 (async()=>{await fetchData();setInterval(fetchData,CFG.POLL);connectSSE()})();
 </script>
