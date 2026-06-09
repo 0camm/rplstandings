@@ -13,17 +13,17 @@
 const http  = require("http");
 const https = require("https");
 
-const PORT         = process.env.PORT         || 3000;
-const SECRET       = process.env.RPL_SECRET   || "CHANGE_ME"; // set via env var, never hardcode
-const SUPABASE_URL = process.env.SUPABASE_URL || "";
-const SUPABASE_KEY = process.env.SUPABASE_KEY || "";
+const PORT         = process.env.PORT                              || 3000;
+const SECRET       = (process.env.RPL_SECRET   || "CHANGE_ME").trim();
+const SUPABASE_URL = (process.env.SUPABASE_URL || "").trim();
+const SUPABASE_KEY = (process.env.SUPABASE_KEY || "").trim();
 
 // Increased to 200 to support full match history browsing
 const RESULTS_MAX  = 200;
 
 // Admin secret for void/unvoid operations (separate from RPL_SECRET)
 // Set ADMIN_SECRET env var on your host. Falls back to RPL_SECRET if not set.
-const ADMIN_SECRET = process.env.ADMIN_SECRET || SECRET;
+const ADMIN_SECRET = (process.env.ADMIN_SECRET || SECRET).trim();
 
 let state = {
   teams:       {},
@@ -253,6 +253,11 @@ function markTerminal(homeABB, awayABB, status) {
 }
 
 // ── Routes ────────────────────────────────────────────────────
+function handleAuth(req, res) {
+  if (!isAdminAuthorized(req)) return sendJSON(res, 401, { error: "Unauthorized" });
+  return sendJSON(res, 200, { ok: true });
+}
+
 async function handlePostResult(req, res) {
   if (!isAuthorized(req)) return sendJSON(res, 401, { error: "Unauthorized" });
   let body;
@@ -422,6 +427,7 @@ const server = http.createServer(async (req, res) => {
     if (method === "GET")  return handleGetStandings(req, res);
   }
   if (url === "/rpl/standings/events" && method === "GET") return handleSSE(req, res);
+  if (url === "/rpl/standings/auth"       && method === "POST") return handleAuth(req, res);
   if (url === "/rpl/standings/void"      && method === "POST") return handleVoidResult(req, res);
   if (url === "/rpl/standings/team"      && method === "POST") return handleTeamOverride(req, res);
 
