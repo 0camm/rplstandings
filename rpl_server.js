@@ -147,13 +147,21 @@ function rebuildStandings() {
   for (const r of ordered) {
     if (r.voided) continue;
     if (!isTerminalStatus(r.status)) continue;
-    if (!r.winnerABB) continue;
-    const loserABB = r.winnerABB === r.homeABB ? r.awayABB : r.homeABB;
-    ensureTeam(r.winnerABB, r.winnerABB === r.homeABB ? r.homeLogo : r.awayLogo);
+
+    // Derive winner if missing — fall back to score comparison
+    let winnerABB = r.winnerABB;
+    if (!winnerABB && r.status === 'final') {
+      if (r.homeScore > r.awayScore) winnerABB = r.homeABB;
+      else if (r.awayScore > r.homeScore) winnerABB = r.awayABB;
+    }
+    if (!winnerABB) continue; // forfeit with no winner recorded — skip
+
+    const loserABB = winnerABB === r.homeABB ? r.awayABB : r.homeABB;
+    ensureTeam(winnerABB, winnerABB === r.homeABB ? r.homeLogo : r.awayLogo);
     ensureTeam(loserABB, loserABB === r.homeABB ? r.homeLogo : r.awayLogo);
-    state.teams[r.winnerABB].wins += 1;
+    state.teams[winnerABB].wins += 1;
     state.teams[loserABB].losses += 1;
-    state.teams[r.winnerABB].streak = updateStreak(state.teams[r.winnerABB].streak, true);
+    state.teams[winnerABB].streak = updateStreak(state.teams[winnerABB].streak, true);
     state.teams[loserABB].streak = updateStreak(state.teams[loserABB].streak, false);
   }
 
