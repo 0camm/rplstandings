@@ -1199,6 +1199,7 @@ function connectSSE(){
   // you must enter the secret manually each time (it is NOT stored).
 
   const API_VOID = CFG.API.replace(/\/standings$/, '/standings/void');
+  const API_AUTH = CFG.API.replace(/\/standings$/, '/standings/auth');
 
   let adminSecret = '';
   let selectedIds = new Set();
@@ -1251,12 +1252,11 @@ function connectSSE(){
     if(!s){ authErr.textContent='Please enter the admin secret.'; authErr.classList.add('on'); return; }
     authErr.classList.remove('on');
     authBtn.textContent='…';
-    // We do a test void with a dummy id to verify secret (server will 404, not 401, if correct)
     try{
-      const r = await fetch(API_VOID, {
+      const r = await fetch(API_AUTH, {
         method:'POST',
         headers:{'Content-Type':'application/json','Authorization':`Bearer ${s}`},
-        body: JSON.stringify({id: '__auth_check__', voided: false})
+        body: JSON.stringify({})
       });
       if(r.status === 401){
         authErr.textContent='Incorrect secret. Try again.';
@@ -1264,7 +1264,12 @@ function connectSSE(){
         authBtn.textContent='Unlock';
         return;
       }
-      // 404 = server found the route but result not found — means secret is valid
+      if(!r.ok){
+        authErr.textContent='Server error. Try again.';
+        authErr.classList.add('on');
+        authBtn.textContent='Unlock';
+        return;
+      }
       adminSecret = s;
       authed = true;
       authEl.style.display='none';
