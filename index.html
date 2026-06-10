@@ -1042,9 +1042,9 @@ async function attemptAuth(){
       method:'POST',headers:{'Content-Type':'application/json','Authorization':`Bearer ${pass}`},body:'{}'
     });
     if(res.status===401||res.status===403){showAuthError('Incorrect password. Try again.');authPass.value=''}
-    else{adminPassword=pass;isAuthed=true;authModal.style.display='none';adminPanel.style.display=''}
+    else{adminPassword=pass;isAuthed=true;authModal.style.display='none';adminPanel.style.display='block';}
   }catch(e){
-    adminPassword=pass;isAuthed=true;authModal.style.display='none';adminPanel.style.display='';
+    showAuthError('Could not reach the server. Check your connection.');
   }finally{authSubmit.disabled=false;authSubmit.textContent='Unlock Admin Panel'}
 }
 
@@ -1057,6 +1057,7 @@ modalBg.addEventListener('click',e=>{if(e.target===modalBg)closeAdmin()});
 document.getElementById('admin-btn').addEventListener('click',()=>{
   modalBg.classList.add('open');
   if(!isAuthed){authModal.style.display='';adminPanel.style.display='none';authPass.value='';hideAuthError();setTimeout(()=>authPass.focus(),80)}
+  else{authModal.style.display='none';adminPanel.style.display='block';}
 });
 function closeAdmin(){modalBg.classList.remove('open');isAuthed=false;adminPassword='';authModal.style.display='';adminPanel.style.display='none'}
 
