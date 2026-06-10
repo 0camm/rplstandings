@@ -822,7 +822,7 @@ function renderHistory(){
     if(isVoided){bt='VOIDED';bc='voided'}
     const aL=logo(g.awayLogo,g.awayABB),hL=logo(g.homeLogo,g.homeABB);
     const clk=(st==='final'||st==='forfeit')&&!isVoided;
-    return`<div class="hr st-${st}${clk?' clk':''}${isVoided?' voided':''}" data-i="${start+i}"${clk?' role="button" tabindex="0"':''} style="position:relative">
+    return`<div class="hr st-${st}${clk?' clk':''} hr-aid${isVoided?' voided':''}" data-i="${start+i}" data-gid="${g.id}"${clk?' role="button" tabindex="0"':''} style="position:relative">
       ${isVoided?'<div class="voided-stamp"><span>VOIDED</span></div>':''}
       <span class="hn">${num}</span>
       <span class="hm">
@@ -848,6 +848,22 @@ function renderHistory(){
     el.addEventListener('click',()=>openModal(g));
     el.addEventListener('keydown',e=>{if(e.key==='Enter'||e.key===' ')openModal(g)});
   });
+  if(isAuthed){
+    rowsEl.querySelectorAll('.hr-aid').forEach(el=>{
+      const fillAdmin=gid=>{
+        document.getElementById('void-game-id').value=gid;
+        document.getElementById('remove-game-id').value=gid;
+        clearPanelMsg('void-msg');clearPanelMsg('remove-msg');
+        if(!modalBg.classList.contains('open')){modalBg.classList.add('open');authModal.style.display='none';adminPanel.style.display='block';}
+        toast(`Game ID ${gid} loaded into admin panel`,'green',3000);
+      };
+      el.addEventListener('contextmenu',e=>{e.preventDefault();fillAdmin(el.dataset.gid)});
+      if(!el.classList.contains('clk')){
+        el.style.cursor='pointer';
+        el.addEventListener('click',()=>fillAdmin(el.dataset.gid));
+      }
+    });
+  }
   const pagerEl=document.getElementById('pager');
   pagerEl.style.display='flex';
   document.getElementById('pg-info').textContent=`${start+1}–${Math.min(start+pp,filt.length)} of ${filt.length}`;
