@@ -7,7 +7,7 @@ const PORT         = process.env.PORT                              || 3000;
 const SECRET       = (process.env.RPL_SECRET   || "RPLHRPASS$&").trim();
 const SUPABASE_URL = (process.env.SUPABASE_URL || "").trim();
 const SUPABASE_KEY = (process.env.SUPABASE_KEY || "").trim();
-const RESULTS_MAX  = 200;
+const RESULTS_MAX  = 500;
 const ADMIN_SECRET = (process.env.ADMIN_SECRET || SECRET).trim();
 
 let state = {
