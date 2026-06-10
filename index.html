@@ -207,16 +207,18 @@ select.fc{
 .hist-empty{padding:40px 20px;text-align:center;font-size:13px;color:var(--mu)}
 
 /* voided */
-.hr.voided{opacity:.45}
-.hr.voided .hm-away,.hr.voided .hm-home{color:var(--mu)!important}
-.hr.voided .hs-a,.hr.voided .hs-h{color:var(--mu)!important}
-.voided-stamp{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;pointer-events:none;z-index:2}
-.voided-stamp span{
-  font-family:'Bebas Neue',sans-serif;font-size:13px;letter-spacing:.22em;
-  color:rgba(255,80,80,.55);border:1px solid rgba(255,80,80,.25);
-  padding:2px 10px;border-radius:4px;background:rgba(255,40,40,.04);transform:rotate(-2deg);
+.hr.voided{background:rgba(232,0,29,.045)}
+.hr.voided::before{background:var(--red)!important}
+.hr.voided .hm-away,.hr.voided .hm-home{
+  color:var(--mu)!important;text-decoration:line-through;text-decoration-color:rgba(232,0,29,.5);
 }
-.hbadge.voided{background:rgba(255,80,80,.08);color:rgba(255,100,100,.55);border:1px solid rgba(255,80,80,.18);text-decoration:line-through}
+.hr.voided .hs-a,.hr.voided .hs-h{color:var(--mu)!important;text-decoration:line-through;text-decoration-color:rgba(232,0,29,.4)}
+.hr.voided .hm-logo,.hr.voided .hm-nolog{opacity:.35;filter:grayscale(1)}
+.hbadge.voided{
+  background:rgba(232,0,29,.15);color:#ff6b6b;
+  border:1px solid rgba(232,0,29,.35);
+  font-weight:800;letter-spacing:.12em;
+}
 
 /* ── PAGER ── */
 .pager{display:flex;align-items:center;justify-content:space-between;margin-top:12px;flex-wrap:wrap;gap:8px;width:100%}
@@ -861,7 +863,6 @@ function renderHistory(){
     const aL=logo(g.awayLogo,g.awayABB),hL=logo(g.homeLogo,g.homeABB);
     const clk=(st==='final'||st==='forfeit')&&!isVoided;
     return`<div class="hr st-${st}${clk?' clk':''} hr-aid${isVoided?' voided':''}" data-i="${start+i}" data-gid="${g.id}"${clk?' role="button" tabindex="0"':''} style="position:relative">
-      ${isVoided?'<div class="voided-stamp"><span>VOIDED</span></div>':''}
       <span class="hn">${num}</span>
       <span class="hm">
         ${aL?`<img class="hm-logo" src="${aL}" alt="" loading="lazy">`:'<span class="hm-nolog"></span>'}
