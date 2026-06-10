@@ -416,6 +416,24 @@ select.fc{
 .panel-msg.success{background:var(--gr-d);border:1px solid rgba(24,212,100,.18);color:var(--gr)}
 .panel-msg.error{background:var(--red-dim);border:1px solid var(--red-mid);color:#f87171}
 
+/* ── GAME PICKER ── */
+.gp-row{
+  display:grid;grid-template-columns:1fr auto;align-items:center;gap:8px;
+  padding:7px 10px;border-radius:6px;border:1px solid var(--b);background:var(--s2);
+  cursor:pointer;transition:background .1s,border-color .1s;
+}
+.gp-row:hover{background:var(--s3);border-color:var(--red-edge)}
+.gp-row.selected{background:var(--red-dim);border-color:var(--red-edge)}
+.gp-matchup{font-family:'Bebas Neue',sans-serif;font-size:14px;letter-spacing:.05em;color:#fff}
+.gp-score{font-family:'JetBrains Mono',monospace;font-size:11px;font-weight:700;color:var(--tx2);white-space:nowrap}
+.gp-meta{font-size:9px;color:var(--mu);margin-top:1px;display:flex;gap:5px;align-items:center}
+.gp-status{font-size:8px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;padding:1px 5px;border-radius:3px}
+.gp-status.final{background:var(--gr-d);color:var(--gr)}
+.gp-status.forfeit{background:var(--am-d);color:var(--am)}
+.gp-status.voided{background:rgba(255,80,80,.08);color:rgba(255,100,100,.55)}
+.gp-status.incomplete{background:rgba(60,60,90,.2);color:var(--mu)}
+.gp-empty{font-size:12px;color:var(--mu);text-align:center;padding:14px 0;font-style:italic}
+
 /* ── TOASTS ── */
 #toasts{
   position:fixed;bottom:20px;right:16px;display:flex;flex-direction:column-reverse;gap:7px;
@@ -674,6 +692,26 @@ select.fc{
     </div>
     <div class="admin-body">
 
+      <!-- Game Picker -->
+      <div class="admin-section">
+        <div class="admin-section-hd">
+          <div class="admin-section-icon blue">
+            <svg width="13" height="13" viewBox="0 0 14 14" fill="none">
+              <circle cx="6" cy="6" r="4.5" stroke="currentColor" stroke-width="1.3"/>
+              <path d="M9.5 9.5L12.5 12.5" stroke="currentColor" stroke-width="1.3" stroke-linecap="round"/>
+            </svg>
+          </div>
+          <div>
+            <div class="admin-section-label">Find Game</div>
+            <div class="admin-section-desc">Search and click a game to auto-fill the ID below.</div>
+          </div>
+        </div>
+        <div class="admin-section-body" style="padding-bottom:8px">
+          <input class="field-input" type="text" id="gp-search" placeholder="Search team (e.g. LAL, BOS)…" autocomplete="off" spellcheck="false" style="width:100%;margin-bottom:8px">
+          <div id="gp-list" style="display:flex;flex-direction:column;gap:3px;max-height:220px;overflow-y:auto"></div>
+        </div>
+      </div>
+
       <!-- Void / Unvoid -->
       <div class="admin-section">
         <div class="admin-section-hd">
@@ -848,22 +886,6 @@ function renderHistory(){
     el.addEventListener('click',()=>openModal(g));
     el.addEventListener('keydown',e=>{if(e.key==='Enter'||e.key===' ')openModal(g)});
   });
-  if(isAuthed){
-    rowsEl.querySelectorAll('.hr-aid').forEach(el=>{
-      const fillAdmin=gid=>{
-        document.getElementById('void-game-id').value=gid;
-        document.getElementById('remove-game-id').value=gid;
-        clearPanelMsg('void-msg');clearPanelMsg('remove-msg');
-        if(!modalBg.classList.contains('open')){modalBg.classList.add('open');authModal.style.display='none';adminPanel.style.display='block';}
-        toast(`Game ID ${gid} loaded into admin panel`,'green',3000);
-      };
-      el.addEventListener('contextmenu',e=>{e.preventDefault();fillAdmin(el.dataset.gid)});
-      if(!el.classList.contains('clk')){
-        el.style.cursor='pointer';
-        el.addEventListener('click',()=>fillAdmin(el.dataset.gid));
-      }
-    });
-  }
   const pagerEl=document.getElementById('pager');
   pagerEl.style.display='flex';
   document.getElementById('pg-info').textContent=`${start+1}–${Math.min(start+pp,filt.length)} of ${filt.length}`;
@@ -994,6 +1016,49 @@ function renderConfs(data){
   prevData=JSON.parse(JSON.stringify(sd));
 }
 
+/* ── GAME PICKER ── */
+function renderGamePicker(q){
+  const list=document.getElementById('gp-list');
+  if(!list)return;
+  const sq=(q||'').trim().toLowerCase();
+  const src=allResults.filter(g=>{
+    if(!sq)return true;
+    return(g.awayABB||'').toLowerCase().includes(sq)||(g.homeABB||'').toLowerCase().includes(sq);
+  }).slice(0,40);
+  if(!src.length){list.innerHTML=`<div class="gp-empty">No games found.</div>`;return}
+  const fmtDT=iso=>{if(!iso)return'—';const d=new Date(iso);if(isNaN(d))return'—';return d.toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'})+' '+d.toLocaleTimeString('en-US',{hour:'numeric',minute:'2-digit'})};
+  list.innerHTML=src.map((g,i)=>{
+    const st=(g.status||'final').toLowerCase();
+    const sc=(g.homeScore??'—')+' – '+(g.awayScore??'—');
+    const badge=g.voided?'voided':st;
+    return`<div class="gp-row" data-gp-i="${i}" tabindex="0" role="button">
+      <div>
+        <div class="gp-matchup">${g.awayABB||'?'} @ ${g.homeABB||'?'}</div>
+        <div class="gp-meta">
+          <span class="gp-status ${badge}">${g.voided?'VOIDED':st.toUpperCase()}</span>
+          <span>${fmtDT(g.timestamp)}</span>
+          <span style="color:var(--mu2)">·</span>
+          <span style="font-family:'JetBrains Mono',monospace;font-size:9px;color:var(--mu2)">${g.id}</span>
+        </div>
+      </div>
+      <div class="gp-score">${sc}</div>
+    </div>`;
+  }).join('');
+  list.querySelectorAll('.gp-row').forEach((el,i)=>{
+    const g=src[i];
+    const pick=()=>{
+      list.querySelectorAll('.gp-row').forEach(r=>r.classList.remove('selected'));
+      el.classList.add('selected');
+      document.getElementById('void-game-id').value=g.id;
+      document.getElementById('remove-game-id').value=g.id;
+      clearPanelMsg('void-msg');clearPanelMsg('remove-msg');
+    };
+    el.addEventListener('click',pick);
+    el.addEventListener('keydown',e=>{if(e.key==='Enter'||e.key===' ')pick()});
+  });
+}
+document.getElementById('gp-search').addEventListener('input',e=>renderGamePicker(e.target.value));
+
 /* ── FETCH ── */
 async function fetchData(){
   try{
@@ -1058,7 +1123,7 @@ async function attemptAuth(){
       method:'POST',headers:{'Content-Type':'application/json','Authorization':`Bearer ${pass}`},body:'{}'
     });
     if(res.status===401||res.status===403){showAuthError('Incorrect password. Try again.');authPass.value=''}
-    else{adminPassword=pass;isAuthed=true;authModal.style.display='none';adminPanel.style.display='block';}
+    else{adminPassword=pass;isAuthed=true;authModal.style.display='none';adminPanel.style.display='block';renderGamePicker('');}
   }catch(e){
     showAuthError('Could not reach the server. Check your connection.');
   }finally{authSubmit.disabled=false;authSubmit.textContent='Unlock Admin Panel'}
@@ -1073,7 +1138,7 @@ modalBg.addEventListener('click',e=>{if(e.target===modalBg)closeAdmin()});
 document.getElementById('admin-btn').addEventListener('click',()=>{
   modalBg.classList.add('open');
   if(!isAuthed){authModal.style.display='';adminPanel.style.display='none';authPass.value='';hideAuthError();setTimeout(()=>authPass.focus(),80)}
-  else{authModal.style.display='none';adminPanel.style.display='block';}
+  else{authModal.style.display='none';adminPanel.style.display='block';renderGamePicker(document.getElementById('gp-search').value);}
 });
 function closeAdmin(){modalBg.classList.remove('open');isAuthed=false;adminPassword='';authModal.style.display='';adminPanel.style.display='none'}
 
