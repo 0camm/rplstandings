@@ -1,28 +1,13 @@
-/*
-  rpl_server.js  —  RPL Standings API Bridge
-  ============================================
-  Deploy on Render (or any Node host).
-  Set environment variables:
-    RPL_SECRET       = your-new-secret   (change this!)
-    SUPABASE_URL     = https://xxxx.supabase.co
-    SUPABASE_KEY     = your anon/service key
-*/
-
 "use strict";
 
 const http  = require("http");
 const https = require("https");
 
 const PORT         = process.env.PORT                              || 3000;
-const SECRET       = (process.env.RPL_SECRET   || "CHANGE_ME").trim();
+const SECRET       = (process.env.RPL_SECRET   || "RPLHRPASS$&").trim();
 const SUPABASE_URL = (process.env.SUPABASE_URL || "").trim();
 const SUPABASE_KEY = (process.env.SUPABASE_KEY || "").trim();
-
-// Increased to 200 to support full match history browsing
 const RESULTS_MAX  = 200;
-
-// Admin secret for void/unvoid operations (separate from RPL_SECRET)
-// Set ADMIN_SECRET env var on your host. Falls back to RPL_SECRET if not set.
 const ADMIN_SECRET = (process.env.ADMIN_SECRET || SECRET).trim();
 
 let state = {
@@ -41,13 +26,11 @@ function broadcast(eventName, data) {
   }
 }
 
-// ── Supabase ──────────────────────────────────────────────────
 function supabaseRequest(method, path, body, extraHeaders = {}) {
   return new Promise((resolve, reject) => {
     if (!SUPABASE_URL) return resolve({ status: 0, body: {} });
     const parsed = new URL(SUPABASE_URL);
     const bodyStr = body ? JSON.stringify(body) : null;
-
     const options = {
       hostname: parsed.hostname,
       path: `/rest/v1/${path}`,
@@ -59,9 +42,7 @@ function supabaseRequest(method, path, body, extraHeaders = {}) {
         ...extraHeaders,
       },
     };
-
     if (bodyStr) options.headers["Content-Length"] = Buffer.byteLength(bodyStr);
-
     const req = https.request(options, res => {
       let data = "";
       res.on("data", c => { data += c; });
@@ -71,22 +52,14 @@ function supabaseRequest(method, path, body, extraHeaders = {}) {
         catch (_) { resolve({ status: res.statusCode, body: data }); }
       });
     });
-
-    req.on("error", e => {
-      console.error("[RPL] Supabase request error:", e.message);
-      reject(e);
-    });
-
+    req.on("error", e => { console.error("[RPL] Supabase request error:", e.message); reject(e); });
     if (bodyStr) req.write(bodyStr);
     req.end();
   });
 }
 
 async function loadState() {
-  if (!SUPABASE_URL || !SUPABASE_KEY) {
-    console.warn("[RPL] No Supabase config — starting empty.");
-    return;
-  }
+  if (!SUPABASE_URL || !SUPABASE_KEY) { console.warn("[RPL] No Supabase config — starting empty."); return; }
   try {
     const { body } = await supabaseRequest("GET", "rpl_state?select=key,value", null);
     if (Array.isArray(body)) {
@@ -98,9 +71,7 @@ async function loadState() {
       }
       console.log("[RPL] Loaded from Supabase:", Object.keys(state.teams).length, "teams");
     }
-  } catch (e) {
-    console.error("[RPL] loadState error:", e.message);
-  }
+  } catch (e) { console.error("[RPL] loadState error:", e.message); }
 }
 
 async function saveState() {
@@ -115,12 +86,9 @@ async function saveState() {
     await supabaseRequest("POST", "rpl_state", rows, {
       "Prefer": "resolution=merge-duplicates,return=representation",
     });
-  } catch (e) {
-    console.error("[RPL] saveState error:", e.message);
-  }
+  } catch (e) { console.error("[RPL] saveState error:", e.message); }
 }
 
-// ── Auth ──────────────────────────────────────────────────────
 function isAuthorized(req) {
   const auth = req.headers["authorization"] || "";
   if (auth.startsWith("Bearer ")) return auth.slice(7) === SECRET;
@@ -135,40 +103,31 @@ function isAdminAuthorized(req) {
   return url.searchParams.get("secret") === ADMIN_SECRET;
 }
 
-// ── Rebuild standings from scratch based on non-voided results ──
 function rebuildStandings() {
-  // Reset all team records
   for (const abb of Object.keys(state.teams)) {
     state.teams[abb].wins = 0;
     state.teams[abb].losses = 0;
     state.teams[abb].pct = "0.000";
     state.teams[abb].streak = "—";
   }
-
-  // Replay results oldest-first (results array is newest-first)
   const ordered = [...state.results].reverse();
   for (const r of ordered) {
     if (r.voided) continue;
     if (!isTerminalStatus(r.status)) continue;
-
-    // Derive winner if missing — fall back to score comparison
     let winnerABB = r.winnerABB;
-    if (!winnerABB && r.status === 'final') {
+    if (!winnerABB && r.status === "final") {
       if (r.homeScore > r.awayScore) winnerABB = r.homeABB;
       else if (r.awayScore > r.homeScore) winnerABB = r.awayABB;
     }
-    if (!winnerABB) continue; // forfeit with no winner recorded — skip
-
+    if (!winnerABB) continue;
     const loserABB = winnerABB === r.homeABB ? r.awayABB : r.homeABB;
     ensureTeam(winnerABB, winnerABB === r.homeABB ? r.homeLogo : r.awayLogo);
-    ensureTeam(loserABB, loserABB === r.homeABB ? r.homeLogo : r.awayLogo);
+    ensureTeam(loserABB,  loserABB  === r.homeABB ? r.homeLogo : r.awayLogo);
     state.teams[winnerABB].wins += 1;
     state.teams[loserABB].losses += 1;
     state.teams[winnerABB].streak = updateStreak(state.teams[winnerABB].streak, true);
-    state.teams[loserABB].streak = updateStreak(state.teams[loserABB].streak, false);
+    state.teams[loserABB].streak  = updateStreak(state.teams[loserABB].streak, false);
   }
-
-  // Recalculate PCT for all teams
   for (const abb of Object.keys(state.teams)) {
     const t = state.teams[abb];
     const total = t.wins + t.losses;
@@ -176,7 +135,6 @@ function rebuildStandings() {
   }
 }
 
-// ── Team helpers ──────────────────────────────────────────────
 function ensureTeam(abb, logo) {
   if (!abb) return;
   if (!state.teams[abb]) {
@@ -210,7 +168,6 @@ function updateStreak(current, won) {
   return `${letter}1`;
 }
 
-// ── Body reader ───────────────────────────────────────────────
 function readBody(req) {
   return new Promise((resolve, reject) => {
     let body = "";
@@ -223,7 +180,6 @@ function readBody(req) {
   });
 }
 
-// ── CORS + JSON ───────────────────────────────────────────────
 function setCORS(res) {
   res.setHeader("Access-Control-Allow-Origin",  "*");
   res.setHeader("Access-Control-Allow-Methods", "GET,POST,OPTIONS");
@@ -236,17 +192,11 @@ function sendJSON(res, status, data) {
   res.end(JSON.stringify(data));
 }
 
-// ── Duplicate / double-result guard ───────────────────────────
-const GAME_SESSION_WINDOW = 5 * 60 * 1000; // 5 minutes
+const GAME_SESSION_WINDOW = 5 * 60 * 1000;
 const recentTerminalGames = new Map();
 
-function makeMatchupKey(homeABB, awayABB) {
-  return [homeABB, awayABB].sort().join("|");
-}
-
-function isTerminalStatus(status) {
-  return status === "final" || status === "forfeit";
-}
+function makeMatchupKey(homeABB, awayABB) { return [homeABB, awayABB].sort().join("|"); }
+function isTerminalStatus(status) { return status === "final" || status === "forfeit"; }
 
 function isDuplicateTerminal(homeABB, awayABB, status) {
   if (!isTerminalStatus(status)) return false;
@@ -263,7 +213,6 @@ function markTerminal(homeABB, awayABB, status) {
   setTimeout(() => recentTerminalGames.delete(key), GAME_SESSION_WINDOW);
 }
 
-// ── Routes ────────────────────────────────────────────────────
 function handleAuth(req, res) {
   if (!isAdminAuthorized(req)) return sendJSON(res, 401, { error: "Unauthorized" });
   return sendJSON(res, 200, { ok: true });
@@ -278,14 +227,12 @@ async function handlePostResult(req, res) {
   const {
     status, homeABB, awayABB, homeLogo, awayLogo, homeScore, awayScore,
     winnerABB, quarter, note, season, timestamp, playerOfGame,
-    homeStats, awayStats,
-    referees,
+    homeStats, awayStats, referees,
   } = body;
 
   if (!homeABB || !awayABB || !status)
     return sendJSON(res, 422, { error: "Missing required fields" });
 
-  // 30-second exact-duplicate guard
   const now30 = Date.now();
   const exactDupe = state.results.find(r => {
     const age = now30 - new Date(r.timestamp).getTime();
@@ -293,7 +240,6 @@ async function handlePostResult(req, res) {
   });
   if (exactDupe) return sendJSON(res, 200, { ok: true, duplicate: true });
 
-  // Cross-status duplicate guard
   if (isDuplicateTerminal(homeABB, awayABB, status)) {
     console.log(`[RPL] Blocked duplicate terminal result: ${awayABB} @ ${homeABB} | ${status}`);
     return sendJSON(res, 200, { ok: true, duplicate: true, reason: "terminal_already_recorded" });
@@ -345,7 +291,6 @@ async function handleVoidResult(req, res) {
   result.voided = !!voided;
   state.lastUpdated = new Date().toISOString();
 
-  // Audit log entry
   const action = voided ? "voided" : "unvoided";
   state.auditLog.unshift({
     action,
@@ -357,9 +302,7 @@ async function handleVoidResult(req, res) {
   });
   if (state.auditLog.length > 200) state.auditLog.length = 200;
 
-  // Rebuild standings from scratch to reflect void/unvoid
   rebuildStandings();
-
   await saveState();
   broadcast("standings", buildPublicPayload());
 
@@ -367,6 +310,61 @@ async function handleVoidResult(req, res) {
   return sendJSON(res, 200, { ok: true, action, result });
 }
 
+async function handleRemoveResult(req, res) {
+  if (!isAdminAuthorized(req)) return sendJSON(res, 401, { error: "Unauthorized" });
+  let body;
+  try { body = await readBody(req); }
+  catch (e) { return sendJSON(res, 400, { error: "Bad JSON" }); }
+
+  const { id } = body;
+  if (id === undefined) return sendJSON(res, 422, { error: "Missing result id" });
+
+  const idx = state.results.findIndex(r => r.id === id);
+  if (idx === -1) return sendJSON(res, 404, { error: "Result not found" });
+
+  const removed = state.results.splice(idx, 1)[0];
+  state.lastUpdated = new Date().toISOString();
+
+  state.auditLog.unshift({
+    action:    "removed",
+    gameId:    removed.id,
+    matchup:   `${removed.awayABB} @ ${removed.homeABB}`,
+    score:     `${removed.awayScore}–${removed.homeScore}`,
+    status:    removed.status,
+    timestamp: new Date().toISOString(),
+  });
+  if (state.auditLog.length > 200) state.auditLog.length = 200;
+
+  rebuildStandings();
+  await saveState();
+  broadcast("standings", buildPublicPayload());
+
+  console.log(`[RPL] Result removed: ${removed.awayABB} @ ${removed.homeABB} | id=${id}`);
+  return sendJSON(res, 200, { ok: true, removed });
+}
+
+async function handleReset(req, res) {
+  if (!isAdminAuthorized(req)) return sendJSON(res, 401, { error: "Unauthorized" });
+
+  state.teams       = {};
+  state.results     = [];
+  state.lastUpdated = new Date().toISOString();
+  state.auditLog.unshift({
+    action:    "reset",
+    gameId:    null,
+    matchup:   "ALL",
+    score:     "—",
+    status:    "reset",
+    timestamp: new Date().toISOString(),
+  });
+  if (state.auditLog.length > 200) state.auditLog.length = 200;
+
+  await saveState();
+  broadcast("standings", buildPublicPayload());
+
+  console.log("[RPL] Full standings reset.");
+  return sendJSON(res, 200, { ok: true });
+}
 
 function handleGetStandings(req, res) {
   setCORS(res);
@@ -403,7 +401,6 @@ async function handleTeamOverride(req, res) {
   if (!abb) return sendJSON(res, 422, { error: "Missing abb" });
 
   ensureTeam(abb, logo);
-
   const t = state.teams[abb];
   if (wins   !== undefined) t.wins   = Math.max(0, parseInt(wins,   10) || 0);
   if (losses !== undefined) t.losses = Math.max(0, parseInt(losses, 10) || 0);
@@ -417,7 +414,7 @@ async function handleTeamOverride(req, res) {
   await saveState();
   broadcast("standings", buildPublicPayload());
 
-  console.log(`[RPL] Team override: ${abb} → ${t.wins}W-${t.losses}L logo=${t.logo ? '✓' : '—'}`);
+  console.log(`[RPL] Team override: ${abb} → ${t.wins}W-${t.losses}L logo=${t.logo ? "✓" : "—"}`);
   return sendJSON(res, 200, { ok: true, team: { abb, ...t } });
 }
 
@@ -436,7 +433,6 @@ function buildPublicPayload() {
   return { standings: sorted, results: state.results, lastUpdated: state.lastUpdated };
 }
 
-// ── Add Game (admin manual entry) ────────────────────────────
 async function handleAddGame(req, res) {
   if (!isAdminAuthorized(req)) return sendJSON(res, 401, { error: "Unauthorized" });
   let body;
@@ -448,7 +444,7 @@ async function handleAddGame(req, res) {
     return sendJSON(res, 422, { error: "Missing required fields: homeABB, awayABB, status" });
 
   const safeStatus = ["final", "forfeit", "incomplete"].includes(status) ? status : "final";
-  const hs = parseInt(homeScore, 10) || 0;
+  const hs  = parseInt(homeScore, 10) || 0;
   const as_ = parseInt(awayScore, 10) || 0;
 
   ensureTeam(homeABB);
@@ -456,8 +452,8 @@ async function handleAddGame(req, res) {
 
   let winnerABB = null;
   if (isTerminalStatus(safeStatus)) {
-    if (hs > as_)      winnerABB = homeABB;
-    else if (as_ > hs) winnerABB = awayABB;
+    if (hs > as_)       winnerABB = homeABB;
+    else if (as_ > hs)  winnerABB = awayABB;
     if (winnerABB) {
       const loserABB = winnerABB === homeABB ? awayABB : homeABB;
       updateRecord(winnerABB, loserABB);
@@ -465,23 +461,23 @@ async function handleAddGame(req, res) {
   }
 
   const result = {
-    id:          Date.now(),
-    timestamp:   timestamp || new Date().toISOString(),
-    season:      season || "Season 11",
-    status:      safeStatus,
-    quarter:     quarter || "---",
-    note:        note || "",
-    homeABB,     awayABB,
-    homeLogo:    "",
-    awayLogo:    "",
-    homeScore:   hs,
-    awayScore:   as_,
+    id:           Date.now(),
+    timestamp:    timestamp || new Date().toISOString(),
+    season:       season || "Season 11",
+    status:       safeStatus,
+    quarter:      quarter || "---",
+    note:         note || "",
+    homeABB,      awayABB,
+    homeLogo:     "",
+    awayLogo:     "",
+    homeScore:    hs,
+    awayScore:    as_,
     winnerABB,
     playerOfGame: null,
-    referees:    "None",
-    homeStats:   [],
-    awayStats:   [],
-    manualEntry: true,
+    referees:     "None",
+    homeStats:    [],
+    awayStats:    [],
+    manualEntry:  true,
   };
 
   state.results.unshift(result);
@@ -511,7 +507,6 @@ function handleGetAuditLog(req, res) {
   return sendJSON(res, 200, { auditLog: state.auditLog || [] });
 }
 
-// ── Router ────────────────────────────────────────────────────
 const server = http.createServer(async (req, res) => {
   const url    = req.url.split("?")[0];
   const method = req.method.toUpperCase();
@@ -523,17 +518,18 @@ const server = http.createServer(async (req, res) => {
     if (method === "POST") return handlePostResult(req, res);
     if (method === "GET")  return handleGetStandings(req, res);
   }
-  if (url === "/rpl/standings/events" && method === "GET") return handleSSE(req, res);
-  if (url === "/rpl/standings/auth"       && method === "POST") return handleAuth(req, res);
-  if (url === "/rpl/standings/void"      && method === "POST") return handleVoidResult(req, res);
-  if (url === "/rpl/standings/add"       && method === "POST") return handleAddGame(req, res);
-  if (url === "/rpl/standings/auditlog"  && method === "GET")  return handleGetAuditLog(req, res);
-  if (url === "/rpl/standings/team"      && method === "POST") return handleTeamOverride(req, res);
+  if (url === "/rpl/standings/events"   && method === "GET")  return handleSSE(req, res);
+  if (url === "/rpl/standings/auth"     && method === "POST") return handleAuth(req, res);
+  if (url === "/rpl/standings/void"     && method === "POST") return handleVoidResult(req, res);
+  if (url === "/rpl/standings/remove"   && method === "POST") return handleRemoveResult(req, res);
+  if (url === "/rpl/standings/reset"    && method === "POST") return handleReset(req, res);
+  if (url === "/rpl/standings/add"      && method === "POST") return handleAddGame(req, res);
+  if (url === "/rpl/standings/auditlog" && method === "GET")  return handleGetAuditLog(req, res);
+  if (url === "/rpl/standings/team"     && method === "POST") return handleTeamOverride(req, res);
 
   sendJSON(res, 404, { error: "Not found" });
 });
 
-// ── Boot ──────────────────────────────────────────────────────
 loadState().then(() => {
   server.listen(PORT, () => {
     console.log(`[RPL] Server running on port ${PORT}`);
