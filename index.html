@@ -112,6 +112,10 @@ body{
 
 /* ── MAIN ── */
 .main{padding:24px 20px 72px;width:100%}
+.view-nav{display:flex;gap:6px;padding:0 20px 0;margin-bottom:4px}
+.vnav-btn{font-family:'Inter',sans-serif;font-size:11px;font-weight:600;letter-spacing:.07em;text-transform:uppercase;padding:6px 14px;border-radius:20px;border:1px solid var(--b2);background:transparent;color:var(--mu);cursor:pointer;transition:background .15s,color .15s,border-color .15s}
+.vnav-btn:hover{color:var(--tx);border-color:var(--b)}
+.vnav-btn.active{background:var(--s2);color:var(--tx);border-color:var(--b)}
 
 /* ── SECTION HEADER ── */
 .sec-hd{margin-bottom:14px;width:100%}
@@ -530,6 +534,18 @@ select.fc{
 .ps-l{font-size:9px;color:var(--mu);letter-spacing:.08em;margin-top:2px}
 .refs-txt{font-size:12px;color:var(--tx2);line-height:1.8}
 .refs-na{font-size:12px;color:var(--mu);font-style:italic}
+/* ── REFEREE STATS TABLE ── */
+.reftbl-wrap{overflow-x:auto;border-radius:8px;border:1px solid var(--b2)}
+.reftbl{width:100%;border-collapse:collapse}
+.reftbl thead tr{border-bottom:1px solid var(--b2)}
+.reftbl th{padding:9px 12px;font-size:10px;font-weight:700;letter-spacing:.09em;text-transform:uppercase;color:var(--mu);text-align:left;white-space:nowrap;background:var(--bg)}
+.reftbl th:not(:first-child){text-align:center}
+.reftbl td{padding:9px 12px;font-size:12px;color:var(--tx2);border-top:1px solid var(--b2);white-space:nowrap}
+.reftbl td:not(:first-child){text-align:center;font-family:'JetBrains Mono',monospace;font-variant-numeric:tabular-nums}
+.reftbl tr:hover td{background:var(--s2)}
+.ref-name{font-weight:600;color:var(--tx);font-size:13px}
+.ref-games-badge{display:inline-block;background:var(--s2);border-radius:4px;padding:1px 6px;font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--tx)}
+.refs-empty{text-align:center;padding:40px 20px;color:var(--mu);font-size:13px}
 .bshd{display:flex;align-items:center;gap:8px;margin-bottom:8px}
 .bshd img{width:20px;height:20px;object-fit:contain}
 .bsname{font-family:'Bebas Neue',sans-serif;font-size:15px;letter-spacing:.06em;color:#fff}
@@ -632,6 +648,12 @@ select.fc{
 
 <div class="alert" id="alert"></div>
 
+<div class="view-nav">
+  <button class="vnav-btn active" data-view="standings">Standings</button>
+  <button class="vnav-btn" data-view="history">Match History</button>
+  <button class="vnav-btn" data-view="refs">Referees</button>
+</div>
+
 <div class="main">
   <div id="hist-sec" style="display:none">
     <div class="sec-hd">
@@ -673,6 +695,21 @@ select.fc{
     </div>
   </div>
   <div class="conf-grid" id="conferences"></div>
+  <div id="refs-sec" style="display:none">
+    <div class="sec-hd">
+      <div class="sec-hd-top">
+        <span class="sec-title">Referees</span>
+        <span class="sec-ct" id="refs-ct"></span>
+        <div class="sec-rule"></div>
+      </div>
+    </div>
+    <div class="reftbl-wrap">
+      <table class="reftbl">
+        <thead><tr><th>Referee</th><th>Games</th><th>Last Active</th><th>Recent</th></tr></thead>
+        <tbody id="refs-rows"><tr><td colspan="4" class="refs-empty">Loading…</td></tr></tbody>
+      </table>
+    </div>
+  </div>
 </div>
 
 <!-- TOASTS -->
@@ -880,14 +917,14 @@ select.fc{
 </div>
 
 <script>
-const CFG={API:'https://rplstandings.onrender.com/rpl/standings',POLL:30000};
+const CFG={API:'https://rplstandings.onrender.com/rpl/standings',REFS_API:'https://rplstandings.onrender.com/rpl/refs',POLL:30000};
 const ESPN={ATL:'atl',BOS:'bos',BKN:'bkn',CHA:'cha',CHI:'chi',CLE:'cle',DAL:'dal',DEN:'den',DET:'det',GSW:'gs',HOU:'hou',IND:'ind',LAC:'lac',LAL:'lal',MEM:'mem',MIA:'mia',MIL:'mil',MIN:'min',NOP:'no',NYK:'ny',OKC:'okc',ORL:'orl',PHI:'phi',PHX:'phx',POR:'por',SAC:'sac',SAS:'sa',TOR:'tor',UTAH:'utah',WAS:'wsh'};
 const logo=(url,abb)=>{if(ESPN[abb])return`https://a.espncdn.com/i/teamlogos/nba/500/${ESPN[abb]}.png`;if(!url)return'';if(url.includes('roblox.com'))return'';return url.startsWith('http://')?'https://'+url.slice(7):url};
 const NAMES={ATL:'Atlanta Hawks',BOS:'Boston Celtics',BKN:'Brooklyn Nets',CHA:'Charlotte Hornets',CHI:'Chicago Bulls',CLE:'Cleveland Cavaliers',DAL:'Dallas Mavericks',DEN:'Denver Nuggets',DET:'Detroit Pistons',GSW:'Golden State Warriors',HOU:'Houston Rockets',IND:'Indiana Pacers',LAC:'LA Clippers',LAL:'Los Angeles Lakers',MEM:'Memphis Grizzlies',MIA:'Miami Heat',MIL:'Milwaukee Bucks',MIN:'Minnesota Timberwolves',NOP:'New Orleans Pelicans',NYK:'New York Knicks',OKC:'Oklahoma City Thunder',ORL:'Orlando Magic',PHI:'Philadelphia 76ers',PHX:'Phoenix Suns',POR:'Portland Trail Blazers',SAC:'Sacramento Kings',SAS:'San Antonio Spurs',TOR:'Toronto Raptors',UTAH:'Utah Jazz',WAS:'Washington Wizards'};
 const EAST=new Set(['ATL','BOS','BKN','CHA','CHI','CLE','DET','IND','MIA','MIL','NYK','ORL','PHI','TOR','WAS']);
 const WEST=new Set(['DAL','DEN','GSW','HOU','LAC','LAL','MEM','MIN','NOP','OKC','PHX','POR','SAC','SAS','UTAH']);
 
-let prevData=null,fails=0,lastId=null,allResults=[],pg=1;
+let prevData=null,fails=0,lastId=null,allResults=[],pg=1,currentView='standings';
 let isAuthed=false,adminPassword='';
 
 const pct=(w,l)=>{const g=w+l;return g?(w/g).toFixed(3).replace(/^0/,''):'—'};
@@ -922,6 +959,7 @@ function renderHistory(){
   if(pg>total)pg=total;
   const sec=document.getElementById('hist-sec');
   if(!allResults.length){sec.style.display='none';return}
+  if(currentView!=='history'){return}
   sec.style.display='block';
   document.getElementById('hist-ct').textContent=filt.length===allResults.length?`${allResults.length} game${allResults.length!==1?'s':''}`:`${filt.length}/${allResults.length}`;
   const start=(pg-1)*pp;
@@ -1051,6 +1089,8 @@ const strk=raw=>!raw||raw==='—'?`<span class="rstrk n">—</span>`:`<span clas
 
 function renderConfs(data){
   const el=document.getElementById('conferences');
+  if(currentView!=='standings'){el.style.display='none';}
+  else{el.style.display='';}
   const sd=Array.isArray(data.standings)?flatToConfs(data.standings):(data.standings||{eastern:[],western:[]});
   const changed=new Set();
   if(prevData){
@@ -1240,7 +1280,48 @@ function connectSSE(){
   es.onerror=()=>es.close();
 }
 
-/* ── AUTH / ADMIN MODAL ── */
+/* ── VIEW NAV ── */
+function setView(v){
+  currentView=v;
+  document.querySelectorAll('.vnav-btn').forEach(b=>b.classList.toggle('active',b.dataset.view===v));
+  const conferences=document.getElementById('conferences');
+  const histSec=document.getElementById('hist-sec');
+  const refsSec=document.getElementById('refs-sec');
+  if(v==='standings'){
+    conferences.style.display='';
+    histSec.style.display='none';
+    refsSec.style.display='none';
+  } else if(v==='history'){
+    conferences.style.display='none';
+    histSec.style.display=allResults.length?'block':'none';
+    refsSec.style.display='none';
+  } else if(v==='refs'){
+    conferences.style.display='none';
+    histSec.style.display='none';
+    refsSec.style.display='block';
+    fetchRefs();
+  }
+}
+document.querySelectorAll('.vnav-btn').forEach(b=>b.addEventListener('click',()=>setView(b.dataset.view)));
+
+async function fetchRefs(){
+  const tbody=document.getElementById('refs-rows');
+  try{
+    const res=await fetch(CFG.REFS_API,{cache:'no-store'});
+    if(!res.ok)throw new Error(`HTTP ${res.status}`);
+    const data=await res.json();
+    const refs=data.refs||[];
+    document.getElementById('refs-ct').textContent=`${refs.length} referee${refs.length!==1?'s':''}`;
+    if(!refs.length){tbody.innerHTML='<tr><td colspan="4" class="refs-empty">No referee data yet.</td></tr>';return;}
+    tbody.innerHTML=refs.map(r=>{
+      const last=r.lastActive?new Date(r.lastActive).toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'}):'—';
+      const recent=(r.recentGames||[]).map(g=>`${g.awayABB}@${g.homeABB}`).join(', ')||'—';
+      return`<tr><td><span class="ref-name">${r.name}</span></td><td><span class="ref-games-badge">${r.games}</span></td><td>${last}</td><td style="color:var(--mu);font-size:11px;max-width:200px;overflow:hidden;text-overflow:ellipsis">${recent}</td></tr>`;
+    }).join('');
+  }catch(e){tbody.innerHTML=`<tr><td colspan="4" class="refs-empty">Failed to load referee data.</td></tr>`;}
+}
+
+
 const modalBg=document.getElementById('modal-bg');
 const authModal=document.getElementById('auth-modal');
 const adminPanel=document.getElementById('admin-panel');
