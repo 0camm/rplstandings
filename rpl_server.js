@@ -232,12 +232,16 @@ function logRefActivity(refString, gameId, homeABB, awayABB, timestamp) {
 
 function buildRefStats() {
   const map = {};
-  for (const entry of state.refLog) {
-    if (!map[entry.name]) map[entry.name] = { name: entry.name, games: 0, lastActive: null, recentGames: [] };
-    const r = map[entry.name];
-    r.games += 1;
-    if (!r.lastActive || entry.timestamp > r.lastActive) r.lastActive = entry.timestamp;
-    if (r.recentGames.length < 5) r.recentGames.push({ gameId: entry.gameId, homeABB: entry.homeABB, awayABB: entry.awayABB, timestamp: entry.timestamp });
+  // Derive from results (source of truth — covers all historical games)
+  for (const result of [...state.results].reverse()) {
+    const names = parseRefs(result.referees);
+    for (const name of names) {
+      if (!map[name]) map[name] = { name, games: 0, lastActive: null, recentGames: [] };
+      const r = map[name];
+      r.games += 1;
+      if (!r.lastActive || result.timestamp > r.lastActive) r.lastActive = result.timestamp;
+      if (r.recentGames.length < 5) r.recentGames.push({ gameId: result.id, homeABB: result.homeABB, awayABB: result.awayABB, timestamp: result.timestamp });
+    }
   }
   return Object.values(map).sort((a, b) => b.games - a.games || b.lastActive.localeCompare(a.lastActive));
 }
