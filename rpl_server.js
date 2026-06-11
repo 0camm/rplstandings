@@ -218,7 +218,12 @@ function markTerminal(homeABB, awayABB, status) {
 
 function parseRefs(refString) {
   if (!refString || refString === "None" || refString === "") return [];
-  return refString.split(/[,;\/]/).map(r => r.trim()).filter(Boolean);
+  return refString.split(/[,;\/]/).map(r => r.trim()).filter(r => {
+    if (!r) return false;
+    if (r.includes(":"))   return false; // Discord emoji format e.g. :notepad_spiral: Note
+    if (r.length > 40)     return false; // suspiciously long
+    return true;
+  });
 }
 
 function logRefActivity(refString, gameId, homeABB, awayABB, timestamp) {
