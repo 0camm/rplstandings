@@ -959,8 +959,7 @@ function renderHistory(){
   if(pg>total)pg=total;
   const sec=document.getElementById('hist-sec');
   if(!allResults.length){sec.style.display='none';return}
-  if(currentView!=='history'){return}
-  sec.style.display='block';
+  sec.style.display=currentView==='history'?'block':'none';
   document.getElementById('hist-ct').textContent=filt.length===allResults.length?`${allResults.length} game${allResults.length!==1?'s':''}`:`${filt.length}/${allResults.length}`;
   const start=(pg-1)*pp;
   const slice=filt.slice(start,start+pp);
@@ -1293,8 +1292,8 @@ function setView(v){
     refsSec.style.display='none';
   } else if(v==='history'){
     conferences.style.display='none';
-    histSec.style.display=allResults.length?'block':'none';
     refsSec.style.display='none';
+    renderHistory();
   } else if(v==='refs'){
     conferences.style.display='none';
     histSec.style.display='none';
