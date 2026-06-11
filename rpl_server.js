@@ -15,6 +15,7 @@ let state = {
   results:     [],
   lastUpdated: null,
   auditLog:    [],
+  refLog:      [],
 };
 
 const sseClients = new Set();
@@ -68,6 +69,7 @@ async function loadState() {
         if (row.key === "results")     state.results     = row.value;
         if (row.key === "lastUpdated") state.lastUpdated = row.value;
         if (row.key === "auditLog")    state.auditLog    = row.value || [];
+        if (row.key === "refLog")      state.refLog      = row.value || [];
       }
       console.log("[RPL] Loaded from Supabase:", Object.keys(state.teams).length, "teams");
     }
@@ -82,6 +84,7 @@ async function saveState() {
       { key: "results",     value: state.results },
       { key: "lastUpdated", value: state.lastUpdated },
       { key: "auditLog",    value: state.auditLog },
+      { key: "refLog",      value: state.refLog },
     ];
     await supabaseRequest("POST", "rpl_state", rows, {
       "Prefer": "resolution=merge-duplicates,return=representation",
@@ -213,6 +216,36 @@ function markTerminal(homeABB, awayABB, status) {
   setTimeout(() => recentTerminalGames.delete(key), GAME_SESSION_WINDOW);
 }
 
+function parseRefs(refString) {
+  if (!refString || refString === "None" || refString === "") return [];
+  return refString.split(/[,;\/]/).map(r => r.trim()).filter(Boolean);
+}
+
+function logRefActivity(refString, gameId, homeABB, awayABB, timestamp) {
+  const names = parseRefs(refString);
+  const ts = timestamp || new Date().toISOString();
+  for (const name of names) {
+    state.refLog.unshift({ name, gameId, homeABB, awayABB, timestamp: ts });
+  }
+  if (state.refLog.length > 5000) state.refLog.length = 5000;
+}
+
+function buildRefStats() {
+  const map = {};
+  for (const entry of state.refLog) {
+    if (!map[entry.name]) map[entry.name] = { name: entry.name, games: 0, lastActive: null, recentGames: [] };
+    const r = map[entry.name];
+    r.games += 1;
+    if (!r.lastActive || entry.timestamp > r.lastActive) r.lastActive = entry.timestamp;
+    if (r.recentGames.length < 5) r.recentGames.push({ gameId: entry.gameId, homeABB: entry.homeABB, awayABB: entry.awayABB, timestamp: entry.timestamp });
+  }
+  return Object.values(map).sort((a, b) => b.games - a.games || b.lastActive.localeCompare(a.lastActive));
+}
+
+function handleGetRefs(req, res) {
+  return sendJSON(res, 200, { refs: buildRefStats(), lastUpdated: state.lastUpdated });
+}
+
 function handleAuth(req, res) {
   if (!isAdminAuthorized(req)) return sendJSON(res, 401, { error: "Unauthorized" });
   return sendJSON(res, 200, { ok: true });
@@ -267,6 +300,8 @@ async function handlePostResult(req, res) {
   state.results.unshift(result);
   if (state.results.length > RESULTS_MAX) state.results.length = RESULTS_MAX;
   state.lastUpdated = new Date().toISOString();
+
+  logRefActivity(result.referees, result.id, homeABB, awayABB, result.timestamp);
 
   await saveState();
   broadcast("standings", buildPublicPayload());
@@ -494,6 +529,8 @@ async function handleAddGame(req, res) {
   });
   if (state.auditLog.length > 200) state.auditLog.length = 200;
 
+  logRefActivity(result.referees, result.id, homeABB, awayABB, result.timestamp);
+
   await saveState();
   broadcast("standings", buildPublicPayload());
   broadcast("result", result);
@@ -526,6 +563,7 @@ const server = http.createServer(async (req, res) => {
   if (url === "/rpl/standings/add"      && method === "POST") return handleAddGame(req, res);
   if (url === "/rpl/standings/auditlog" && method === "GET")  return handleGetAuditLog(req, res);
   if (url === "/rpl/standings/team"     && method === "POST") return handleTeamOverride(req, res);
+  if (url === "/rpl/refs"               && method === "GET")  return handleGetRefs(req, res);
 
   sendJSON(res, 404, { error: "Not found" });
 });
