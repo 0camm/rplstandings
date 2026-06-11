@@ -1314,7 +1314,7 @@ async function fetchRefs(){
     if(!refs.length){tbody.innerHTML='<tr><td colspan="4" class="refs-empty">No referee data yet.</td></tr>';return;}
     tbody.innerHTML=refs.map(r=>{
       const last=r.lastActive?new Date(r.lastActive).toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'}):'—';
-      const recent=(r.recentGames||[]).map(g=>`${g.awayABB}@${g.homeABB}`).join(', ')||'—';
+      const recent=(r.recentGames||[]).map(g=>`${g.awayABB} @ ${g.homeABB}`).join(', ')||'—';
       return`<tr><td><span class="ref-name">${r.name}</span></td><td><span class="ref-games-badge">${r.games}</span></td><td>${last}</td><td style="color:var(--mu);font-size:11px;max-width:200px;overflow:hidden;text-overflow:ellipsis">${recent}</td></tr>`;
     }).join('');
   }catch(e){tbody.innerHTML=`<tr><td colspan="4" class="refs-empty">Failed to load referee data.</td></tr>`;}
