@@ -17,6 +17,7 @@
   --gr:#18d464;--gr-d:rgba(24,212,100,.09);
   --am:#f5a623;--am-d:rgba(245,166,35,.09);
   --bl:#5b9cf6;--bl-d:rgba(91,156,246,.09);
+  --gold:#f5c400;--gold-d:rgba(245,196,0,.09);--gold-mid:rgba(245,196,0,.3);
   --win:#3de87a;--lose:#f06070;
 }
 *,*::before,*::after{margin:0;padding:0;box-sizing:border-box}
@@ -148,7 +149,7 @@ body{
 
 /* ── SECTION HEADER ── */
 .sec-hd{margin-bottom:14px;width:100%}
-.sec-hd-top{display:flex;align-items:center;gap:10px;margin-bottom:10px}
+.sec-hd-top{display:flex;align-items:center;gap:10px;margin-bottom:10px;flex-wrap:wrap}
 .sec-title{font-family:'Bebas Neue',sans-serif;font-size:19px;letter-spacing:.08em;color:#fff}
 .sec-ct{
   font-size:10px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;
@@ -345,6 +346,54 @@ select.fc{
 }
 .refs-empty{text-align:center;padding:40px 20px;color:var(--mu);font-size:13px}
 
+/* ── ARCHIVE ── */
+.archive-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:14px;margin-top:4px}
+.arc-card{background:var(--s1);border:1px solid var(--b);border-radius:11px;overflow:hidden;position:relative;cursor:pointer;transition:border-color .15s,transform .15s}
+.arc-card::before{content:'';position:absolute;top:0;left:0;right:0;height:1px;background:linear-gradient(90deg,var(--gold-mid),transparent 60%)}
+.arc-card:hover{border-color:var(--gold-mid);transform:translateY(-2px)}
+.arc-hd{padding:13px 15px 11px;border-bottom:1px solid var(--b);display:flex;align-items:center;justify-content:space-between;gap:10px}
+.arc-season{font-family:'Bebas Neue',sans-serif;font-size:20px;letter-spacing:.05em;color:#fff}
+.arc-badge{font-size:9px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--mu);background:var(--s3);border:1px solid var(--b);border-radius:20px;padding:2px 8px}
+.arc-body{padding:14px 15px;display:flex;align-items:center;gap:12px}
+.arc-champ-logo{width:44px;height:44px;object-fit:contain;flex-shrink:0}
+.arc-champ-ph{width:44px;height:44px;border-radius:50%;background:var(--s3);flex-shrink:0}
+.arc-champ-info{flex:1;min-width:0}
+.arc-champ-lbl{font-size:9px;font-weight:700;letter-spacing:.14em;text-transform:uppercase;color:var(--gold);margin-bottom:2px}
+.arc-champ-name{font-family:'Bebas Neue',sans-serif;font-size:19px;letter-spacing:.04em;color:#fff;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.arc-final{font-size:11px;color:var(--mu);margin-top:2px}
+.arc-empty{padding:60px 20px;text-align:center;color:var(--mu);font-size:13px;grid-column:1/-1}
+
+.amg{position:fixed;inset:0;z-index:2000;background:rgba(0,0,0,.82);backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);display:flex;align-items:center;justify-content:center;padding:12px;opacity:0;pointer-events:none;transition:opacity .2s}
+.amg.open{opacity:1;pointer-events:all}
+.amodal{background:var(--s1);border:1px solid var(--b);border-radius:14px;overflow:hidden;width:100%;max-width:900px;max-height:92vh;display:flex;flex-direction:column;transform:translateY(12px) scale(.97);transition:transform .2s;box-shadow:0 28px 72px rgba(0,0,0,.8);position:relative}
+.amodal::before{content:'';position:absolute;top:0;left:0;right:0;height:2px;background:linear-gradient(90deg,var(--gold),transparent 60%);z-index:2}
+.amg.open .amodal{transform:none}
+.ahd{padding:16px 20px;background:var(--s2);border-bottom:1px solid var(--b);display:flex;align-items:center;justify-content:space-between;gap:12px;flex-shrink:0}
+.ahd-title{font-family:'Bebas Neue',sans-serif;font-size:24px;letter-spacing:.05em;color:#fff}
+.ahd-sub{font-size:11px;color:var(--mu);margin-top:2px}
+.aclose{background:var(--s3);border:1px solid var(--b);cursor:pointer;color:var(--mu);font-size:16px;line-height:1;width:30px;height:30px;border-radius:7px;display:flex;align-items:center;justify-content:center;transition:all .13s;flex-shrink:0}
+.aclose:hover{color:#fff;background:var(--s4);border-color:rgba(255,255,255,.12)}
+.abody{overflow-y:auto;flex:1;padding:20px;display:flex;flex-direction:column;gap:18px}
+.achamp-banner{display:flex;align-items:center;gap:16px;background:var(--gold-d);border:1px solid var(--gold-mid);border-radius:10px;padding:16px 18px}
+.achamp-banner img{width:54px;height:54px;object-fit:contain;flex-shrink:0}
+.achamp-crown{font-size:24px}
+.achamp-text-lbl{font-size:10px;font-weight:700;letter-spacing:.16em;text-transform:uppercase;color:var(--gold)}
+.achamp-text-name{font-family:'Bebas Neue',sans-serif;font-size:26px;letter-spacing:.04em;color:#fff}
+.achamp-text-series{font-size:11px;color:var(--mu);margin-top:2px}
+.arounds{display:flex;flex-direction:column;gap:14px}
+.around-block{background:var(--bg);border:1px solid var(--b);border-radius:10px;overflow:hidden}
+.around-hd{font-size:10px;font-weight:700;letter-spacing:.13em;text-transform:uppercase;color:var(--mu);padding:9px 14px;background:var(--s2);border-bottom:1px solid var(--b)}
+.amatch-row{display:flex;align-items:center;gap:10px;padding:8px 14px;border-bottom:1px solid var(--b2);flex-wrap:wrap}
+.amatch-row:last-child{border-bottom:none}
+.amatch-conf{font-size:9px;font-weight:700;color:var(--mu);width:34px;flex-shrink:0;text-align:center}
+.amatch-conf.east{color:var(--red)}
+.amatch-conf.west{color:var(--bl)}
+.amatch-team{display:flex;align-items:center;gap:6px;font-family:'Bebas Neue',sans-serif;font-size:14px;letter-spacing:.04em;color:rgba(226,226,242,.65)}
+.amatch-team.winner{color:#fff}
+.amatch-team img{width:17px;height:17px;object-fit:contain}
+.amatch-vs{color:var(--mu2);font-size:11px;flex-shrink:0}
+.amatch-series{margin-left:auto;font-size:10px;color:var(--mu);font-family:'JetBrains Mono',monospace;flex-shrink:0}
+
 /* ── ADMIN PANEL (bottom sheet / modal — matching salary site style) ── */
 .admin-overlay{
   position:fixed;inset:0;z-index:200;
@@ -448,6 +497,7 @@ select.fc{
 .admin-section-icon.blue{background:rgba(91,156,246,.1);color:var(--bl)}
 .admin-section-icon.amber{background:rgba(245,166,35,.1);color:var(--am)}
 .admin-section-icon.red{background:rgba(232,0,29,.1);color:var(--red)}
+.admin-section-icon.gold{background:var(--gold-d);color:var(--gold)}
 .admin-section-label{font-size:11px;font-weight:700;letter-spacing:.09em;text-transform:uppercase;color:var(--tx)}
 .admin-section-desc{font-size:10px;color:var(--mu);margin-top:1px}
 .admin-section-body{padding:12px 14px}
@@ -473,6 +523,13 @@ select.fc{
 }
 .action-btn:hover{border-color:var(--red-edge);background:var(--red-dim)}
 .action-btn:disabled{opacity:.4;cursor:not-allowed}
+.gold-btn{
+  width:100%;background:var(--gold-d);border:1px solid var(--gold-mid);border-radius:7px;padding:10px 16px;
+  color:var(--gold);font-family:'Inter',sans-serif;font-size:12px;font-weight:700;letter-spacing:.07em;text-transform:uppercase;
+  cursor:pointer;transition:background .15s,border-color .15s;min-height:42px;
+}
+.gold-btn:hover{background:rgba(245,196,0,.16)}
+.gold-btn:disabled{opacity:.4;cursor:not-allowed}
 .danger-btn{
   width:100%;background:rgba(232,0,29,.08);border:1px solid rgba(232,0,29,.2);border-radius:7px;
   padding:10px 16px;color:var(--red);font-family:'Inter',sans-serif;font-size:12px;font-weight:700;
@@ -609,6 +666,7 @@ select.fc{
 }
 .toast.green{border-left-color:var(--gr)}
 .toast.amber{border-left-color:var(--am)}
+.toast.gold{border-left-color:var(--gold)}
 .toast.out{animation:tOut .2s ease forwards}
 @keyframes tIn{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
 @keyframes tOut{from{opacity:1}to{opacity:0;transform:translateY(-5px)}}
@@ -651,6 +709,9 @@ select.fc{
   .mbody{padding:14px}
   .mabb{font-size:18px}
   .mscore{font-size:22px}
+  .archive-grid{grid-template-columns:1fr}
+  .ahd{padding:13px 15px}
+  .abody{padding:14px}
 }
 @media(max-width:360px){
   .hero-h1{font-size:28px}
@@ -666,6 +727,8 @@ select.fc{
   .srow:active{background:rgba(255,255,255,.03)}
   .admin-btn:hover{border-color:var(--b);color:var(--mu)}
   .admin-btn:active{border-color:rgba(232,0,29,.4);color:var(--tx)}
+  .arc-card:hover{transform:none}
+  .arc-card:active{border-color:var(--gold-mid)}
 }
 </style>
 </head>
@@ -717,6 +780,7 @@ select.fc{
     <button class="view-tab active" data-view="standings">Standings</button>
     <button class="view-tab" data-view="history">Match History</button>
     <button class="view-tab" data-view="refs">Referees</button>
+    <button class="view-tab" data-view="archive">Archive</button>
   </div>
 
   <!-- STANDINGS VIEW -->
@@ -782,6 +846,18 @@ select.fc{
     </div>
   </div>
 
+  <!-- ARCHIVE VIEW -->
+  <div id="view-archive" class="hidden" style="margin-top:0;">
+    <div class="sec-hd" style="padding-top:18px;">
+      <div class="sec-hd-top">
+        <span class="sec-title">Season Archive</span>
+        <span class="sec-ct" id="arc-ct">0 seasons</span>
+        <div class="sec-rule"></div>
+      </div>
+    </div>
+    <div class="archive-grid" id="archive-grid"></div>
+  </div>
+
 </div><!-- /main -->
 
 <!-- BOX SCORE MODAL -->
@@ -796,6 +872,20 @@ select.fc{
       <button class="mclose" id="m-close" aria-label="Close">✕</button>
     </div>
     <div class="mbody" id="m-body"></div>
+  </div>
+</div>
+
+<!-- ARCHIVE DETAIL MODAL -->
+<div class="amg" id="archive-modal-bg">
+  <div class="amodal">
+    <div class="ahd">
+      <div>
+        <div class="ahd-title" id="am-title">Season</div>
+        <div class="ahd-sub" id="am-sub"></div>
+      </div>
+      <button class="aclose" id="am-close">✕</button>
+    </div>
+    <div class="abody" id="am-body"></div>
   </div>
 </div>
 
@@ -830,6 +920,7 @@ select.fc{
       <button class="admin-tab active" onclick="switchAdminTab('games',this)">Games</button>
       <button class="admin-tab" onclick="switchAdminTab('void',this)">Void</button>
       <button class="admin-tab" onclick="switchAdminTab('remove',this)">Remove</button>
+      <button class="admin-tab" onclick="switchAdminTab('season',this)">Season</button>
       <button class="admin-tab" onclick="switchAdminTab('tools',this)">Tools</button>
     </div>
 
@@ -919,6 +1010,25 @@ select.fc{
       </div>
     </div>
 
+    <!-- SEASON TAB -->
+    <div id="atab-season" class="admin-body-wrap hidden">
+      <div class="admin-section">
+        <div class="admin-section-hd">
+          <div class="admin-section-icon gold">📦</div>
+          <div>
+            <div class="admin-section-label">Archive &amp; Start New Season</div>
+            <div class="admin-section-desc">Snapshots the current standings, match history, and referee log into the Archive tab, then starts a clean season.</div>
+          </div>
+        </div>
+        <div class="admin-section-body">
+          <div style="margin-bottom:6px"><div class="flbl" style="font-size:10px;font-weight:600;letter-spacing:.08em;text-transform:uppercase;color:var(--mu);margin-bottom:4px;">Season Label</div><input class="field-input" id="arc-season-label" placeholder="e.g. Season 11"></div>
+          <div style="margin-bottom:6px"><div class="flbl" style="font-size:10px;font-weight:600;letter-spacing:.08em;text-transform:uppercase;color:var(--mu);margin-bottom:4px;">Champion ABB (optional)</div><input class="field-input" id="arc-champion" placeholder="e.g. BOS" maxlength="8" style="text-transform:uppercase"></div>
+          <button class="gold-btn" id="archive-season-btn">Archive Current Season</button>
+          <div class="panel-msg" id="archive-season-msg"></div>
+        </div>
+      </div>
+    </div>
+
     <!-- TOOLS TAB -->
     <div id="atab-tools" class="admin-body-wrap hidden">
       <!-- Audit Log -->
@@ -942,11 +1052,11 @@ select.fc{
           <div class="admin-section-icon red">⚠</div>
           <div>
             <div class="admin-section-label">Danger Zone</div>
-            <div class="admin-section-desc">Irreversible — resets all standings for a new season.</div>
+            <div class="admin-section-desc">Irreversible — resets all standings without archiving them.</div>
           </div>
         </div>
         <div class="admin-section-body">
-          <button class="danger-btn" id="modal-reset">Reset All Standings &amp; Start New Season</button>
+          <button class="danger-btn" id="modal-reset">Reset All Standings (No Archive)</button>
           <div class="panel-msg" id="reset-msg"></div>
         </div>
       </div>
@@ -966,8 +1076,16 @@ const NAMES={ATL:'Atlanta Hawks',BOS:'Boston Celtics',BKN:'Brooklyn Nets',CHA:'C
 const EAST=new Set(['ATL','BOS','BKN','CHA','CHI','CLE','DET','IND','MIA','MIL','NYK','ORL','PHI','TOR','WAS']);
 const WEST=new Set(['DAL','DEN','GSW','HOU','LAC','LAL','MEM','MIN','NOP','OKC','PHX','POR','SAC','SAS','UTAH']);
 
+/* Redis for the Archive feature only (standings/history/refs stay on the existing API) */
+const RU='https://faithful-haddock-151326.upstash.io';
+const RT='gQAAAAAAAk8eAAIgcDIzNjk4NjQ2MWE4YmU0YWQ5YTBiZDFkYjUzMmFlNmUxNQ';
+const RK_ARCHIVE='rpl-standings-archive';
+async function rGet(key){try{const r=await fetch(`${RU}/get/${key}`,{headers:{Authorization:`Bearer ${RT}`}});const j=await r.json();return j.result?JSON.parse(j.result):null;}catch{return null;}}
+async function rSet(key,d){try{await fetch(`${RU}/set/${key}`,{method:'POST',headers:{Authorization:`Bearer ${RT}`,'Content-Type':'application/json'},body:JSON.stringify({value:JSON.stringify(d)})});return true;}catch{return false;}}
+
 let prevData=null,fails=0,lastId=null,allResults=[],pg=1,currentView='standings';
 let adminUnlocked=false,adminPassword='',currentAdminTab='games';
+let ARCHIVE=[],lastStandingsSnapshot=null,lastRefsSnapshot=null;
 
 const pct=(w,l)=>{const g=w+l;return g?(w/g).toFixed(3).replace(/^0/,''):'—'};
 const fmtDate=iso=>{if(!iso)return'—';const d=new Date(iso);if(isNaN(d))return'—';const diff=Math.floor((Date.now()-d)/86400000);if(diff===0)return'Today';if(diff===1)return'Yest.';if(diff<7)return`${diff}d ago`;return d.toLocaleDateString('en-US',{month:'short',day:'numeric'})};
@@ -989,8 +1107,10 @@ document.querySelectorAll('.view-tab').forEach(tab=>{
     document.getElementById('view-standings').classList.toggle('hidden',currentView!=='standings');
     document.getElementById('view-history').classList.toggle('hidden',currentView!=='history');
     document.getElementById('view-refs').classList.toggle('hidden',currentView!=='refs');
+    document.getElementById('view-archive').classList.toggle('hidden',currentView!=='archive');
     if(currentView==='history')renderHistory();
     if(currentView==='refs')fetchRefs();
+    if(currentView==='archive')renderArchiveGrid();
   });
 });
 
@@ -1182,6 +1302,7 @@ function renderConfs(data){
   }).join('');
   setTimeout(()=>document.querySelectorAll('.srow.flash').forEach(r=>r.classList.remove('flash')),1900);
   prevData=JSON.parse(JSON.stringify(sd));
+  lastStandingsSnapshot=sd;
 }
 
 /* ── REFS ── */
@@ -1192,6 +1313,7 @@ async function fetchRefs(){
     if(!res.ok)throw new Error(`HTTP ${res.status}`);
     const data=await res.json();
     const refs=data.refs||[];
+    lastRefsSnapshot=refs;
     document.getElementById('refs-ct').textContent=`${refs.length} referee${refs.length!==1?'s':''}`;
     if(!refs.length){tbody.innerHTML='<tr><td colspan="4" class="refs-empty">No referee data yet.</td></tr>';return;}
     tbody.innerHTML=refs.map(r=>{
@@ -1201,6 +1323,100 @@ async function fetchRefs(){
     }).join('');
   }catch(e){tbody.innerHTML=`<tr><td colspan="4" class="refs-empty">Failed to load referee data.</td></tr>`;}
 }
+
+/* ── ARCHIVE ── */
+async function loadArchive(){
+  const d=await rGet(RK_ARCHIVE);
+  ARCHIVE=Array.isArray(d)?d:[];
+}
+function renderArchiveGrid(){
+  const grid=document.getElementById('archive-grid');
+  const ct=document.getElementById('arc-ct');
+  const list=(ARCHIVE||[]).slice().sort((a,b)=>(b.archivedAt||'').localeCompare(a.archivedAt||''));
+  ct.textContent=`${list.length} season${list.length!==1?'s':''}`;
+  if(!list.length){grid.innerHTML=`<div class="arc-empty">No archived seasons yet. Use Admin → Season to archive standings once a season wraps up.</div>`;return;}
+  grid.innerHTML=list.map((s,i)=>{
+    const u=s.champion?logo(null,s.champion):null;
+    const teamCt=((s.standings?.eastern||[]).length)+((s.standings?.western||[]).length);
+    const gameCt=(s.results||[]).length;
+    return`<div class="arc-card" data-arc-i="${i}">
+      <div class="arc-hd"><span class="arc-season">${s.label||'Season'}</span><span class="arc-badge">Archived</span></div>
+      <div class="arc-body">
+        ${u?`<img class="arc-champ-logo" src="${u}" alt="">`:'<div class="arc-champ-ph"></div>'}
+        <div class="arc-champ-info">
+          <div class="arc-champ-lbl">${s.champion?'🏆 Champion':'Final Standings'}</div>
+          <div class="arc-champ-name">${s.champion||`${teamCt} teams`}</div>
+          <div class="arc-final">${gameCt} games played</div>
+        </div>
+      </div>
+    </div>`;
+  }).join('');
+  grid.querySelectorAll('.arc-card').forEach(el=>{
+    el.addEventListener('click',()=>openArchiveModal(list[parseInt(el.dataset.arcI,10)]));
+  });
+}
+function archiveStandingsTable(teams,confLabel,confCls){
+  const sorted=sortT(teams||[]);
+  if(!sorted.length)return'';
+  const rows=sorted.map((t,i)=>`<div class="amatch-row">
+      <span class="amatch-conf ${confCls}">${i+1}</span>
+      <span class="amatch-team winner">${t.logo?`<img src="${t.logo}" alt="">`:''}${t.name||t.abbr}</span>
+      <span class="amatch-series">${t.w}-${t.l} (${pct(t.w,t.l)})</span>
+    </div>`).join('');
+  return`<div class="around-block"><div class="around-hd">${confLabel}</div>${rows}</div>`;
+}
+function openArchiveModal(s){
+  if(!s)return;
+  document.getElementById('am-title').textContent=s.label||'Season';
+  document.getElementById('am-sub').textContent=`Archived ${s.archivedAt?new Date(s.archivedAt).toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'}):''}`;
+  const u=s.champion?logo(null,s.champion):null;
+  const champBanner=s.champion?`<div class="achamp-banner">
+      <span class="achamp-crown">👑</span>
+      ${u?`<img src="${u}" alt="">`:''}
+      <div><div class="achamp-text-lbl">RPL Champion</div><div class="achamp-text-name">${s.champion}</div></div>
+    </div>`:'';
+  const eastTbl=archiveStandingsTable(s.standings?.eastern,'Eastern Conference — Final Standings','east');
+  const westTbl=archiveStandingsTable(s.standings?.western,'Western Conference — Final Standings','west');
+  const summary=`<div class="around-block"><div class="around-hd">Season Summary</div>
+    <div class="amatch-row"><span class="amatch-team winner" style="font-family:'Inter',sans-serif;font-size:12px;letter-spacing:0;color:var(--tx2)">${(s.results||[]).length} games played${s.refs?.length?` · ${s.refs.length} referees logged`:''}</span></div>
+  </div>`;
+  document.getElementById('am-body').innerHTML=`${champBanner}<div class="arounds">${summary}${eastTbl}${westTbl}</div>`;
+  document.getElementById('archive-modal-bg').classList.add('open');
+  document.body.style.overflow='hidden';
+}
+document.getElementById('am-close').addEventListener('click',()=>{document.getElementById('archive-modal-bg').classList.remove('open');document.body.style.overflow='';});
+document.getElementById('archive-modal-bg').addEventListener('click',e=>{if(e.target.id==='archive-modal-bg'){e.currentTarget.classList.remove('open');document.body.style.overflow='';}});
+
+document.getElementById('archive-season-btn').addEventListener('click',async()=>{
+  clearPanelMsg('archive-season-msg');
+  const label=document.getElementById('arc-season-label').value.trim()||'Season';
+  const champion=document.getElementById('arc-champion').value.trim().toUpperCase();
+  if(!confirm(`Archive "${label}" with the current standings, match history, and referee log?\n\nThis snapshot is saved to the Archive tab and does not delete or reset live data.`))return;
+  const btn=document.getElementById('archive-season-btn');
+  btn.disabled=true;btn.textContent='Archiving…';
+  try{
+    await loadArchive();
+    const snapshot={
+      label,
+      champion:champion||'',
+      archivedAt:new Date().toISOString(),
+      standings:lastStandingsSnapshot||{eastern:[],western:[]},
+      results:allResults||[],
+      refs:lastRefsSnapshot||[]
+    };
+    ARCHIVE=[...(ARCHIVE||[]).filter(s=>s.label!==label),snapshot];
+    const ok=await rSet(RK_ARCHIVE,ARCHIVE);
+    if(!ok)throw new Error('Sync failed');
+    showPanelMsg('archive-season-msg',`✓ "${label}" archived.`,'success');
+    toast(`📦 ${label} archived`,'gold',5000);
+    document.getElementById('arc-season-label').value='';
+    document.getElementById('arc-champion').value='';
+  }catch(e){
+    showPanelMsg('archive-season-msg','Archiving failed. Check your connection and try again.','error');
+  }finally{
+    btn.disabled=false;btn.textContent='Archive Current Season';
+  }
+});
 
 /* ── ADMIN PANEL ── */
 function openAdmin(){
@@ -1238,6 +1454,7 @@ async function unlockAdmin(){
     document.getElementById('admin-sub-text').textContent='Changes apply instantly to the live site.';
     renderGamePicker('');
     loadAuditLog();
+    document.getElementById('arc-season-label').value=document.querySelector('.hero-eyebrow')?.textContent.split('·')[0].trim()||'';
   }catch(e){toast('Network error — could not verify password','red',3000);}
   finally{btn.textContent='Unlock';btn.disabled=false;}
 }
@@ -1246,7 +1463,7 @@ function switchAdminTab(tab,btn){
   currentAdminTab=tab;
   document.querySelectorAll('.admin-tab').forEach(t=>t.classList.remove('active'));
   btn.classList.add('active');
-  ['games','void','remove','tools'].forEach(t=>{
+  ['games','void','remove','season','tools'].forEach(t=>{
     document.getElementById(`atab-${t}`).classList.toggle('hidden',t!==tab);
   });
   if(tab==='tools')loadAuditLog();
@@ -1392,7 +1609,7 @@ document.getElementById('remove-btn').addEventListener('click',async()=>{
 /* ── RESET ── */
 document.getElementById('modal-reset').addEventListener('click',async()=>{
   clearPanelMsg('reset-msg');
-  if(!confirm('⚠️ This will permanently reset ALL standings. This cannot be undone.\n\nAre you absolutely sure?'))return;
+  if(!confirm('⚠️ This will permanently reset ALL standings WITHOUT archiving them. This cannot be undone.\n\nTip: use the Season tab to archive first.\n\nAre you absolutely sure?'))return;
   const btn=document.getElementById('modal-reset');
   btn.disabled=true;btn.textContent='Resetting…';
   try{
@@ -1476,10 +1693,10 @@ function connectSSE(){
 }
 
 document.addEventListener('keydown',e=>{
-  if(e.key==='Escape'){closeAdmin();closeBoxModal()}
+  if(e.key==='Escape'){closeAdmin();closeBoxModal();document.getElementById('archive-modal-bg').classList.remove('open');}
 });
 
-(async()=>{await fetchData();setInterval(fetchData,CFG.POLL);connectSSE()})();
+(async()=>{await loadArchive();await fetchData();setInterval(fetchData,CFG.POLL);connectSSE()})();
 </script>
 </body>
 </html>
