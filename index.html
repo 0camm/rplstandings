@@ -1077,11 +1077,9 @@ const EAST=new Set(['ATL','BOS','BKN','CHA','CHI','CLE','DET','IND','MIA','MIL',
 const WEST=new Set(['DAL','DEN','GSW','HOU','LAC','LAL','MEM','MIN','NOP','OKC','PHX','POR','SAC','SAS','UTAH']);
 
 /* Redis for the Archive feature only (standings/history/refs stay on the existing API) */
-const RU='https://faithful-haddock-151326.upstash.io';
-const RT='gQAAAAAAAk8eAAIgcDIzNjk4NjQ2MWE4YmU0YWQ5YTBiZDFkYjUzMmFlNmUxNQ';
-const RK_ARCHIVE='rpl-standings-archive';
-async function rGet(key){try{const r=await fetch(`${RU}/get/${key}`,{headers:{Authorization:`Bearer ${RT}`}});const j=await r.json();return j.result?JSON.parse(j.result):null;}catch{return null;}}
-async function rSet(key,d){try{await fetch(`${RU}/set/${key}`,{method:'POST',headers:{Authorization:`Bearer ${RT}`,'Content-Type':'application/json'},body:JSON.stringify({value:JSON.stringify(d)})});return true;}catch{return false;}}
+const ARCHIVE_API = `${CFG.API.replace(/\/standings$/, '')}/archive`;
+async function rGet(){try{const r=await fetch(ARCHIVE_API);const j=await r.json();return j.data||null;}catch{return null;}}
+async function rSet(d){try{await fetch(ARCHIVE_API,{method:'POST',headers:{'Content-Type':'application/json','Authorization':`Bearer ${adminPassword||password||''}`},body:JSON.stringify(d)});return true;}catch{return false;}}
 
 let prevData=null,fails=0,lastId=null,allResults=[],pg=1,currentView='standings';
 let adminUnlocked=false,adminPassword='',currentAdminTab='games';
@@ -1326,7 +1324,7 @@ async function fetchRefs(){
 
 /* ── ARCHIVE ── */
 async function loadArchive(){
-  const d=await rGet(RK_ARCHIVE);
+  const d=await rGet();
   ARCHIVE=Array.isArray(d)?d:[];
 }
 function renderArchiveGrid(){
@@ -1405,7 +1403,7 @@ document.getElementById('archive-season-btn').addEventListener('click',async()=>
       refs:lastRefsSnapshot||[]
     };
     ARCHIVE=[...(ARCHIVE||[]).filter(s=>s.label!==label),snapshot];
-    const ok=await rSet(RK_ARCHIVE,ARCHIVE);
+    const ok=await rSet(ARCHIVE);
     if(!ok)throw new Error('Sync failed');
     showPanelMsg('archive-season-msg',`✓ "${label}" archived.`,'success');
     toast(`📦 ${label} archived`,'gold',5000);

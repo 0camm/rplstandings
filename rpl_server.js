@@ -9,6 +9,9 @@ const SUPABASE_URL = (process.env.SUPABASE_URL || "").trim();
 const SUPABASE_KEY = (process.env.SUPABASE_KEY || "").trim();
 const RESULTS_MAX  = 500;
 const ADMIN_SECRET = (process.env.ADMIN_SECRET || SECRET).trim();
+const UPSTASH_URL   = (process.env.UPSTASH_URL   || "").trim();
+const UPSTASH_TOKEN = (process.env.UPSTASH_TOKEN || "").trim();
+const ARCHIVE_KEY   = "rpl-standings-archive";
 
 let state = {
   teams:       {},
@@ -54,6 +57,35 @@ function supabaseRequest(method, path, body, extraHeaders = {}) {
       });
     });
     req.on("error", e => { console.error("[RPL] Supabase request error:", e.message); reject(e); });
+    if (bodyStr) req.write(bodyStr);
+    req.end();
+  });
+}
+
+function upstashRequest(method, path, body) {
+  return new Promise((resolve, reject) => {
+    if (!UPSTASH_URL || !UPSTASH_TOKEN) return resolve({ status: 0, body: {} });
+    const parsed = new URL(`${UPSTASH_URL}${path}`);
+    const bodyStr = body !== undefined ? JSON.stringify(body) : null;
+    const options = {
+      hostname: parsed.hostname,
+      path: parsed.pathname + parsed.search,
+      method,
+      headers: {
+        "Authorization": `Bearer ${UPSTASH_TOKEN}`,
+        "Content-Type":  "application/json",
+      },
+    };
+    if (bodyStr) options.headers["Content-Length"] = Buffer.byteLength(bodyStr);
+    const req = https.request(options, res => {
+      let data = "";
+      res.on("data", c => { data += c; });
+      res.on("end", () => {
+        try { resolve({ status: res.statusCode, body: data ? JSON.parse(data) : {} }); }
+        catch (_) { resolve({ status: res.statusCode, body: data }); }
+      });
+    });
+    req.on("error", e => { console.error("[RPL] Upstash request error:", e.message); reject(e); });
     if (bodyStr) req.write(bodyStr);
     req.end();
   });
@@ -553,6 +585,27 @@ function handleGetAuditLog(req, res) {
   return sendJSON(res, 200, { auditLog: state.auditLog || [] });
 }
 
+async function handleGetArchive(req, res) {
+  try {
+    const { body } = await upstashRequest("GET", `/get/${ARCHIVE_KEY}`);
+    const data = body && body.result ? JSON.parse(body.result) : null;
+    return sendJSON(res, 200, { data });
+  } catch (e) {
+    return sendJSON(res, 500, { error: "Archive fetch failed" });
+  }
+}
+
+async function handleSetArchive(req, res) {
+  if (!isAuthorized(req)) return sendJSON(res, 401, { error: "Unauthorized" });
+  try {
+    const payload = await readBody(req);
+    await upstashRequest("POST", `/set/${ARCHIVE_KEY}`, { value: JSON.stringify(payload) });
+    return sendJSON(res, 200, { ok: true });
+  } catch (e) {
+    return sendJSON(res, 400, { error: "Invalid request" });
+  }
+}
+
 const server = http.createServer(async (req, res) => {
   const url    = req.url.split("?")[0];
   const method = req.method.toUpperCase();
@@ -573,6 +626,8 @@ const server = http.createServer(async (req, res) => {
   if (url === "/rpl/standings/auditlog" && method === "GET")  return handleGetAuditLog(req, res);
   if (url === "/rpl/standings/team"     && method === "POST") return handleTeamOverride(req, res);
   if (url === "/rpl/refs"               && method === "GET")  return handleGetRefs(req, res);
+  if (url === "/rpl/archive"            && method === "GET")  return handleGetArchive(req, res);
+  if (url === "/rpl/archive"            && method === "POST") return handleSetArchive(req, res);
 
   sendJSON(res, 404, { error: "Not found" });
 });
