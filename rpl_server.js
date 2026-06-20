@@ -4,14 +4,19 @@ const http  = require("http");
 const https = require("https");
 
 const PORT         = process.env.PORT                              || 3000;
-const SECRET       = (process.env.RPL_SECRET   || "RPLHRPASS$&").trim();
+const SECRET       = (process.env.RPL_SECRET   || "").trim();
 const SUPABASE_URL = (process.env.SUPABASE_URL || "").trim();
 const SUPABASE_KEY = (process.env.SUPABASE_KEY || "").trim();
 const RESULTS_MAX  = 500;
-const ADMIN_SECRET = (process.env.ADMIN_SECRET || SECRET).trim();
+const ADMIN_SECRET = (process.env.ADMIN_SECRET || "").trim();
 const UPSTASH_URL   = (process.env.UPSTASH_URL   || "").trim();
 const UPSTASH_TOKEN = (process.env.UPSTASH_TOKEN || "").trim();
 const ARCHIVE_KEY   = "rpl-standings-archive";
+
+if (!SECRET || !ADMIN_SECRET) {
+  console.error("[RPL] FATAL: RPL_SECRET and ADMIN_SECRET must be set as environment variables. Refusing to start with no/default credentials.");
+  process.exit(1);
+}
 
 let state = {
   teams:       {},
@@ -213,6 +218,34 @@ function readBody(req) {
     });
     req.on("error", reject);
   });
+}
+
+/* Simple in-memory rate limiter for auth/write endpoints.
+   Not distributed (resets on restart, per-instance only) but stops
+   naive brute-force / scripted abuse against a single process. */
+const RATE_LIMIT_WINDOW_MS = 60 * 1000;
+const RATE_LIMIT_MAX_HITS  = 20;
+const rateBuckets = new Map();
+
+function getClientIP(req) {
+  const fwd = req.headers["x-forwarded-for"];
+  if (fwd) return fwd.split(",")[0].trim();
+  return req.socket.remoteAddress || "unknown";
+}
+
+function isRateLimited(req) {
+  const ip  = getClientIP(req);
+  const now = Date.now();
+  let bucket = rateBuckets.get(ip);
+  if (!bucket || now - bucket.windowStart > RATE_LIMIT_WINDOW_MS) {
+    bucket = { windowStart: now, count: 0 };
+    rateBuckets.set(ip, bucket);
+  }
+  bucket.count += 1;
+  if (rateBuckets.size > 5000) {
+    for (const [k, v] of rateBuckets) { if (now - v.windowStart > RATE_LIMIT_WINDOW_MS) rateBuckets.delete(k); }
+  }
+  return bucket.count > RATE_LIMIT_MAX_HITS;
 }
 
 function setCORS(res) {
@@ -613,6 +646,11 @@ const server = http.createServer(async (req, res) => {
   if (method === "OPTIONS") { setCORS(res); res.writeHead(204); return res.end(); }
   if (url === "/" || url === "/health")
     return sendJSON(res, 200, { status: "ok", clients: sseClients.size, teams: Object.keys(state.teams).length });
+
+  if (method === "POST" && isRateLimited(req)) {
+    return sendJSON(res, 429, { error: "Too many requests — please slow down." });
+  }
+
   if (url === "/rpl/standings") {
     if (method === "POST") return handlePostResult(req, res);
     if (method === "GET")  return handleGetStandings(req, res);
