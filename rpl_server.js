@@ -452,6 +452,39 @@ async function handleRemoveResult(req, res) {
   return sendJSON(res, 200, { ok: true, removed });
 }
 
+async function handleZeroRecords(req, res) {
+  // Zeroes every team's wins/losses/streak back to 0-0 and clears match
+  // history, but — unlike handleReset — KEEPS the team objects (and their
+  // logos) in state.teams so the roster doesn't need to be re-seeded.
+  if (!isAdminAuthorized(req)) return sendJSON(res, 401, { error: "Unauthorized" });
+
+  const teamCount = Object.keys(state.teams).length;
+  for (const abb of Object.keys(state.teams)) {
+    state.teams[abb].wins   = 0;
+    state.teams[abb].losses = 0;
+    state.teams[abb].pct    = "0.000";
+    state.teams[abb].streak = "—";
+  }
+  state.results     = [];
+  state.lastUpdated = new Date().toISOString();
+
+  state.auditLog.unshift({
+    action:    "zeroed",
+    gameId:    null,
+    matchup:   "ALL",
+    score:     "—",
+    status:    "zeroed (roster kept)",
+    timestamp: new Date().toISOString(),
+  });
+  if (state.auditLog.length > 200) state.auditLog.length = 200;
+
+  await saveState();
+  broadcast("standings", buildPublicPayload());
+
+  console.log(`[RPL] All ${teamCount} team records zeroed to 0-0 (roster/logos kept, match history cleared).`);
+  return sendJSON(res, 200, { ok: true, teamsZeroed: teamCount });
+}
+
 async function resetState(auditAction) {
   state.teams       = {};
   state.results     = [];
@@ -711,6 +744,7 @@ const server = http.createServer(async (req, res) => {
   if (url === "/rpl/archive"            && method === "GET")  return handleGetArchive(req, res);
   if (url === "/rpl/archive"            && method === "POST") return handleSetArchive(req, res);
   if (url === "/rpl/standings/archive-advance" && method === "POST") return handleArchiveAndAdvance(req, res);
+  if (url === "/rpl/standings/zero-records"    && method === "POST") return handleZeroRecords(req, res);
 
   sendJSON(res, 404, { error: "Not found" });
 });

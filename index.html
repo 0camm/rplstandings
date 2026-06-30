@@ -1091,13 +1091,27 @@ select.fc{
           </div>
         </div>
       </div>
+      <!-- Zero Records (keeps roster/logos) -->
+      <div class="admin-section">
+        <div class="admin-section-hd">
+          <div class="admin-section-icon amber">0️⃣</div>
+          <div>
+            <div class="admin-section-label">Zero All Records</div>
+            <div class="admin-section-desc">Sets every team to 0-0 and clears match history, but keeps your team roster and logos so you don't have to re-add them.</div>
+          </div>
+        </div>
+        <div class="admin-section-body">
+          <button class="danger-btn" id="modal-zero">Zero All Records (Keep Roster &amp; Logos)</button>
+          <div class="panel-msg" id="zero-msg"></div>
+        </div>
+      </div>
       <!-- Danger Zone -->
       <div class="admin-section">
         <div class="admin-section-hd">
           <div class="admin-section-icon red">⚠</div>
           <div>
             <div class="admin-section-label">Danger Zone</div>
-            <div class="admin-section-desc">Irreversible — resets all standings without archiving them.</div>
+            <div class="admin-section-desc">Irreversible — deletes every team AND all match history, without archiving. You will need to re-add teams/logos afterward. For most "start fresh" needs, use Zero All Records above instead.</div>
           </div>
         </div>
         <div class="admin-section-body">
@@ -1651,6 +1665,8 @@ document.getElementById('ag-btn').addEventListener('click',async()=>{
   if(!away||!home){showPanelMsg('ag-msg','Enter both team abbreviations.','error');return}
   if(away===home){showPanelMsg('ag-msg','Away and home teams must differ.','error');return}
   if(status!=='incomplete'&&(awayScore===''||homeScore==='')){showPanelMsg('ag-msg','Enter scores for Final/Forfeit results.','error');return}
+  const scoreLine=status==='incomplete'?'(incomplete — no scores recorded)':`${awayScore||0}–${homeScore||0}`;
+  if(!confirm(`Add this game to the live standings?\n\n${away} @ ${home}\nScore: ${scoreLine}\nStatus: ${status.toUpperCase()}\n\n${status!=='incomplete'?"This will update the winning/losing team's win-loss record immediately.":'No records will change since this is marked incomplete.'}`))return;
   const btn=document.getElementById('ag-btn');
   btn.disabled=true;btn.textContent='Adding…';
   try{
@@ -1732,6 +1748,9 @@ document.getElementById('void-btn').addEventListener('click',async()=>{
   clearPanelMsg('void-msg');
   const id=document.getElementById('void-game-id').value.trim();
   if(!id){showPanelMsg('void-msg','Enter a game ID.','error');return}
+  const g=allResults.find(x=>String(x.id)===String(id));
+  const desc=g?`${g.awayABB} @ ${g.homeABB} (${g.awayScore}–${g.homeScore}, ${g.status})`:`game ID ${id}`;
+  if(!confirm(`Void this result?\n\n${desc}\n\nThis removes it from the win-loss calculation and recalculates standings from the remaining history. It stays in the history list marked as voided — it is not deleted.`))return;
   document.getElementById('void-btn').disabled=true;
   try{
     const r=await fetch(CFG.API.replace(/\/standings$/,'/standings/void'),{
@@ -1751,6 +1770,9 @@ document.getElementById('unvoid-btn').addEventListener('click',async()=>{
   clearPanelMsg('void-msg');
   const id=document.getElementById('void-game-id').value.trim();
   if(!id){showPanelMsg('void-msg','Enter a game ID.','error');return}
+  const g=allResults.find(x=>String(x.id)===String(id));
+  const desc=g?`${g.awayABB} @ ${g.homeABB} (${g.awayScore}–${g.homeScore}, ${g.status})`:`game ID ${id}`;
+  if(!confirm(`Restore (unvoid) this result?\n\n${desc}\n\nThis adds it back into the win-loss calculation and recalculates standings to include it.`))return;
   document.getElementById('unvoid-btn').disabled=true;
   try{
     const r=await fetch(CFG.API.replace(/\/standings$/,'/standings/void'),{
@@ -1771,6 +1793,9 @@ document.getElementById('remove-btn').addEventListener('click',async()=>{
   clearPanelMsg('remove-msg');
   const id=document.getElementById('remove-game-id').value.trim();
   if(!id){showPanelMsg('remove-msg','Enter a game ID.','error');return}
+  const g=allResults.find(x=>String(x.id)===String(id));
+  const desc=g?`${g.awayABB} @ ${g.homeABB} (${g.awayScore}–${g.homeScore}, ${g.status})`:`game ID ${id}`;
+  if(!confirm(`PERMANENTLY delete this result?\n\n${desc}\n\nUnlike voiding, this cannot be undone — the game is removed from history entirely and standings are recalculated without it.`))return;
   document.getElementById('remove-btn').disabled=true;document.getElementById('remove-btn').textContent='Removing…';
   try{
     const r=await fetch(CFG.API.replace(/\/standings$/,'/standings/remove'),{
@@ -1786,10 +1811,31 @@ document.getElementById('remove-btn').addEventListener('click',async()=>{
   finally{document.getElementById('remove-btn').disabled=false;document.getElementById('remove-btn').textContent='Remove'}
 });
 
+/* ── ZERO ALL RECORDS (keeps team roster/logos) ── */
+document.getElementById('modal-zero').addEventListener('click',async()=>{
+  clearPanelMsg('zero-msg');
+  const teamCt=(prevData&&prevData.standings)?prevData.standings.length:0;
+  if(!confirm(`This will set ALL ${teamCt} teams to 0-0, reset every streak, and permanently delete all match history.\n\nYour team roster and logos will be KEPT — you will not need to re-add teams.\n\nThis does NOT save anything to the Archive. If you want a permanent record of this season first, cancel and use Season → Archive Current Season instead.\n\nThis cannot be undone. Continue?`))return;
+  const btn=document.getElementById('modal-zero');
+  btn.disabled=true;btn.textContent='Zeroing…';
+  try{
+    const r=await fetch(CFG.API.replace(/\/standings$/,'/standings/zero-records'),{
+      method:'POST',headers:{'Content-Type':'application/json','Authorization':`Bearer ${adminPassword}`}
+    });
+    let data=null;try{data=await r.json();}catch(_){}
+    if(!r.ok)throw new Error(data?.error?`${data.error} (HTTP ${r.status})`:`Server error ${r.status}`);
+    showPanelMsg('zero-msg',`✓ All teams zeroed to 0-0. Roster and logos kept.`,'success');
+    toast('All records zeroed to 0-0','amber',5000);
+    await fetchData();
+    await loadAuditLog();
+  }catch(e){showPanelMsg('zero-msg',`Failed: ${e.message||'unknown error'}`,'error')}
+  finally{btn.disabled=false;btn.textContent='Zero All Records (Keep Roster & Logos)'}
+});
+
 /* ── RESET ── */
 document.getElementById('modal-reset').addEventListener('click',async()=>{
   clearPanelMsg('reset-msg');
-  if(!confirm('⚠️ This will permanently reset ALL standings WITHOUT archiving them. This cannot be undone.\n\nTip: use the Season tab to archive first.\n\nAre you absolutely sure?'))return;
+  if(!confirm('⚠️ This will PERMANENTLY DELETE every team (including logos) and all match history, with no archive saved.\n\nYou will have to re-add every team and logo from scratch afterward.\n\nIf you just want to start a new season with scores at 0-0, cancel and use "Zero All Records" instead, which keeps your team roster and logos.\n\nThis cannot be undone. Are you absolutely sure?'))return;
   const btn=document.getElementById('modal-reset');
   btn.disabled=true;btn.textContent='Resetting…';
   try{
