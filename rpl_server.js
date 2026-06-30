@@ -211,7 +211,7 @@ function updateStreak(current, won) {
 function readBody(req) {
   return new Promise((resolve, reject) => {
     let body = "";
-    req.on("data", chunk => { body += chunk; if (body.length > 1e6) req.destroy(); });
+    req.on("data", chunk => { body += chunk; if (body.length > 8e6) req.destroy(); });
     req.on("end", () => {
       try { resolve(JSON.parse(body)); }
       catch (e) { reject(new Error("Invalid JSON")); }
@@ -495,6 +495,7 @@ async function handleArchiveAndAdvance(req, res) {
   try {
     await upstashRequest("POST", `/set/${ARCHIVE_KEY}`, { value: JSON.stringify(archive) });
   } catch (e) {
+    console.error("[RPL] Archive save to Upstash failed — aborting reset:", e.message);
     return sendJSON(res, 500, { error: "Archive save failed — standings were NOT reset." });
   }
 
@@ -677,7 +678,8 @@ async function handleSetArchive(req, res) {
     await upstashRequest("POST", `/set/${ARCHIVE_KEY}`, { value: JSON.stringify(payload) });
     return sendJSON(res, 200, { ok: true });
   } catch (e) {
-    return sendJSON(res, 400, { error: "Invalid request" });
+    console.error("[RPL] handleSetArchive error:", e.message);
+    return sendJSON(res, 400, { error: e.message || "Invalid request" });
   }
 }
 

@@ -1124,7 +1124,13 @@ const WEST=new Set(['DAL','DEN','GSW','HOU','LAC','LAL','MEM','MIN','NOP','OKC',
 /* Redis for the Archive feature only (standings/history/refs stay on the existing API) */
 const ARCHIVE_API = `${CFG.API.replace(/\/standings$/, '')}/archive`;
 async function rGet(){try{const r=await fetch(ARCHIVE_API);const j=await r.json();return j.data||null;}catch{return null;}}
-async function rSet(d){try{await fetch(ARCHIVE_API,{method:'POST',headers:{'Content-Type':'application/json','Authorization':`Bearer ${adminPassword||password||''}`},body:JSON.stringify(d)});return true;}catch{return false;}}
+async function rSet(d){
+  try{
+    const r=await fetch(ARCHIVE_API,{method:'POST',headers:{'Content-Type':'application/json','Authorization':`Bearer ${adminPassword||''}`},body:JSON.stringify(d)});
+    if(!r.ok){let msg=`HTTP ${r.status}`;try{const j=await r.json();if(j?.error)msg=`${j.error} (HTTP ${r.status})`;}catch(_){}return{ok:false,error:msg};}
+    return{ok:true};
+  }catch(e){return{ok:false,error:e.message||'Network error'};}
+}
 
 let prevData=null,fails=0,lastId=null,allResults=[],pg=1,currentView='standings';
 let adminUnlocked=false,adminPassword='',currentAdminTab='games';
@@ -1453,12 +1459,13 @@ document.getElementById('arc-admin-save-btn').addEventListener('click',async()=>
   const btn=document.getElementById('arc-admin-save-btn');
   btn.disabled=true;btn.textContent='Saving…';
   try{
-    const ok=await rSet(ARCHIVE);
-    if(!ok)throw new Error('Save failed');
+    const result=await rSet(ARCHIVE);
+    if(!result.ok)throw new Error(result.error||'Save failed');
     showPanelMsg('arc-admin-msg','✓ Archive changes saved.','success');
     toast('Archive updated','green',4000);
   }catch(e){
-    showPanelMsg('arc-admin-msg','Save failed — admin key may be invalid or connection dropped.','error');
+    showPanelMsg('arc-admin-msg',`Save failed: ${e.message||'unknown error'}`,'error');
+    console.error('[RPL] archive save failed:',e);
   }finally{
     btn.disabled=false;btn.textContent='Save Archive Changes';
   }
@@ -1518,7 +1525,8 @@ document.getElementById('archive-season-btn').addEventListener('click',async()=>
       method:'POST',headers:{'Content-Type':'application/json','Authorization':`Bearer ${adminPassword}`},
       body:JSON.stringify({archive:ARCHIVE,label})
     });
-    if(!r.ok)throw new Error(`Server error ${r.status}`);
+    let data=null;try{data=await r.json();}catch(_){}
+    if(!r.ok)throw new Error(data?.error?`${data.error} (HTTP ${r.status})`:`Server error ${r.status}`);
     showPanelMsg('archive-season-msg',`✓ "${label}" archived. All records reset for the new season.`,'success');
     toast(`📦 ${label} archived — new season started`,'gold',6000);
     document.getElementById('arc-season-label').value='';
@@ -1526,7 +1534,8 @@ document.getElementById('archive-season-btn').addEventListener('click',async()=>
     await fetchData();
     await loadAuditLog();
   }catch(e){
-    showPanelMsg('archive-season-msg','Archiving failed. Check your connection and try again. Standings were NOT reset.','error');
+    showPanelMsg('archive-season-msg',e.message?`Archiving failed: ${e.message}`:'Archiving failed. Check your connection and try again. Standings were NOT reset.','error');
+    console.error('[RPL] archive-advance failed:',e);
   }finally{
     btn.disabled=false;btn.textContent='Archive Current Season';
   }
