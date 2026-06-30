@@ -918,9 +918,11 @@ select.fc{
   <div id="admin-unlocked" class="hidden" style="display:none;flex-direction:column;flex:1;min-height:0;">
     <div class="admin-tabs">
       <button class="admin-tab active" onclick="switchAdminTab('games',this)">Games</button>
+      <button class="admin-tab" onclick="switchAdminTab('edit',this)">Edit Standings</button>
       <button class="admin-tab" onclick="switchAdminTab('void',this)">Void</button>
       <button class="admin-tab" onclick="switchAdminTab('remove',this)">Remove</button>
       <button class="admin-tab" onclick="switchAdminTab('season',this)">Season</button>
+      <button class="admin-tab" onclick="switchAdminTab('archive',this)">Archive</button>
       <button class="admin-tab" onclick="switchAdminTab('tools',this)">Tools</button>
     </div>
 
@@ -970,6 +972,31 @@ select.fc{
     </div>
 
     <!-- VOID TAB -->
+    <!-- EDIT STANDINGS TAB -->
+    <div id="atab-edit" class="admin-body-wrap hidden">
+      <div class="admin-section">
+        <div class="admin-section-hd">
+          <div class="admin-section-icon blue">🛠</div>
+          <div>
+            <div class="admin-section-label">Edit Team Record</div>
+            <div class="admin-section-desc">Manually set a team's wins, losses, streak, or logo. Overwrites whatever the auto-calculated record would be. Admin key required.</div>
+          </div>
+        </div>
+        <div class="admin-section-body">
+          <div style="margin-bottom:6px"><div class="flbl" style="font-size:10px;font-weight:600;letter-spacing:.08em;text-transform:uppercase;color:var(--mu);margin-bottom:4px;">Team ABB</div><input class="field-input" id="es-abb" placeholder="e.g. BOS" maxlength="8" style="text-transform:uppercase" list="es-abb-list"><datalist id="es-abb-list"></datalist></div>
+          <div style="display:flex;gap:8px;margin-bottom:6px">
+            <div style="flex:1"><div class="flbl" style="font-size:10px;font-weight:600;letter-spacing:.08em;text-transform:uppercase;color:var(--mu);margin-bottom:4px;">Wins</div><input class="field-input" id="es-wins" type="number" min="0" placeholder="0"></div>
+            <div style="flex:1"><div class="flbl" style="font-size:10px;font-weight:600;letter-spacing:.08em;text-transform:uppercase;color:var(--mu);margin-bottom:4px;">Losses</div><input class="field-input" id="es-losses" type="number" min="0" placeholder="0"></div>
+          </div>
+          <div style="margin-bottom:6px"><div class="flbl" style="font-size:10px;font-weight:600;letter-spacing:.08em;text-transform:uppercase;color:var(--mu);margin-bottom:4px;">Streak (optional, e.g. W3 / L2)</div><input class="field-input" id="es-streak" placeholder="leave blank to keep current"></div>
+          <div style="margin-bottom:6px"><div class="flbl" style="font-size:10px;font-weight:600;letter-spacing:.08em;text-transform:uppercase;color:var(--mu);margin-bottom:4px;">Logo URL (optional)</div><input class="field-input" id="es-logo" placeholder="leave blank to keep current"></div>
+          <button class="gold-btn" id="es-load-btn" type="button" style="margin-bottom:6px;background:transparent;border:1px solid var(--b);color:var(--tx)">Load Current Record</button>
+          <button class="gold-btn" id="es-save-btn">Save Team Record</button>
+          <div class="panel-msg" id="es-msg"></div>
+        </div>
+      </div>
+    </div>
+
     <div id="atab-void" class="admin-body-wrap hidden">
       <div class="admin-section">
         <div class="admin-section-hd">
@@ -1017,7 +1044,7 @@ select.fc{
           <div class="admin-section-icon gold">📦</div>
           <div>
             <div class="admin-section-label">Archive &amp; Start New Season</div>
-            <div class="admin-section-desc">Snapshots the current standings, match history, and referee log into the Archive tab, then starts a clean season.</div>
+            <div class="admin-section-desc">Snapshots the current standings, match history, and referee log into the Archive tab, then resets every record to 0 to start a clean season.</div>
           </div>
         </div>
         <div class="admin-section-body">
@@ -1025,6 +1052,24 @@ select.fc{
           <div style="margin-bottom:6px"><div class="flbl" style="font-size:10px;font-weight:600;letter-spacing:.08em;text-transform:uppercase;color:var(--mu);margin-bottom:4px;">Champion ABB (optional)</div><input class="field-input" id="arc-champion" placeholder="e.g. BOS" maxlength="8" style="text-transform:uppercase"></div>
           <button class="gold-btn" id="archive-season-btn">Archive Current Season</button>
           <div class="panel-msg" id="archive-season-msg"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ARCHIVE MANAGEMENT TAB -->
+    <div id="atab-archive" class="admin-body-wrap hidden">
+      <div class="admin-section">
+        <div class="admin-section-hd">
+          <div class="admin-section-icon gold">🗂</div>
+          <div>
+            <div class="admin-section-label">Manage Archived Seasons</div>
+            <div class="admin-section-desc">Rename, edit champion, reorder, or permanently delete past seasons. Changes save when you hit "Save Archive Changes" below.</div>
+          </div>
+        </div>
+        <div class="admin-section-body">
+          <div id="arc-admin-list" style="display:flex;flex-direction:column;gap:8px;margin-bottom:10px;"></div>
+          <button class="gold-btn" id="arc-admin-save-btn">Save Archive Changes</button>
+          <div class="panel-msg" id="arc-admin-msg"></div>
         </div>
       </div>
     </div>
@@ -1353,6 +1398,72 @@ function renderArchiveGrid(){
     el.addEventListener('click',()=>openArchiveModal(list[parseInt(el.dataset.arcI,10)]));
   });
 }
+
+/* ── ADMIN: ARCHIVE MANAGEMENT (rename / edit champion / reorder / delete) ── */
+function renderAdminArchiveList(){
+  const wrap=document.getElementById('arc-admin-list');
+  if(!wrap)return;
+  if(!ARCHIVE||!ARCHIVE.length){wrap.innerHTML='<div class="audit-empty">No archived seasons yet.</div>';return}
+  wrap.innerHTML=ARCHIVE.map((s,i)=>{
+    const gameCt=(s.results||[]).length;
+    const teamCt=((s.standings?.eastern||[]).length)+((s.standings?.western||[]).length);
+    return`<div style="border:1px solid var(--b);border-radius:8px;padding:10px;background:var(--bg)">
+      <div style="display:flex;gap:6px;margin-bottom:6px">
+        <input class="field-input" style="flex:1" data-arc-field="label" data-arc-i="${i}" value="${(s.label||'').replace(/"/g,'&quot;')}" placeholder="Season label">
+        <input class="field-input" style="flex:1;text-transform:uppercase" data-arc-field="champion" data-arc-i="${i}" maxlength="8" value="${(s.champion||'').replace(/"/g,'&quot;')}" placeholder="Champion ABB">
+      </div>
+      <div style="display:flex;align-items:center;justify-content:space-between;gap:6px">
+        <div style="font-size:10px;color:var(--mu)">${teamCt} teams · ${gameCt} games · archived ${fmtDate(s.archivedAt)}</div>
+        <div style="display:flex;gap:4px">
+          <button type="button" class="danger-btn" style="padding:6px 10px;font-size:11px" data-arc-act="up" data-arc-i="${i}" ${i===0?'disabled':''}>↑</button>
+          <button type="button" class="danger-btn" style="padding:6px 10px;font-size:11px" data-arc-act="down" data-arc-i="${i}" ${i===ARCHIVE.length-1?'disabled':''}>↓</button>
+          <button type="button" class="danger-btn" style="padding:6px 10px;font-size:11px" data-arc-act="del" data-arc-i="${i}">Delete</button>
+        </div>
+      </div>
+    </div>`;
+  }).join('');
+
+  wrap.querySelectorAll('input[data-arc-field]').forEach(inp=>{
+    inp.addEventListener('input',()=>{
+      const i=parseInt(inp.dataset.arcI,10);
+      const field=inp.dataset.arcField;
+      if(!ARCHIVE[i])return;
+      ARCHIVE[i][field]=field==='champion'?inp.value.toUpperCase():inp.value;
+    });
+  });
+  wrap.querySelectorAll('button[data-arc-act]').forEach(btn=>{
+    btn.addEventListener('click',()=>{
+      const i=parseInt(btn.dataset.arcI,10);
+      const act=btn.dataset.arcAct;
+      if(act==='del'){
+        if(!confirm(`Delete archived season "${ARCHIVE[i].label||'Season'}"? This cannot be undone once saved.`))return;
+        ARCHIVE.splice(i,1);
+      }else if(act==='up'&&i>0){
+        [ARCHIVE[i-1],ARCHIVE[i]]=[ARCHIVE[i],ARCHIVE[i-1]];
+      }else if(act==='down'&&i<ARCHIVE.length-1){
+        [ARCHIVE[i+1],ARCHIVE[i]]=[ARCHIVE[i],ARCHIVE[i+1]];
+      }
+      renderAdminArchiveList();
+    });
+  });
+}
+
+document.getElementById('arc-admin-save-btn').addEventListener('click',async()=>{
+  clearPanelMsg('arc-admin-msg');
+  const btn=document.getElementById('arc-admin-save-btn');
+  btn.disabled=true;btn.textContent='Saving…';
+  try{
+    const ok=await rSet(ARCHIVE);
+    if(!ok)throw new Error('Save failed');
+    showPanelMsg('arc-admin-msg','✓ Archive changes saved.','success');
+    toast('Archive updated','green',4000);
+  }catch(e){
+    showPanelMsg('arc-admin-msg','Save failed — admin key may be invalid or connection dropped.','error');
+  }finally{
+    btn.disabled=false;btn.textContent='Save Archive Changes';
+  }
+});
+
 function archiveStandingsTable(teams,confLabel,confCls){
   const sorted=sortT(teams||[]);
   if(!sorted.length)return'';
@@ -1389,7 +1500,7 @@ document.getElementById('archive-season-btn').addEventListener('click',async()=>
   clearPanelMsg('archive-season-msg');
   const label=document.getElementById('arc-season-label').value.trim()||'Season';
   const champion=document.getElementById('arc-champion').value.trim().toUpperCase();
-  if(!confirm(`Archive "${label}" with the current standings, match history, and referee log?\n\nThis snapshot is saved to the Archive tab and does not delete or reset live data.`))return;
+  if(!confirm(`Archive "${label}" with the current standings, match history, and referee log, then RESET all records to 0 to start the next season?\n\nThis cannot be undone, but the snapshot is saved permanently to the Archive tab.`))return;
   const btn=document.getElementById('archive-season-btn');
   btn.disabled=true;btn.textContent='Archiving…';
   try{
@@ -1403,14 +1514,19 @@ document.getElementById('archive-season-btn').addEventListener('click',async()=>
       refs:lastRefsSnapshot||[]
     };
     ARCHIVE=[...(ARCHIVE||[]).filter(s=>s.label!==label),snapshot];
-    const ok=await rSet(ARCHIVE);
-    if(!ok)throw new Error('Sync failed');
-    showPanelMsg('archive-season-msg',`✓ "${label}" archived.`,'success');
-    toast(`📦 ${label} archived`,'gold',5000);
+    const r=await fetch(CFG.API.replace(/\/standings$/,'/standings/archive-advance'),{
+      method:'POST',headers:{'Content-Type':'application/json','Authorization':`Bearer ${adminPassword}`},
+      body:JSON.stringify({archive:ARCHIVE,label})
+    });
+    if(!r.ok)throw new Error(`Server error ${r.status}`);
+    showPanelMsg('archive-season-msg',`✓ "${label}" archived. All records reset for the new season.`,'success');
+    toast(`📦 ${label} archived — new season started`,'gold',6000);
     document.getElementById('arc-season-label').value='';
     document.getElementById('arc-champion').value='';
+    await fetchData();
+    await loadAuditLog();
   }catch(e){
-    showPanelMsg('archive-season-msg','Archiving failed. Check your connection and try again.','error');
+    showPanelMsg('archive-season-msg','Archiving failed. Check your connection and try again. Standings were NOT reset.','error');
   }finally{
     btn.disabled=false;btn.textContent='Archive Current Season';
   }
@@ -1461,10 +1577,12 @@ function switchAdminTab(tab,btn){
   currentAdminTab=tab;
   document.querySelectorAll('.admin-tab').forEach(t=>t.classList.remove('active'));
   btn.classList.add('active');
-  ['games','void','remove','season','tools'].forEach(t=>{
+  ['games','edit','void','remove','season','archive','tools'].forEach(t=>{
     document.getElementById(`atab-${t}`).classList.toggle('hidden',t!==tab);
   });
   if(tab==='tools')loadAuditLog();
+  if(tab==='edit')populateEditTeamList();
+  if(tab==='archive')renderAdminArchiveList();
 }
 
 /* ── GAME PICKER ── */
@@ -1543,6 +1661,61 @@ document.getElementById('ag-btn').addEventListener('click',async()=>{
     await loadAuditLog();
   }catch(e){showPanelMsg('ag-msg',e.message||'Failed.','error')}
   finally{btn.disabled=false;btn.textContent='Add Game'}
+});
+
+/* ── EDIT STANDINGS (manual record override, admin-key only) ── */
+document.getElementById('es-abb').addEventListener('input',function(){this.value=this.value.toUpperCase()});
+
+function populateEditTeamList(){
+  const dl=document.getElementById('es-abb-list');
+  if(!dl)return;
+  const abbs=(prevData&&prevData.standings)?prevData.standings.map(t=>t.abb):[];
+  dl.innerHTML=abbs.map(a=>`<option value="${a}">`).join('');
+}
+
+document.getElementById('es-load-btn').addEventListener('click',()=>{
+  clearPanelMsg('es-msg');
+  const abb=document.getElementById('es-abb').value.trim().toUpperCase();
+  if(!abb){showPanelMsg('es-msg','Enter a team ABB first.','error');return}
+  const t=prevData&&prevData.standings?prevData.standings.find(x=>x.abb===abb):null;
+  if(!t){showPanelMsg('es-msg',`No existing record for ${abb} — it will be created on save.`,'error');return}
+  document.getElementById('es-wins').value=t.wins??0;
+  document.getElementById('es-losses').value=t.losses??0;
+  document.getElementById('es-streak').value=t.streak&&t.streak!=='—'?t.streak:'';
+  document.getElementById('es-logo').value=t.logo||'';
+  showPanelMsg('es-msg',`Loaded current record for ${abb}.`,'success');
+});
+
+document.getElementById('es-save-btn').addEventListener('click',async()=>{
+  clearPanelMsg('es-msg');
+  const abb=document.getElementById('es-abb').value.trim().toUpperCase();
+  const wins=document.getElementById('es-wins').value;
+  const losses=document.getElementById('es-losses').value;
+  const streak=document.getElementById('es-streak').value.trim();
+  const logo=document.getElementById('es-logo').value.trim();
+  if(!abb){showPanelMsg('es-msg','Enter a team ABB.','error');return}
+  if(wins===''||losses===''){showPanelMsg('es-msg','Enter both wins and losses.','error');return}
+  if(!confirm(`Manually set ${abb} to ${wins}-${losses}${streak?` (streak ${streak})`:''}? This overwrites the auto-calculated record.`))return;
+  const btn=document.getElementById('es-save-btn');
+  btn.disabled=true;btn.textContent='Saving…';
+  try{
+    const payload={abb,wins:Number(wins)||0,losses:Number(losses)||0};
+    if(streak)payload.streak=streak;
+    if(logo)payload.logo=logo;
+    // Admin-only endpoint: the server rejects this with the regular site
+    // SECRET and only accepts the ADMIN_SECRET supplied as adminPassword.
+    const r=await fetch(CFG.API.replace(/\/standings$/,'/standings/team'),{
+      method:'POST',headers:{'Content-Type':'application/json','Authorization':`Bearer ${adminPassword}`},
+      body:JSON.stringify(payload)
+    });
+    if(r.status===401){showPanelMsg('es-msg','Unauthorized — admin key required.','error');return}
+    if(!r.ok)throw new Error(`Server error ${r.status}`);
+    showPanelMsg('es-msg',`✓ ${abb} updated to ${wins}-${losses}.`,'success');
+    toast(`Edited ${abb}: ${wins}-${losses}`,'green',4000);
+    await fetchData();
+    populateEditTeamList();
+  }catch(e){showPanelMsg('es-msg',e.message||'Failed.','error')}
+  finally{btn.disabled=false;btn.textContent='Save Team Record'}
 });
 
 /* ── VOID / UNVOID ── */

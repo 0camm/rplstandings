@@ -452,14 +452,12 @@ async function handleRemoveResult(req, res) {
   return sendJSON(res, 200, { ok: true, removed });
 }
 
-async function handleReset(req, res) {
-  if (!isAdminAuthorized(req)) return sendJSON(res, 401, { error: "Unauthorized" });
-
+async function resetState(auditAction) {
   state.teams       = {};
   state.results     = [];
   state.lastUpdated = new Date().toISOString();
   state.auditLog.unshift({
-    action:    "reset",
+    action:    auditAction || "reset",
     gameId:    null,
     matchup:   "ALL",
     score:     "—",
@@ -470,8 +468,49 @@ async function handleReset(req, res) {
 
   await saveState();
   broadcast("standings", buildPublicPayload());
+}
+
+async function handleReset(req, res) {
+  if (!isAdminAuthorized(req)) return sendJSON(res, 401, { error: "Unauthorized" });
+
+  await resetState("reset");
 
   console.log("[RPL] Full standings reset.");
+  return sendJSON(res, 200, { ok: true });
+}
+
+async function handleArchiveAndAdvance(req, res) {
+  // Saves the season snapshot (the full archive list, same shape the client
+  // already builds for /rpl/archive) and then wipes the live standings/results
+  // back to a clean slate, all in one admin-authorized, atomic-from-the-
+  // client's-perspective call.
+  if (!isAdminAuthorized(req)) return sendJSON(res, 401, { error: "Unauthorized" });
+  let body;
+  try { body = await readBody(req); }
+  catch (e) { return sendJSON(res, 400, { error: "Bad JSON" }); }
+
+  const { archive, label } = body;
+  if (archive === undefined) return sendJSON(res, 422, { error: "Missing archive payload" });
+
+  try {
+    await upstashRequest("POST", `/set/${ARCHIVE_KEY}`, { value: JSON.stringify(archive) });
+  } catch (e) {
+    return sendJSON(res, 500, { error: "Archive save failed — standings were NOT reset." });
+  }
+
+  state.auditLog.unshift({
+    action:    "archived",
+    gameId:    null,
+    matchup:   "ALL",
+    score:     "—",
+    status:    label ? `archived: ${label}` : "archived",
+    timestamp: new Date().toISOString(),
+  });
+  if (state.auditLog.length > 200) state.auditLog.length = 200;
+
+  await resetState("season-advance");
+
+  console.log(`[RPL] Season archived${label ? ` ("${label}")` : ""} and standings reset for new season.`);
   return sendJSON(res, 200, { ok: true });
 }
 
@@ -501,7 +540,9 @@ function handleSSE(req, res) {
 }
 
 async function handleTeamOverride(req, res) {
-  if (!isAuthorized(req)) return sendJSON(res, 401, { error: "Unauthorized" });
+  // Manual standings edits are admin-only. The regular SECRET ("console" /
+  // bot-poster credential) is intentionally NOT accepted here — only ADMIN_SECRET.
+  if (!isAdminAuthorized(req)) return sendJSON(res, 401, { error: "Unauthorized" });
   let body;
   try { body = await readBody(req); }
   catch (e) { return sendJSON(res, 400, { error: "Bad JSON" }); }
@@ -629,7 +670,8 @@ async function handleGetArchive(req, res) {
 }
 
 async function handleSetArchive(req, res) {
-  if (!isAuthorized(req)) return sendJSON(res, 401, { error: "Unauthorized" });
+  // Archive management (rename/delete/reorder seasons) is admin-only.
+  if (!isAdminAuthorized(req)) return sendJSON(res, 401, { error: "Unauthorized" });
   try {
     const payload = await readBody(req);
     await upstashRequest("POST", `/set/${ARCHIVE_KEY}`, { value: JSON.stringify(payload) });
@@ -666,6 +708,7 @@ const server = http.createServer(async (req, res) => {
   if (url === "/rpl/refs"               && method === "GET")  return handleGetRefs(req, res);
   if (url === "/rpl/archive"            && method === "GET")  return handleGetArchive(req, res);
   if (url === "/rpl/archive"            && method === "POST") return handleSetArchive(req, res);
+  if (url === "/rpl/standings/archive-advance" && method === "POST") return handleArchiveAndAdvance(req, res);
 
   sendJSON(res, 404, { error: "Not found" });
 });
