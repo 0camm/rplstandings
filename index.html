@@ -344,6 +344,10 @@ select.fc{
   display:inline-block;background:var(--s3);border:1px solid var(--b);border-radius:4px;
   padding:1px 6px;font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--tx)
 }
+.ref-robux-badge{
+  display:inline-block;background:rgba(61,232,122,.1);border:1px solid rgba(61,232,122,.3);border-radius:4px;
+  padding:1px 6px;font-family:'JetBrains Mono',monospace;font-size:11px;font-weight:600;color:var(--win)
+}
 .refs-empty{text-align:center;padding:40px 20px;color:var(--mu);font-size:13px}
 
 /* ── ARCHIVE ── */
@@ -840,8 +844,8 @@ select.fc{
     </div>
     <div class="reftbl-wrap">
       <table class="reftbl">
-        <thead><tr><th>Referee</th><th>Games</th><th>Last Active</th><th>Recent</th></tr></thead>
-        <tbody id="refs-rows"><tr><td colspan="4" class="refs-empty">Loading…</td></tr></tbody>
+        <thead><tr><th>Referee</th><th>Games</th><th>Robux Earned</th><th>Last Active</th><th>Recent</th></tr></thead>
+        <tbody id="refs-rows"><tr><td colspan="5" class="refs-empty">Loading…</td></tr></tbody>
       </table>
     </div>
   </div>
@@ -1376,15 +1380,18 @@ async function fetchRefs(){
     if(!res.ok)throw new Error(`HTTP ${res.status}`);
     const data=await res.json();
     const refs=data.refs||[];
+    const robuxPerGame=data.robuxPerGame||40;
+    const totalRobux=(typeof data.totalRobux==='number')?data.totalRobux:refs.reduce((s,r)=>s+(r.robux||r.games*robuxPerGame),0);
     lastRefsSnapshot=refs;
-    document.getElementById('refs-ct').textContent=`${refs.length} referee${refs.length!==1?'s':''}`;
-    if(!refs.length){tbody.innerHTML='<tr><td colspan="4" class="refs-empty">No referee data yet.</td></tr>';return;}
+    document.getElementById('refs-ct').textContent=`${refs.length} referee${refs.length!==1?'s':''} · ${totalRobux.toLocaleString()} R$ paid`;
+    if(!refs.length){tbody.innerHTML='<tr><td colspan="5" class="refs-empty">No referee data yet.</td></tr>';return;}
     tbody.innerHTML=refs.map(r=>{
       const last=r.lastActive?new Date(r.lastActive).toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'}):'—';
       const recent=(r.recentGames||[]).map(g=>`${g.awayABB} @ ${g.homeABB}`).join(', ')||'—';
-      return`<tr><td><span class="ref-name">${r.name}</span></td><td><span class="ref-games-badge">${r.games}</span></td><td>${last}</td><td style="color:var(--mu);font-size:11px;max-width:200px;overflow:hidden;text-overflow:ellipsis">${recent}</td></tr>`;
+      const robux=(typeof r.robux==='number')?r.robux:r.games*robuxPerGame;
+      return`<tr><td><span class="ref-name">${r.name}</span></td><td><span class="ref-games-badge">${r.games}</span></td><td><span class="ref-robux-badge">${robux.toLocaleString()} R$</span></td><td>${last}</td><td style="color:var(--mu);font-size:11px;max-width:200px;overflow:hidden;text-overflow:ellipsis">${recent}</td></tr>`;
     }).join('');
-  }catch(e){tbody.innerHTML=`<tr><td colspan="4" class="refs-empty">Failed to load referee data.</td></tr>`;}
+  }catch(e){tbody.innerHTML=`<tr><td colspan="5" class="refs-empty">Failed to load referee data.</td></tr>`;}
 }
 
 /* ── ARCHIVE ── */

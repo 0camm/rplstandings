@@ -12,6 +12,7 @@ const ADMIN_SECRET = (process.env.ADMIN_SECRET || "").trim();
 const UPSTASH_URL   = (process.env.UPSTASH_URL   || "").trim();
 const UPSTASH_TOKEN = (process.env.UPSTASH_TOKEN || "").trim();
 const ARCHIVE_KEY   = "rpl-standings-archive";
+const ROBUX_PER_REF_GAME = 40;
 
 if (!SECRET || !ADMIN_SECRET) {
   console.error("[RPL] FATAL: RPL_SECRET and ADMIN_SECRET must be set as environment variables. Refusing to start with no/default credentials.");
@@ -313,11 +314,14 @@ function buildRefStats() {
       if (r.recentGames.length < 5) r.recentGames.push({ gameId: result.id, homeABB: result.homeABB, awayABB: result.awayABB, timestamp: result.timestamp });
     }
   }
-  return Object.values(map).sort((a, b) => b.games - a.games || b.lastActive.localeCompare(a.lastActive));
+  const list = Object.values(map).map(r => ({ ...r, robux: r.games * ROBUX_PER_REF_GAME }));
+  return list.sort((a, b) => b.games - a.games || b.lastActive.localeCompare(a.lastActive));
 }
 
 function handleGetRefs(req, res) {
-  return sendJSON(res, 200, { refs: buildRefStats(), lastUpdated: state.lastUpdated });
+  const refs = buildRefStats();
+  const totalRobux = refs.reduce((sum, r) => sum + r.robux, 0);
+  return sendJSON(res, 200, { refs, robuxPerGame: ROBUX_PER_REF_GAME, totalRobux, lastUpdated: state.lastUpdated });
 }
 
 function handleAuth(req, res) {
