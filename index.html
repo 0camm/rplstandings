@@ -1252,6 +1252,7 @@ function renderHistory(){
     if(st==='forfeit')bt='FORFEIT';
     if(isVoided){bt='VOIDED';bc='voided'}
     const aL=logo(g.awayLogo,realAbbOf(g.awayABB)),hL=logo(g.homeLogo,realAbbOf(g.homeABB));
+    const clk=(st==='final'||st==='forfeit')&&!isVoided;
     return`<div class="hr st-${st}${clk?' clk':''} hr-aid${isVoided?' voided':''}" data-i="${start+i}" data-gid="${g.id}"${clk?' role="button" tabindex="0"':''}>
       <span class="hn">${num}</span>
       <span class="hm">
