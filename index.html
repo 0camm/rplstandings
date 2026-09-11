@@ -1349,12 +1349,27 @@ document.getElementById('box-modal-bg').addEventListener('click',e=>{if(e.target
 
 /* ── STANDINGS ── */
 function flatToConfs(teams){
-  const e=[],w=[],o=[];
+  const merged={};
   for(const t of teams){
     const c=CUSTOM_TEAMS[t.abb];
-    const realAbb=c?c.real:t.abb;
-    const ent={name:c?c.name:(NAMES[t.abb]||t.abb),abbr:t.abb,w:t.wins||0,l:t.losses||0,pct:t.pct||'0.000',status:t.status||'',logo:logo(t.logo,realAbb),streak:t.streak||'—'};
-    if(EAST.has(realAbb))e.push(ent);else if(WEST.has(realAbb))w.push(ent);else o.push(ent);
+    const key=c?c.real:t.abb;
+    if(!merged[key])merged[key]={name:null,abbr:null,wins:0,losses:0,streak:'—',streakGames:-1,logoUrl:'',status:''};
+    const m=merged[key];
+    m.wins+=t.wins||0;
+    m.losses+=t.losses||0;
+    if(c&&!m.name){m.name=c.name;m.abbr=t.abb;}
+    if(!m.status&&t.status)m.status=t.status;
+    const games=(t.wins||0)+(t.losses||0);
+    if(games>m.streakGames){m.streak=t.streak||'—';m.streakGames=games;}
+    if(!m.logoUrl&&t.logo)m.logoUrl=t.logo;
+  }
+  const e=[],w=[],o=[];
+  for(const key of Object.keys(merged)){
+    const m=merged[key];
+    const total=m.wins+m.losses;
+    const pct=total>0?(m.wins/total).toFixed(3):'0.000';
+    const ent={name:m.name||NAMES[key]||key,abbr:m.abbr||key,w:m.wins,l:m.losses,pct,status:m.status||'',logo:logo(m.logoUrl,key),streak:m.streak};
+    if(EAST.has(key))e.push(ent);else if(WEST.has(key))w.push(ent);else o.push(ent);
   }
   return{eastern:e,western:[...w,...o]};
 }
