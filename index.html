@@ -1174,6 +1174,7 @@ const NAMES={ATL:'Atlanta Hawks',BOS:'Boston Celtics',BKN:'Brooklyn Nets',CHA:'C
 const EAST=new Set(['ATL','BOS','BKN','CHA','CHI','CLE','DET','IND','MIA','MIL','NYK','ORL','PHI','TOR','WAS']);
 const WEST=new Set(['DAL','DEN','GSW','HOU','LAC','LAL','MEM','MIN','NOP','OKC','PHX','POR','SAC','SAS','UTAH']);
 const CUSTOM_TEAMS={TIT:{name:'Toronto Titans',real:'TOR'},BLZ:{name:'Chicago Blaze',real:'CHI'},STG:{name:'Milwaukee Stags',real:'MIL'},MOT:{name:'Detroit Motors',real:'DET'},LEG:{name:'Los Angeles Legends',real:'LAL'},ORB:{name:'Houston Orbit',real:'HOU'},RGN:{name:'Los Angeles Reign',real:'LAC'},OUT:{name:'Dallas Outlaws',real:'DAL'},BKR:{name:'Brooklyn Royals',real:'BKN'},ALT:{name:'Utah Altitude',real:'UTAH'},DYN:{name:'Golden State Dynasty',real:'GSW'},PIO:{name:'Portland Pioneers',real:'POR'},SWM:{name:'Charlotte Swarm',real:'CHA'},INF:{name:'Miami Inferno',real:'MIA'},PHM:{name:'Memphis Phantoms',real:'MEM'},WRN:{name:'San Antonio Wranglers',real:'SAS'},FRO:{name:'Minnesota Frost',real:'MIN'},CRE:{name:'New Orleans Crescent',real:'NOP'},TMP:{name:'Oklahoma City Tempest',real:'OKC'},SUM:{name:'Denver Summit',real:'DEN'},VEL:{name:'Indiana Velocity',real:'IND'},REV:{name:'Philadelphia Revolution',real:'PHI'},FED:{name:'Washington Federals',real:'WAS'},MON:{name:'Sacramento Monarchs',real:'SAC'},GRD:{name:'Boston Guardians',real:'BOS'},FLT:{name:'Atlanta Flight',real:'ATL'},ECL:{name:'Orlando Eclipse',real:'ORL'},SOL:{name:'Phoenix Sol',real:'PHX'},CLK:{name:'Cleveland Knights',real:'CLE'}};
+const realAbbOf=abb=>CUSTOM_TEAMS[abb]?CUSTOM_TEAMS[abb].real:abb;
 
 /* Redis for the Archive feature only (standings/history/refs stay on the existing API) */
 const ARCHIVE_API = `${CFG.API.replace(/\/standings$/, '')}/archive`;
@@ -1250,8 +1251,7 @@ function renderHistory(){
     if(st==='incomplete')bt='—';
     if(st==='forfeit')bt='FORFEIT';
     if(isVoided){bt='VOIDED';bc='voided'}
-    const aL=logo(g.awayLogo,g.awayABB),hL=logo(g.homeLogo,g.homeABB);
-    const clk=(st==='final'||st==='forfeit')&&!isVoided;
+    const aL=logo(g.awayLogo,realAbbOf(g.awayABB)),hL=logo(g.homeLogo,realAbbOf(g.homeABB));
     return`<div class="hr st-${st}${clk?' clk':''} hr-aid${isVoided?' voided':''}" data-i="${start+i}" data-gid="${g.id}"${clk?' role="button" tabindex="0"':''}>
       <span class="hn">${num}</span>
       <span class="hm">
@@ -1308,7 +1308,7 @@ function openModal(g){
   if(!g)return;
   const hw=g.homeScore>g.awayScore,aw=g.awayScore>g.homeScore;
   const st=(g.status||'final').toLowerCase();
-  const aL=logo(g.awayLogo,g.awayABB),hL=logo(g.homeLogo,g.homeABB);
+  const aL=logo(g.awayLogo,realAbbOf(g.awayABB)),hL=logo(g.homeLogo,realAbbOf(g.homeABB));
   document.getElementById('m-matchup').innerHTML=`
     <div class="mteam">${aL?`<img src="${aL}" alt="">`:''}<span class="mabb">${g.awayABB||'?'}</span></div>
     <span class="mscore${aw?' w':''}">${g.awayScore??'—'}</span>
