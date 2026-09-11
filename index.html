@@ -1173,6 +1173,7 @@ const logo=(url,abb)=>{if(ESPN[abb])return`https://a.espncdn.com/i/teamlogos/nba
 const NAMES={ATL:'Atlanta Hawks',BOS:'Boston Celtics',BKN:'Brooklyn Nets',CHA:'Charlotte Hornets',CHI:'Chicago Bulls',CLE:'Cleveland Cavaliers',DAL:'Dallas Mavericks',DEN:'Denver Nuggets',DET:'Detroit Pistons',GSW:'Golden State Warriors',HOU:'Houston Rockets',IND:'Indiana Pacers',LAC:'LA Clippers',LAL:'Los Angeles Lakers',MEM:'Memphis Grizzlies',MIA:'Miami Heat',MIL:'Milwaukee Bucks',MIN:'Minnesota Timberwolves',NOP:'New Orleans Pelicans',NYK:'New York Knicks',OKC:'Oklahoma City Thunder',ORL:'Orlando Magic',PHI:'Philadelphia 76ers',PHX:'Phoenix Suns',POR:'Portland Trail Blazers',SAC:'Sacramento Kings',SAS:'San Antonio Spurs',TOR:'Toronto Raptors',UTAH:'Utah Jazz',WAS:'Washington Wizards'};
 const EAST=new Set(['ATL','BOS','BKN','CHA','CHI','CLE','DET','IND','MIA','MIL','NYK','ORL','PHI','TOR','WAS']);
 const WEST=new Set(['DAL','DEN','GSW','HOU','LAC','LAL','MEM','MIN','NOP','OKC','PHX','POR','SAC','SAS','UTAH']);
+const CUSTOM_TEAMS={TIT:{name:'Toronto Titans',real:'TOR'},BLZ:{name:'Chicago Blaze',real:'CHI'},STG:{name:'Milwaukee Stags',real:'MIL'},MOT:{name:'Detroit Motors',real:'DET'},LEG:{name:'Los Angeles Legends',real:'LAL'},ORB:{name:'Houston Orbit',real:'HOU'},RGN:{name:'Los Angeles Reign',real:'LAC'},OUT:{name:'Dallas Outlaws',real:'DAL'},BKR:{name:'Brooklyn Royals',real:'BKN'},ALT:{name:'Utah Altitude',real:'UTAH'},DYN:{name:'Golden State Dynasty',real:'GSW'},PIO:{name:'Portland Pioneers',real:'POR'},SWM:{name:'Charlotte Swarm',real:'CHA'},INF:{name:'Miami Inferno',real:'MIA'},PHM:{name:'Memphis Phantoms',real:'MEM'},WRN:{name:'San Antonio Wranglers',real:'SAS'},FRO:{name:'Minnesota Frost',real:'MIN'},CRE:{name:'New Orleans Crescent',real:'NOP'},TMP:{name:'Oklahoma City Tempest',real:'OKC'},SUM:{name:'Denver Summit',real:'DEN'},VEL:{name:'Indiana Velocity',real:'IND'},REV:{name:'Philadelphia Revolution',real:'PHI'},FED:{name:'Washington Federals',real:'WAS'},MON:{name:'Sacramento Monarchs',real:'SAC'},GRD:{name:'Boston Guardians',real:'BOS'},FLT:{name:'Atlanta Flight',real:'ATL'},ECL:{name:'Orlando Eclipse',real:'ORL'},SOL:{name:'Phoenix Sol',real:'PHX'},CLK:{name:'Cleveland Knights',real:'CLE'}};
 
 /* Redis for the Archive feature only (standings/history/refs stay on the existing API) */
 const ARCHIVE_API = `${CFG.API.replace(/\/standings$/, '')}/archive`;
@@ -1350,8 +1351,10 @@ document.getElementById('box-modal-bg').addEventListener('click',e=>{if(e.target
 function flatToConfs(teams){
   const e=[],w=[],o=[];
   for(const t of teams){
-    const ent={name:NAMES[t.abb]||t.abb,abbr:t.abb,w:t.wins||0,l:t.losses||0,pct:t.pct||'0.000',status:t.status||'',logo:logo(t.logo,t.abb),streak:t.streak||'—'};
-    if(EAST.has(t.abb))e.push(ent);else if(WEST.has(t.abb))w.push(ent);else o.push(ent);
+    const c=CUSTOM_TEAMS[t.abb];
+    const realAbb=c?c.real:t.abb;
+    const ent={name:c?c.name:(NAMES[t.abb]||t.abb),abbr:t.abb,w:t.wins||0,l:t.losses||0,pct:t.pct||'0.000',status:t.status||'',logo:logo(t.logo,realAbb),streak:t.streak||'—'};
+    if(EAST.has(realAbb))e.push(ent);else if(WEST.has(realAbb))w.push(ent);else o.push(ent);
   }
   return{eastern:e,western:[...w,...o]};
 }
