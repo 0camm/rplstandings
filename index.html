@@ -1257,11 +1257,11 @@ function renderHistory(){
       <span class="hn">${num}</span>
       <span class="hm">
         ${aL?`<img class="hm-logo" src="${aL}" alt="" loading="lazy">`:'<span class="hm-nolog"></span>'}
-        <span class="hm-away${hw&&!isVoided?' dim':''}">${g.awayABB||'?'}</span>
+        <span class="hm-away${hw&&!isVoided?' dim':''}">${realAbbOf(g.awayABB)||'?'}</span>
         <span class="hm-at">@</span>
         <span class="hm-home-wrap">
           ${hL?`<img class="hm-logo" src="${hL}" alt="" loading="lazy">`:'<span class="hm-nolog"></span>'}
-          <span class="hm-home${aw&&!isVoided?' dim':''}">${g.homeABB||'?'}</span>
+          <span class="hm-home${aw&&!isVoided?' dim':''}">${realAbbOf(g.homeABB)||'?'}</span>
         </span>
       </span>
       <span class="hs">
@@ -1311,11 +1311,11 @@ function openModal(g){
   const st=(g.status||'final').toLowerCase();
   const aL=logo(g.awayLogo,realAbbOf(g.awayABB)),hL=logo(g.homeLogo,realAbbOf(g.homeABB));
   document.getElementById('m-matchup').innerHTML=`
-    <div class="mteam">${aL?`<img src="${aL}" alt="">`:''}<span class="mabb">${g.awayABB||'?'}</span></div>
+    <div class="mteam">${aL?`<img src="${aL}" alt="">`:''}<span class="mabb">${realAbbOf(g.awayABB)||'?'}</span></div>
     <span class="mscore${aw?' w':''}">${g.awayScore??'—'}</span>
     <span class="msep">–</span>
     <span class="mscore${hw?' w':''}">${g.homeScore??'—'}</span>
-    <div class="mteam"><span class="mabb">${g.homeABB||'?'}</span>${hL?`<img src="${hL}" alt="">`:''}</div>`;
+    <div class="mteam"><span class="mabb">${realAbbOf(g.homeABB)||'?'}</span>${hL?`<img src="${hL}" alt="">`:''}</div>`;
   const mb=document.getElementById('m-badge');
   let bt=st.toUpperCase(),bc=st;
   if(st==='final'&&g.quarter==='OT'){bt='FINAL/OT';bc='ot'}
@@ -1339,8 +1339,8 @@ function openModal(g){
   };
   document.getElementById('m-body').innerHTML=`
     <div class="minfo">${pH}${rH}</div>
-    <div class="bssec"><div class="bshd">${aL?`<img src="${aL}" alt="">`:''}<span class="bsname">${g.awayABB||'Away'}</span><span class="bssc${aw?' w':''}">${g.awayScore??'—'}</span></div>${bsTbl(g.awayStats)}</div>
-    <div class="bssec"><div class="bshd">${hL?`<img src="${hL}" alt="">`:''}<span class="bsname">${g.homeABB||'Home'}</span><span class="bssc${hw?' w':''}">${g.homeScore??'—'}</span></div>${bsTbl(g.homeStats)}</div>`;
+    <div class="bssec"><div class="bshd">${aL?`<img src="${aL}" alt="">`:''}<span class="bsname">${realAbbOf(g.awayABB)||'Away'}</span><span class="bssc${aw?' w':''}">${g.awayScore??'—'}</span></div>${bsTbl(g.awayStats)}</div>
+    <div class="bssec"><div class="bshd">${hL?`<img src="${hL}" alt="">`:''}<span class="bsname">${realAbbOf(g.homeABB)||'Home'}</span><span class="bssc${hw?' w':''}">${g.homeScore??'—'}</span></div>${bsTbl(g.homeStats)}</div>`;
   document.getElementById('box-modal-bg').classList.add('open');
   document.body.style.overflow='hidden';
 }
@@ -1369,7 +1369,7 @@ function flatToConfs(teams){
     const m=merged[key];
     const total=m.wins+m.losses;
     const pct=total>0?(m.wins/total).toFixed(3):'0.000';
-    const ent={name:NAMES[key]||key,abbr:m.abbr||key,w:m.wins,l:m.losses,pct,status:m.status||'',logo:logo(m.logoUrl,key),streak:m.streak};
+    const ent={name:NAMES[key]||key,abbr:key,w:m.wins,l:m.losses,pct,status:m.status||'',logo:logo(m.logoUrl,key),streak:m.streak};
     if(EAST.has(key))e.push(ent);else if(WEST.has(key))w.push(ent);else o.push(ent);
   }
   return{eastern:e,western:[...w,...o]};
@@ -1441,7 +1441,7 @@ async function fetchRefs(){
     if(!refs.length){tbody.innerHTML='<tr><td colspan="5" class="refs-empty">No referee data yet.</td></tr>';return;}
     tbody.innerHTML=refs.map(r=>{
       const last=r.lastActive?new Date(r.lastActive).toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'}):'—';
-      const recent=(r.recentGames||[]).map(g=>`${g.awayABB} @ ${g.homeABB}`).join(', ')||'—';
+      const recent=(r.recentGames||[]).map(g=>`${realAbbOf(g.awayABB)} @ ${realAbbOf(g.homeABB)}`).join(', ')||'—';
       const robux=(typeof r.robux==='number')?r.robux:r.games*robuxPerGame;
       return`<tr><td><span class="ref-name">${r.name}</span></td><td><span class="ref-games-badge">${r.games}</span></td><td><span class="ref-robux-badge">${robux.toLocaleString()} R$</span></td><td>${last}</td><td style="color:var(--mu);font-size:11px;max-width:200px;overflow:hidden;text-overflow:ellipsis">${recent}</td></tr>`;
     }).join('');
@@ -1686,7 +1686,7 @@ function renderGamePicker(q){
     const badge=g.voided?'voided':st;
     return`<div class="gp-row" data-gp-i="${i}" tabindex="0" role="button">
       <div>
-        <div class="gp-matchup">${g.awayABB||'?'} @ ${g.homeABB||'?'}</div>
+        <div class="gp-matchup">${realAbbOf(g.awayABB)||'?'} @ ${realAbbOf(g.homeABB)||'?'}</div>
         <div class="gp-meta">
           <span class="gp-status ${badge}">${g.voided?'VOIDED':st.toUpperCase()}</span>
           <span>${fmtDT(g.timestamp)}</span>
@@ -1810,7 +1810,7 @@ document.getElementById('void-btn').addEventListener('click',async()=>{
   const id=document.getElementById('void-game-id').value.trim();
   if(!id){showPanelMsg('void-msg','Enter a game ID.','error');return}
   const g=allResults.find(x=>String(x.id)===String(id));
-  const desc=g?`${g.awayABB} @ ${g.homeABB} (${g.awayScore}–${g.homeScore}, ${g.status})`:`game ID ${id}`;
+  const desc=g?`${realAbbOf(g.awayABB)} @ ${realAbbOf(g.homeABB)} (${g.awayScore}–${g.homeScore}, ${g.status})`:`game ID ${id}`;
   if(!confirm(`Void this result?\n\n${desc}\n\nThis removes it from the win-loss calculation and recalculates standings from the remaining history. It stays in the history list marked as voided — it is not deleted.`))return;
   document.getElementById('void-btn').disabled=true;
   try{
@@ -1832,7 +1832,7 @@ document.getElementById('unvoid-btn').addEventListener('click',async()=>{
   const id=document.getElementById('void-game-id').value.trim();
   if(!id){showPanelMsg('void-msg','Enter a game ID.','error');return}
   const g=allResults.find(x=>String(x.id)===String(id));
-  const desc=g?`${g.awayABB} @ ${g.homeABB} (${g.awayScore}–${g.homeScore}, ${g.status})`:`game ID ${id}`;
+  const desc=g?`${realAbbOf(g.awayABB)} @ ${realAbbOf(g.homeABB)} (${g.awayScore}–${g.homeScore}, ${g.status})`:`game ID ${id}`;
   if(!confirm(`Restore (unvoid) this result?\n\n${desc}\n\nThis adds it back into the win-loss calculation and recalculates standings to include it.`))return;
   document.getElementById('unvoid-btn').disabled=true;
   try{
@@ -1855,7 +1855,7 @@ document.getElementById('remove-btn').addEventListener('click',async()=>{
   const id=document.getElementById('remove-game-id').value.trim();
   if(!id){showPanelMsg('remove-msg','Enter a game ID.','error');return}
   const g=allResults.find(x=>String(x.id)===String(id));
-  const desc=g?`${g.awayABB} @ ${g.homeABB} (${g.awayScore}–${g.homeScore}, ${g.status})`:`game ID ${id}`;
+  const desc=g?`${realAbbOf(g.awayABB)} @ ${realAbbOf(g.homeABB)} (${g.awayScore}–${g.homeScore}, ${g.status})`:`game ID ${id}`;
   if(!confirm(`PERMANENTLY delete this result?\n\n${desc}\n\nUnlike voiding, this cannot be undone — the game is removed from history entirely and standings are recalculated without it.`))return;
   document.getElementById('remove-btn').disabled=true;document.getElementById('remove-btn').textContent='Removing…';
   try{
@@ -1955,7 +1955,7 @@ async function fetchData(){
       if(lat?.id&&lat.id!==lastId&&prevData){
         lastId=lat.id;
         const st=lat.status;
-        toast(`${lat.awayABB} @ ${lat.homeABB} — ${st==='final'?`${lat.awayScore}–${lat.homeScore} FINAL`:st==='forfeit'?'FORFEIT':st==='incomplete'?'NO RESULT':st.toUpperCase()}`,st==='forfeit'?'amber':'green',6000);
+        toast(`${realAbbOf(lat.awayABB)} @ ${realAbbOf(lat.homeABB)} — ${st==='final'?`${lat.awayScore}–${lat.homeScore} FINAL`:st==='forfeit'?'FORFEIT':st==='incomplete'?'NO RESULT':st.toUpperCase()}`,st==='forfeit'?'amber':'green',6000);
       }
       if(!lastId)lastId=data.results[0]?.id;
     }
